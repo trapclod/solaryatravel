@@ -75,11 +75,18 @@
                 </div>
 
                 {{-- Features --}}
-                @if($catamaran->features && count($catamaran->features) > 0)
+                @php
+                    $features = $catamaran->features;
+                    if (is_string($features)) {
+                        $features = json_decode($features, true) ?? [];
+                    }
+                    $features = is_array($features) ? $features : [];
+                @endphp
+                @if(count($features) > 0)
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">Caratteristiche</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            @foreach($catamaran->features as $feature)
+                            @foreach($features as $feature)
                                 <div class="flex items-center gap-2 text-gray-600">
                                     <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

@@ -110,7 +110,13 @@
         </label>
         <div id="features-container" class="space-y-2">
             @php
-                $features = old('features', $catamaran->features ?? []);
+                $rawFeatures = old('features', $catamaran->features ?? []);
+                // Handle both array and JSON string cases
+                if (is_string($rawFeatures)) {
+                    $features = json_decode($rawFeatures, true) ?? [];
+                } else {
+                    $features = is_array($rawFeatures) ? $rawFeatures : [];
+                }
             @endphp
             @forelse($features as $index => $feature)
                 <div class="flex items-center gap-2 feature-row">

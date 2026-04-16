@@ -105,7 +105,12 @@
 
                     {{-- Features --}}
                     @php
-                        $features = is_array($catamaran->features) ? $catamaran->features : [];
+                        $rawFeatures = $catamaran->features;
+                        if (is_string($rawFeatures)) {
+                            $features = json_decode($rawFeatures, true) ?? [];
+                        } else {
+                            $features = is_array($rawFeatures) ? $rawFeatures : [];
+                        }
                     @endphp
                     @if(count($features) > 0)
                         <div class="mb-8">

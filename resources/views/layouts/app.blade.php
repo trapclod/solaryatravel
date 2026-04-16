@@ -143,6 +143,7 @@
 
     <!-- Main Content -->
     <main id="main-content">
+        {{ $slot ?? '' }}
         @yield('content')
     </main>
 

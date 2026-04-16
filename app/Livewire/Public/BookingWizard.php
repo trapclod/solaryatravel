@@ -98,20 +98,15 @@ class BookingWizard extends Component
         'acceptPrivacy.accepted' => 'Devi accettare la privacy policy',
     ];
 
-    public function mount(?string $slug = null): void
+    public function mount(?Catamaran $catamaran = null): void
     {
         $this->currentMonth = now()->format('Y-m');
 
-        if ($slug) {
-            $this->catamaran_slug = $slug;
-            $this->selectedCatamaran = Catamaran::where('slug', $slug)
-                ->where('is_active', true)
-                ->first();
-
-            if ($this->selectedCatamaran) {
-                $this->step = 2;
-                $this->loadAvailableDates();
-            }
+        if ($catamaran && $catamaran->id && $catamaran->is_active) {
+            $this->catamaran_slug = $catamaran->slug;
+            $this->selectedCatamaran = $catamaran;
+            $this->step = 2;
+            $this->loadAvailableDates();
         }
     }
 

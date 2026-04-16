@@ -62,7 +62,14 @@
                                     </svg>
                                     {{ $catamaran->length_meters }}m
                                 </span>
-                                @php $features = is_array($catamaran->features) ? $catamaran->features : []; @endphp
+                                @php 
+                                    $rawFeatures = $catamaran->features;
+                                    if (is_string($rawFeatures)) {
+                                        $features = json_decode($rawFeatures, true) ?? [];
+                                    } else {
+                                        $features = is_array($rawFeatures) ? $rawFeatures : [];
+                                    }
+                                @endphp
                                 @foreach(array_slice($features, 0, 2) as $feature)
                                     <span class="inline-flex items-center text-sm text-gray-500">
                                         <svg class="w-4 h-4 mr-1 text-gold-500" fill="currentColor" viewBox="0 0 20 20">
