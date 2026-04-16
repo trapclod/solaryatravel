@@ -61,7 +61,13 @@ class BookingController extends Controller
         $catamarans = Catamaran::orderBy('name')->get();
         $statuses = BookingStatus::cases();
 
-        return view('admin.bookings.index', compact('bookings', 'catamarans', 'statuses'));
+        // Compute stats for the dashboard cards
+        $stats = Booking::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        return view('admin.bookings.index', compact('bookings', 'catamarans', 'statuses', 'stats'));
     }
 
     /**

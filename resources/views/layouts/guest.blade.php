@@ -34,7 +34,7 @@
 
         <!-- Content Card -->
         <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-            {{ $slot }}
+            @yield('content')
         </div>
 
         <!-- Back to Home -->

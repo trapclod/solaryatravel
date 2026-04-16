@@ -25,7 +25,7 @@ use App\Livewire\Public\BookingWizard;
 */
 
 // Home
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 // Catamarans
 Route::get('/catamarani', [CatamaranController::class, 'index'])->name('catamarans.index');

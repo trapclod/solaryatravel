@@ -18,7 +18,7 @@
                 Comfort, eleganza e servizio impeccabile per un'esperienza indimenticabile.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('booking.create') }}" 
+                <a href="{{ route('booking.start') }}" 
                    class="inline-flex items-center px-8 py-4 bg-gold-500 text-white font-semibold rounded-full hover:bg-gold-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                     Prenota Ora
                     <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,7 +238,7 @@
             <p class="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
                 Prenota oggi la tua escursione in catamarano e vivi un'esperienza indimenticabile
             </p>
-            <a href="{{ route('booking.create') }}" 
+            <a href="{{ route('booking.start') }}" 
                class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-full hover:bg-primary-50 transition-colors shadow-lg">
                 Prenota la Tua Escursione
                 <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

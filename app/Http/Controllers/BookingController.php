@@ -102,6 +102,20 @@ class BookingController extends Controller
     }
 
     /**
+     * Show all bookings for the authenticated user.
+     */
+    public function myBookings(): View
+    {
+        $bookings = Booking::where('user_id', auth()->id())
+            ->orWhere('customer_email', auth()->user()->email)
+            ->with(['catamaran', 'timeSlot'])
+            ->orderBy('booking_date', 'desc')
+            ->paginate(10);
+
+        return view('bookings.index', compact('bookings'));
+    }
+
+    /**
      * Cancel a booking.
      */
     public function cancel(string $bookingNumber): RedirectResponse

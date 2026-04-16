@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Addon;
 use App\Models\Catamaran;
 use App\Models\Availability;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class CatamaranController extends Controller
     {
         $catamarans = Catamaran::where('is_active', true)
             ->orderBy('sort_order')
-            ->with(['images', 'addons'])
+            ->with(['images'])
             ->get();
 
         return view('catamarans.index', compact('catamarans'));
@@ -29,8 +30,13 @@ class CatamaranController extends Controller
     {
         $catamaran = Catamaran::where('slug', $slug)
             ->where('is_active', true)
-            ->with(['images', 'addons'])
+            ->with(['images'])
             ->firstOrFail();
+
+        // Get available addons
+        $addons = Addon::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
 
         // Get availability for the next 3 months
         $availableDates = Availability::where('catamaran_id', $catamaran->id)
@@ -54,7 +60,7 @@ class CatamaranController extends Controller
             ->take(3)
             ->get();
 
-        return view('catamarans.show', compact('catamaran', 'availableDates', 'similarCatamarans'));
+        return view('catamarans.show', compact('catamaran', 'addons', 'availableDates', 'similarCatamarans'));
     }
 
     /**

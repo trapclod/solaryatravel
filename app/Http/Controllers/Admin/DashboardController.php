@@ -14,7 +14,7 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): View
+    public function index(): View
     {
         // Today's stats
         $todayStats = [
@@ -23,7 +23,7 @@ class DashboardController extends Controller
                 ->where('status', '!=', BookingStatus::CANCELLED)
                 ->sum('seats'),
             'revenue' => Payment::whereDate('paid_at', today())
-                ->where('status', PaymentStatus::COMPLETED)
+                ->where('status', PaymentStatus::SUCCEEDED)
                 ->sum('amount'),
         ];
 
@@ -34,10 +34,10 @@ class DashboardController extends Controller
         $monthlyStats = [
             'bookings' => Booking::whereBetween('booking_date', [$monthStart, $monthEnd])->count(),
             'revenue' => Payment::whereBetween('paid_at', [$monthStart, $monthEnd])
-                ->where('status', PaymentStatus::COMPLETED)
+                ->where('status', PaymentStatus::SUCCEEDED)
                 ->sum('amount'),
             'avg_booking_value' => Payment::whereBetween('paid_at', [$monthStart, $monthEnd])
-                ->where('status', PaymentStatus::COMPLETED)
+                ->where('status', PaymentStatus::SUCCEEDED)
                 ->avg('amount') ?? 0,
         ];
 
@@ -55,7 +55,7 @@ class DashboardController extends Controller
             ->get();
 
         // Weekly revenue chart data
-        $weeklyRevenue = Payment::where('status', PaymentStatus::COMPLETED)
+        $weeklyRevenue = Payment::where('status', PaymentStatus::SUCCEEDED)
             ->whereBetween('paid_at', [now()->subDays(7), now()])
             ->selectRaw('DATE(paid_at) as date, SUM(amount) as total')
             ->groupBy('date')
@@ -106,7 +106,7 @@ class DashboardController extends Controller
 
         // Add recent payments
         $recentPayments = Payment::with('booking')
-            ->where('status', PaymentStatus::COMPLETED)
+            ->where('status', PaymentStatus::SUCCEEDED)
             ->orderBy('paid_at', 'desc')
             ->limit(5)
             ->get()
@@ -137,5 +137,52 @@ class DashboardController extends Controller
             'popularCatamarans',
             'recentActivity'
         ));
+    }
+
+    /**
+     * Show the schedule/calendar view.
+     */
+    public function schedule(): View
+    {
+        $bookings = Booking::with(['catamaran', 'timeSlot'])
+            ->whereBetween('booking_date', [now()->startOfMonth(), now()->endOfMonth()->addMonth()])
+            ->where('status', '!=', BookingStatus::CANCELLED)
+            ->get()
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'title' => "{$booking->customer_first_name} {$booking->customer_last_name}",
+                    'start' => $booking->booking_date->format('Y-m-d') . 'T' . ($booking->timeSlot->start_time ?? '09:00'),
+                    'end' => $booking->booking_date->format('Y-m-d') . 'T' . ($booking->timeSlot->end_time ?? '17:00'),
+                    'color' => $this->getBookingColor($booking->status),
+                    'extendedProps' => [
+                        'booking_number' => $booking->booking_number,
+                        'catamaran' => $booking->catamaran->name ?? 'N/A',
+                        'guests' => $booking->seats,
+                        'status' => $booking->status->value ?? $booking->status,
+                    ],
+                ];
+            });
+
+        $catamarans = Catamaran::where('is_active', true)->get();
+
+        return view('admin.schedule', compact('bookings', 'catamarans'));
+    }
+
+    /**
+     * Get color based on booking status.
+     */
+    private function getBookingColor(BookingStatus|string $status): string
+    {
+        $statusValue = $status instanceof BookingStatus ? $status->value : $status;
+        
+        return match ($statusValue) {
+            'pending' => '#f59e0b',
+            'confirmed' => '#10b981',
+            'completed' => '#3b82f6',
+            'cancelled' => '#ef4444',
+            'no_show' => '#6b7280',
+            default => '#8b5cf6',
+        };
     }
 }

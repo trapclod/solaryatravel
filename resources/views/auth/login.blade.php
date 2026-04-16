@@ -77,7 +77,7 @@
             <p class="text-sm text-gray-500">
                 Puoi prenotare anche senza registrazione
             </p>
-            <a href="{{ route('booking.create') }}" class="inline-flex items-center mt-2 text-primary-600 font-medium hover:text-primary-700">
+            <a href="{{ route('booking.start') }}" class="inline-flex items-center mt-2 text-primary-600 font-medium hover:text-primary-700">
                 Prenota come ospite
                 <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
