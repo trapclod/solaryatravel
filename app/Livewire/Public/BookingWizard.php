@@ -31,11 +31,13 @@ class BookingWizard extends Component
     public ?Catamaran $selectedCatamaran = null;
 
     // Step 2: Date & Time Selection
+    #[Url]
     public ?string $date = null;
     public ?int $timeSlotId = null;
     public ?TimeSlot $selectedTimeSlot = null;
     public array $availableDates = [];
     public array $availableSlots = [];
+    public ?string $prefillDateError = null;
 
     // Step 3: Booking Type & Guests
     public string $bookingType = 'seats'; // 'seats' or 'exclusive'
@@ -103,10 +105,24 @@ class BookingWizard extends Component
         $this->currentMonth = now()->format('Y-m');
 
         if ($catamaran && $catamaran->id && $catamaran->is_active) {
-            $this->catamaran_slug = $catamaran->slug;
             $this->selectedCatamaran = $catamaran;
+            $this->catamaran_slug = $catamaran->slug;
+        } elseif ($this->catamaran_slug) {
+            $this->selectedCatamaran = Catamaran::where('slug', $this->catamaran_slug)
+                ->where('is_active', true)
+                ->first();
+        }
+
+        if ($this->selectedCatamaran) {
             $this->step = 2;
             $this->loadAvailableDates();
+
+            if ($this->date && in_array($this->date, $this->availableDates, true)) {
+                $this->selectDate($this->date);
+            } elseif ($this->date) {
+                $this->prefillDateError = 'La data selezionata non e disponibile per questo catamarano. Scegli un altra data dal calendario.';
+                $this->date = null;
+            }
         }
     }
 
@@ -140,6 +156,7 @@ class BookingWizard extends Component
 
     public function selectDate(string $date): void
     {
+        $this->prefillDateError = null;
         $this->date = $date;
         $this->loadAvailableSlots();
         $this->timeSlotId = null;

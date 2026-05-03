@@ -137,6 +137,12 @@
                                 Scegli quando vuoi vivere la tua esperienza su {{ $selectedCatamaran->name }}.
                             </p>
 
+                            @if($prefillDateError)
+                                <x-alert type="warning" class="mb-6">
+                                    {{ $prefillDateError }}
+                                </x-alert>
+                            @endif
+
                             {{-- Calendar --}}
                             <div class="mb-8">
                                 <livewire:public.booking-calendar 

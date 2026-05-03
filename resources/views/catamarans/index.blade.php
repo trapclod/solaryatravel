@@ -16,6 +16,97 @@
         </div>
     </section>
 
+    {{-- Availability Search --}}
+    <section class="relative -mt-10 z-10">
+        <div class="container mx-auto px-4 lg:px-8">
+            <div class="bg-white rounded-3xl shadow-xl border border-sand-200 p-5 lg:p-6">
+                <form method="GET" action="{{ route('catamarans.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-end">
+                    <div class="md:col-span-5">
+                        <label for="filter_date" class="block text-sm font-semibold text-navy-900 mb-2">Data escursione</label>
+                        <input
+                            id="filter_date"
+                            type="date"
+                            name="date"
+                            value="{{ $search['date'] ?? '' }}"
+                            min="{{ now()->addHours(config('booking.advance_hours', 24))->toDateString() }}"
+                            required
+                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
+                        />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="filter_adults" class="block text-sm font-semibold text-navy-900 mb-2">Adulti</label>
+                        <input
+                            id="filter_adults"
+                            type="number"
+                            name="adults"
+                            min="1"
+                            max="20"
+                            value="{{ $search['adults'] ?? 2 }}"
+                            required
+                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
+                        />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="filter_children" class="block text-sm font-semibold text-navy-900 mb-2">Bambini</label>
+                        <input
+                            id="filter_children"
+                            type="number"
+                            name="children"
+                            min="0"
+                            max="20"
+                            value="{{ $search['children'] ?? 0 }}"
+                            required
+                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
+                        />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="filter_slot_type" class="block text-sm font-semibold text-navy-900 mb-2">Durata</label>
+                        <select
+                            id="filter_slot_type"
+                            name="slot_type"
+                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
+                        >
+                            <option value="">Tutte</option>
+                            <option value="half_day" @selected(($search['slot_type'] ?? null) === 'half_day')>Mezza giornata</option>
+                            <option value="full_day" @selected(($search['slot_type'] ?? null) === 'full_day')>Giornata intera</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-gold-500 to-gold-600 text-white font-semibold rounded-xl hover:from-gold-600 hover:to-gold-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            Cerca
+                        </button>
+                    </div>
+                </form>
+
+                @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']))
+                    <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 font-medium">
+                            {{ $search['results'] }} catamarani disponibili
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
+                            {{ \Carbon\Carbon::parse($search['date'])->locale('it')->isoFormat('D MMMM YYYY') }}
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
+                            {{ $search['adults'] }} adulti
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
+                            {{ $search['children'] }} bambini
+                        </span>
+                        @if(!empty($search['slot_type']))
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
+                                {{ $search['slot_type'] === 'half_day' ? 'Mezza giornata' : 'Giornata intera' }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        </div>
+    </section>
+
     {{-- Catamarans Grid --}}
     <section class="py-16 lg:py-24 bg-sand-50">
         <div class="container mx-auto px-4 lg:px-8">
@@ -35,7 +126,12 @@
                                     </svg>
                                 </div>
                             @endif
-                            <div class="absolute top-4 right-4">
+                            <div class="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                                @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']) && isset($catamaran->matched_seats_available))
+                                    <span class="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+                                        Disponibile per {{ $catamaran->matched_seats_available }} persone
+                                    </span>
+                                @endif
                                 <span class="bg-gold-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
                                     Max {{ $catamaran->capacity }} ospiti
                                 </span>
@@ -89,13 +185,23 @@
                                         <span class="text-sm font-normal text-gray-500">/persona</span>
                                     </p>
                                 </div>
-                                <a href="{{ route('catamarans.show', $catamaran) }}" 
+                                @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']))
+                                <a href="{{ route('booking.start', ['catamaran_slug' => $catamaran->slug, 'date' => $search['date']]) }}"
+                                   class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
+                                    Prenota
+                                    <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            @else
+                                <a href="{{ route('catamarans.show', $catamaran) }}"
                                    class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
                                     Scopri
                                     <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </a>
+                            @endif
                             </div>
                         </div>
                     </article>
@@ -105,7 +211,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                         </svg>
                         <h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun catamarano disponibile</h3>
-                        <p class="text-gray-500">Torna a trovarci presto per scoprire la nostra flotta.</p>
+                        <p class="text-gray-500">
+                            @if($search['isAvailabilitySearch'] ?? false)
+                                Nessuna disponibilita trovata per i criteri selezionati. Prova a cambiare data o numero ospiti.
+                            @else
+                                Torna a trovarci presto per scoprire la nostra flotta.
+                            @endif
+                        </p>
                     </div>
                 @endforelse
             </div>

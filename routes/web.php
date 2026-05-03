@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Livewire\Public\BookingWizard;
 
 /*
@@ -150,6 +151,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::post('/impostazioni', [SettingsController::class, 'update'])->name('settings.update');
     Route::get('/impostazioni/time-slots', [SettingsController::class, 'timeSlots'])->name('settings.timeslots');
     Route::post('/impostazioni/time-slots', [SettingsController::class, 'updateTimeSlots'])->name('settings.timeslots.update');
+
+    // Users Management
+    Route::resource('users', AdminUserController::class)->except(['show']);
 });
 
 /*

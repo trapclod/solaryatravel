@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Catamaran;
 use App\Models\Booking;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -47,6 +48,10 @@ class HomeController extends Controller
             'catamarans' => Catamaran::where('is_active', true)->count(),
         ];
 
-        return view('home', compact('catamarans', 'testimonials', 'stats'));
+        $minBookingDate = Carbon::now()
+            ->addHours(config('booking.advance_hours', 24))
+            ->toDateString();
+
+        return view('home', compact('catamarans', 'testimonials', 'stats', 'minBookingDate'));
     }
 }

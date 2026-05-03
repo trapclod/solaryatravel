@@ -17,6 +17,78 @@
                 Escursioni esclusive in catamarano lungo le coste più belle. 
                 Comfort, eleganza e servizio impeccabile per un'esperienza indimenticabile.
             </p>
+
+            {{-- Search Bar --}}
+            <form method="GET" action="{{ route('catamarans.index') }}"
+                  class="mb-10 max-w-4xl mx-auto">
+                {{-- Label above --}}
+                <p class="text-sm font-semibold text-white/70 uppercase tracking-widest mb-4 text-center">
+                    Cerca la tua escursione
+                </p>
+
+                {{-- Pill container --}}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+
+                    {{-- Data --}}
+                    <label class="flex items-center gap-3 px-5 py-4 flex-1 min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100 cursor-pointer group">
+                        <span class="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center group-focus-within:bg-blue-100 transition-colors">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Data</span>
+                            <input id="hero_date" type="date" name="date" min="{{ $minBookingDate }}" required
+                                   class="block w-full text-sm font-semibold text-gray-800 bg-transparent border-none outline-none p-0 focus:ring-0 cursor-pointer" />
+                        </div>
+                    </label>
+
+                    {{-- Adulti --}}
+                    <label class="flex items-center gap-3 px-5 py-4 flex-none border-b sm:border-b-0 sm:border-r border-gray-100 cursor-pointer group">
+                        <span class="flex-shrink-0 w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center group-focus-within:bg-emerald-100 transition-colors">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Adulti</span>
+                            <input id="hero_adults" type="number" name="adults" min="1" max="20" value="2" required
+                                   class="block w-16 text-sm font-semibold text-gray-800 bg-transparent border-none outline-none p-0 focus:ring-0" />
+                        </div>
+                    </label>
+
+                    {{-- Bambini --}}
+                    <label class="flex items-center gap-3 px-5 py-4 flex-none border-b sm:border-b-0 sm:border-r border-gray-100 cursor-pointer group">
+                        <span class="flex-shrink-0 w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center group-focus-within:bg-amber-100 transition-colors">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Bambini</span>
+                            <input id="hero_children" type="number" name="children" min="0" max="20" value="0" required
+                                   class="block w-16 text-sm font-semibold text-gray-800 bg-transparent border-none outline-none p-0 focus:ring-0" />
+                        </div>
+                    </label>
+
+                    {{-- CTA Button --}}
+                    <div class="p-2 sm:p-2 flex-shrink-0">
+                        <button type="submit"
+                                class="w-full sm:w-auto h-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
+                                style="background: linear-gradient(135deg, #facc15 0%, #d97706 100%); box-shadow: 0 4px 20px rgba(234,179,8,0.45);">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Cerca
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-xs text-white/50 mt-3 text-center">
+                    Mostriamo tutti i catamarani disponibili per la data e il numero di persone selezionati.
+                </p>
+            </form>
+
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('booking.start') }}" 
                    class="inline-flex items-center px-8 py-4 bg-gold-500 text-white font-semibold rounded-full hover:bg-gold-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
