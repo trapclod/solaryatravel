@@ -18,7 +18,7 @@
         .admin-sidebar { width: 280px; flex-shrink: 0; min-height: 100vh; }
         .admin-sidebar .nav-link { color: rgba(255,255,255,.7); border-radius: .75rem; padding: .65rem 1rem; transition: all .15s ease; }
         .admin-sidebar .nav-link:hover { background: rgba(255,255,255,.08); color: #fff; }
-        .admin-sidebar .nav-link.active { background: linear-gradient(90deg, #facc15 0%, #eab308 100%); color: #0f172a; box-shadow: 0 4px 14px rgba(234,179,8,.4); }
+        .admin-sidebar .nav-link.active { background: linear-gradient(90deg, #facc15 0%, #eab308 100%); color: #0f172a; }
         .admin-sidebar .nav-link i { width: 20px; }
         .admin-sidebar .section-title { color: rgba(255,255,255,.4); font-size: .7rem; letter-spacing: .12em; }
         .admin-content-wrapper { min-width: 0; flex: 1; }
@@ -38,17 +38,12 @@
 
         {{-- Sidebar --}}
         <aside class="admin-sidebar sidebar-bg d-flex flex-column shadow-lg" id="adminSidebar">
-            <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary border-opacity-25">
-                <a href="{{ route('admin.dashboard') }}" class="text-decoration-none d-flex align-items-center gap-2">
-                    <span class="d-inline-flex align-items-center justify-content-center bg-gold rounded-3 shadow" style="width:40px;height:40px">
-                        <i class="bi bi-compass text-navy fs-5"></i>
-                    </span>
-                    <span class="lh-1">
-                        <span class="d-block text-white fw-bold fs-5">Solarya</span>
-                        <small class="text-warning text-uppercase" style="letter-spacing:.15em;font-size:.65rem">Admin Panel</small>
-                    </span>
+            <div class="d-flex align-items-start justify-content-between px-4 py-4 border-bottom border-secondary border-opacity-25">
+                <a href="{{ route('admin.dashboard') }}" class="text-decoration-none d-flex flex-column align-items-start gap-2 flex-grow-1">
+                    <img src="{{ asset('images/logo_white.svg') }}" alt="Solarya Travel" style="height:25px;width:auto;max-width:60%">
+                    <small class="text-warning text-uppercase fw-semibold" style="letter-spacing:.18em;font-size:.65rem">Admin Panel</small>
                 </a>
-                <button class="btn btn-sm btn-link text-white d-lg-none" type="button" id="adminSidebarClose" aria-label="Chiudi menu">
+                <button class="btn btn-sm btn-link text-white d-lg-none p-0 ms-2" type="button" id="adminSidebarClose" aria-label="Chiudi menu">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>

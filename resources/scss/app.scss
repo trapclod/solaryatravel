@@ -572,6 +572,30 @@ body.admin-body { letter-spacing: -.01em; }
     }
 }
 
+// Force white text on primary buttons (override Bootstrap auto contrast)
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-color: #fff;
+    --bs-btn-disabled-color: #fff;
+}
+
+// Force white background on form controls (override sand body bg inheritance)
+.form-control,
+.form-select,
+.input-group-text {
+    background-color: #fff;
+}
+.form-control:focus,
+.form-select:focus {
+    background-color: #fff;
+}
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: #f8fafc;
+}
+
 .dash-icon-btn {
     width: 34px; height: 34px;
     border-radius: .55rem;
