@@ -2,235 +2,320 @@
 
 @section('title', $catamaran->name)
 
+@php
+    $features = $catamaran->features;
+    if (is_string($features)) $features = json_decode($features, true) ?? [];
+    $features = is_array($features) ? $features : [];
+
+    $heroImage = $catamaran->images->first();
+    $extraImages = $catamaran->images->skip(1);
+@endphp
+
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('admin.catamarans.index') }}" 
-                   class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </a>
-                <div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-2xl font-bold text-gray-900">{{ $catamaran->name }}</h1>
-                        @if($catamaran->is_active)
-                            <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Attivo</span>
-                        @else
-                            <span class="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">Inattivo</span>
+    {{-- Hero header card with overlay --}}
+    <div class="cat-show-hero rounded-4 overflow-hidden mb-4 position-relative shadow-sm">
+        @if($heroImage)
+            <img src="{{ Storage::url($heroImage->path) }}" alt="{{ $catamaran->name }}"
+                 class="cat-show-hero-img">
+        @else
+            <div class="cat-show-hero-placeholder">
+                <i class="bi bi-water"></i>
+            </div>
+        @endif
+
+        <div class="cat-show-hero-overlay"></div>
+
+        <div class="cat-show-hero-content">
+            <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ route('admin.catamarans.index') }}"
+                       class="dash-icon-btn bg-white" title="Torna alla flotta">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div class="text-white">
+                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            <h1 class="h3 fw-bold mb-0 text-white">{{ $catamaran->name }}</h1>
+                            @if($catamaran->is_active)
+                                <span class="status-pill s-confirmed"><i class="bi bi-check-circle-fill"></i>Attivo</span>
+                            @else
+                                <span class="status-pill s-cancelled"><i class="bi bi-pause-circle-fill"></i>Inattivo</span>
+                            @endif
+                        </div>
+                        @if($catamaran->description_short)
+                            <p class="mb-0 text-white-75 small" style="max-width:60ch">
+                                {{ $catamaran->description_short }}
+                            </p>
                         @endif
                     </div>
-                    <p class="text-gray-600">{{ $catamaran->description_short }}</p>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ route('admin.availability.calendar', $catamaran) }}"
+                       class="btn btn-light rounded-pill px-3 fw-semibold border-0">
+                        <i class="bi bi-calendar3 me-2"></i>Disponibilità
+                    </a>
+                    <a href="{{ route('catamarans.show', $catamaran) }}" target="_blank" rel="noopener"
+                       class="btn btn-light rounded-pill px-3 fw-semibold border-0">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Vedi sul sito
+                    </a>
+                    <a href="{{ route('admin.catamarans.edit', $catamaran) }}"
+                       class="btn btn-warning rounded-pill px-3 fw-semibold text-dark">
+                        <i class="bi bi-pencil-square me-2"></i>Modifica
+                    </a>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('admin.availability.calendar', $catamaran) }}" 
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Disponibilità
-                </a>
-                <a href="{{ route('admin.catamarans.edit', $catamaran) }}" 
-                   class="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Modifica
-                </a>
-            </div>
-        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- Main Content --}}
-            <div class="lg:col-span-2 space-y-6">
-                {{-- Images --}}
-                @if($catamaran->images->count() > 0)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="aspect-video">
-                            <img src="{{ Storage::url($catamaran->images->first()->path) }}" 
-                                 alt="{{ $catamaran->name }}"
-                                 class="w-full h-full object-cover">
+            {{-- Quick stats inside hero --}}
+            <div class="cat-show-hero-stats">
+                <div class="cat-hero-stat">
+                    <i class="bi bi-people"></i>
+                    <div>
+                        <div class="cat-hero-stat-value">{{ $catamaran->capacity }}</div>
+                        <div class="cat-hero-stat-label">Posti</div>
+                    </div>
+                </div>
+                @if($catamaran->length_meters)
+                    <div class="cat-hero-stat">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                        <div>
+                            <div class="cat-hero-stat-value">{{ $catamaran->length_meters }}m</div>
+                            <div class="cat-hero-stat-label">Lunghezza</div>
                         </div>
-                        @if($catamaran->images->count() > 1)
-                            <div class="p-4 grid grid-cols-4 gap-2">
-                                @foreach($catamaran->images->skip(1)->take(4) as $image)
-                                    <img src="{{ Storage::url($image->path) }}" 
-                                         alt="{{ $catamaran->name }}"
-                                         class="aspect-video object-cover rounded-lg">
-                                @endforeach
-                            </div>
-                        @endif
                     </div>
                 @endif
-
-                {{-- Description --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Descrizione</h2>
-                    <div class="prose prose-sm max-w-none text-gray-600">
-                        {!! nl2br(e($catamaran->description)) !!}
+                <div class="cat-hero-stat">
+                    <i class="bi bi-journal-bookmark"></i>
+                    <div>
+                        <div class="cat-hero-stat-value">{{ $stats['total_bookings'] }}</div>
+                        <div class="cat-hero-stat-label">Prenotazioni</div>
                     </div>
                 </div>
+                <div class="cat-hero-stat">
+                    <i class="bi bi-cash-coin"></i>
+                    <div>
+                        <div class="cat-hero-stat-value">€{{ number_format($stats['total_revenue'], 0, ',', '.') }}</div>
+                        <div class="cat-hero-stat-label">Ricavi</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                {{-- Features --}}
-                @php
-                    $features = $catamaran->features;
-                    if (is_string($features)) {
-                        $features = json_decode($features, true) ?? [];
-                    }
-                    $features = is_array($features) ? $features : [];
-                @endphp
-                @if(count($features) > 0)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Caratteristiche</h2>
-                        <div class="grid grid-cols-2 gap-3">
-                            @foreach($features as $feature)
-                                <div class="flex items-center gap-2 text-gray-600">
-                                    <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    {{ $feature }}
+    <div class="row g-3">
+        {{-- LEFT --}}
+        <div class="col-lg-8">
+            {{-- Gallery thumbnails --}}
+            @if($extraImages->count() > 0)
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-images me-2 text-primary"></i>Galleria</h3>
+                        <span class="small text-muted">{{ $catamaran->images->count() }} immagini</span>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="row g-2">
+                            @foreach($extraImages as $image)
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <a href="{{ Storage::url($image->path) }}" target="_blank" rel="noopener"
+                                       class="d-block ratio ratio-1x1 rounded-3 overflow-hidden bg-light border">
+                                        <img src="{{ Storage::url($image->path) }}" alt=""
+                                             class="w-100 h-100" style="object-fit:cover">
+                                    </a>
                                 </div>
                             @endforeach
                         </div>
                     </div>
-                @endif
+                </div>
+            @endif
 
-                {{-- Recent Bookings --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 class="text-lg font-semibold text-gray-900">Prenotazioni Recenti</h2>
-                        <a href="{{ route('admin.bookings.index') }}?catamaran={{ $catamaran->id }}" 
-                           class="text-sm text-primary-600 hover:text-primary-700">
-                            Vedi tutte
-                        </a>
+            {{-- Description --}}
+            @if($catamaran->description)
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-file-text me-2 text-primary"></i>Descrizione</h3>
                     </div>
-                    <div class="divide-y divide-gray-100">
-                        @forelse($catamaran->bookings as $booking)
-                            <div class="px-6 py-4 flex items-center justify-between">
-                                <div>
-                                    <a href="{{ route('admin.bookings.show', $booking) }}" 
-                                       class="font-medium text-gray-900 hover:text-primary-600">
+                    <div class="dash-card-body">
+                        <div class="text-secondary lh-lg">{!! nl2br(e($catamaran->description)) !!}</div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Features --}}
+            @if(count($features) > 0)
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-stars me-2 text-warning"></i>Caratteristiche</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="row g-2">
+                            @foreach($features as $feature)
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2 p-2 rounded-3 bg-light">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success flex-shrink-0"
+                                              style="width:28px;height:28px">
+                                            <i class="bi bi-check-lg"></i>
+                                        </span>
+                                        <span class="small fw-medium text-dark">{{ $feature }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Recent bookings --}}
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-clock-history me-2 text-primary"></i>Prenotazioni recenti</h3>
+                    <a href="{{ route('admin.bookings.index') }}?catamaran={{ $catamaran->id }}"
+                       class="small fw-semibold text-primary text-decoration-none">
+                        Vedi tutte <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="dash-card-body p-0">
+                    @forelse($catamaran->bookings as $booking)
+                        @php
+                            $statusValue = $booking->status instanceof \App\Enums\BookingStatus ? $booking->status->value : $booking->status;
+                        @endphp
+                        <div class="d-flex align-items-center justify-content-between gap-3 px-3 py-3 border-bottom">
+                            <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0">
+                                <div class="avatar-sm bg-primary-subtle text-primary fw-bold">
+                                    {{ strtoupper(mb_substr($booking->customer_first_name ?? '?', 0, 1)) }}{{ strtoupper(mb_substr($booking->customer_last_name ?? '', 0, 1)) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <a href="{{ route('admin.bookings.show', $booking) }}"
+                                       class="fw-semibold text-dark text-decoration-none">
                                         #{{ $booking->booking_number }}
                                     </a>
-                                    <p class="text-sm text-gray-500">
-                                        {{ $booking->customer_first_name }} {{ $booking->customer_last_name }} • 
-                                        {{ $booking->booking_date->format('d/m/Y') }}
-                                    </p>
+                                    <div class="small text-muted text-truncate">
+                                        {{ $booking->customer_first_name }} {{ $booking->customer_last_name }}
+                                        · {{ \Carbon\Carbon::parse($booking->booking_date)->locale('it')->isoFormat('D MMM YYYY') }}
+                                    </div>
                                 </div>
-                                @php
-                                    $statusValue = $booking->status instanceof \App\Enums\BookingStatus ? $booking->status->value : $booking->status;
-                                    $statusColors = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                        'confirmed' => 'bg-green-100 text-green-800',
-                                        'cancelled' => 'bg-red-100 text-red-800',
-                                        'completed' => 'bg-blue-100 text-blue-800',
-                                    ];
-                                @endphp
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$statusValue] ?? 'bg-gray-100 text-gray-800' }}">
-                                    {{ ucfirst($statusValue) }}
-                                </span>
                             </div>
-                        @empty
-                            <div class="px-6 py-8 text-center text-gray-500">
-                                Nessuna prenotazione recente
-                            </div>
-                        @endforelse
-                    </div>
+                            <span class="status-pill s-{{ $statusValue }}">{{ ucfirst($statusValue) }}</span>
+                        </div>
+                    @empty
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                            <p class="mb-0">Nessuna prenotazione recente</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
+        </div>
 
-            {{-- Sidebar --}}
-            <div class="space-y-6">
-                {{-- Stats --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Statistiche</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Prenotazioni totali</span>
-                            <span class="font-semibold text-gray-900">{{ $stats['total_bookings'] }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Prossime prenotazioni</span>
-                            <span class="font-semibold text-gray-900">{{ $stats['upcoming_bookings'] }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Ricavi totali</span>
-                            <span class="font-semibold text-green-600">€{{ number_format($stats['total_revenue'], 2, ',', '.') }}</span>
-                        </div>
-                    </div>
+        {{-- RIGHT --}}
+        <div class="col-lg-4">
+            {{-- Pricing --}}
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-tag me-2 text-warning"></i>Prezzi</h3>
                 </div>
-
-                {{-- Specifications --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Specifiche</h2>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Capacità</span>
-                            <span class="font-medium text-gray-900">{{ $catamaran->capacity }} persone</span>
+                <div class="dash-card-body">
+                    <div class="cat-price-block">
+                        <div class="cat-price-label">
+                            <i class="bi bi-sun me-1"></i>Mezza giornata
                         </div>
-                        @if($catamaran->length_meters)
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-500">Lunghezza</span>
-                                <span class="font-medium text-gray-900">{{ $catamaran->length_meters }} metri</span>
+                        <div class="cat-price-value">
+                            €{{ number_format($catamaran->base_price_half_day, 0, ',', '.') }}
+                        </div>
+                        @if($catamaran->exclusive_price_half_day)
+                            <div class="cat-price-extra">
+                                <i class="bi bi-gem text-primary"></i>
+                                Esclusivo: <strong>€{{ number_format($catamaran->exclusive_price_half_day, 0, ',', '.') }}</strong>
+                            </div>
+                        @endif
+                        @if($catamaran->price_per_person_half_day)
+                            <div class="cat-price-extra">
+                                <i class="bi bi-person text-muted"></i>
+                                Per persona: <strong>€{{ number_format($catamaran->price_per_person_half_day, 0, ',', '.') }}</strong>
+                            </div>
+                        @endif
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="cat-price-block">
+                        <div class="cat-price-label">
+                            <i class="bi bi-brightness-high me-1"></i>Giornata intera
+                        </div>
+                        <div class="cat-price-value">
+                            €{{ number_format($catamaran->base_price_full_day, 0, ',', '.') }}
+                        </div>
+                        @if($catamaran->exclusive_price_full_day)
+                            <div class="cat-price-extra">
+                                <i class="bi bi-gem text-primary"></i>
+                                Esclusivo: <strong>€{{ number_format($catamaran->exclusive_price_full_day, 0, ',', '.') }}</strong>
+                            </div>
+                        @endif
+                        @if($catamaran->price_per_person_full_day)
+                            <div class="cat-price-extra">
+                                <i class="bi bi-person text-muted"></i>
+                                Per persona: <strong>€{{ number_format($catamaran->price_per_person_full_day, 0, ',', '.') }}</strong>
                             </div>
                         @endif
                     </div>
                 </div>
+            </div>
 
-                {{-- Pricing --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Prezzi</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <p class="text-sm text-gray-500 mb-1">Mezza Giornata</p>
-                            <p class="text-xl font-bold text-gray-900">€{{ number_format($catamaran->base_price_half_day, 0, ',', '.') }}</p>
-                            @if($catamaran->exclusive_price_half_day)
-                                <p class="text-sm text-gray-500">Esclusivo: €{{ number_format($catamaran->exclusive_price_half_day, 0, ',', '.') }}</p>
-                            @endif
-                        </div>
-                        <div class="border-t border-gray-100 pt-4">
-                            <p class="text-sm text-gray-500 mb-1">Giornata Intera</p>
-                            <p class="text-xl font-bold text-gray-900">€{{ number_format($catamaran->base_price_full_day, 0, ',', '.') }}</p>
-                            @if($catamaran->exclusive_price_full_day)
-                                <p class="text-sm text-gray-500">Esclusivo: €{{ number_format($catamaran->exclusive_price_full_day, 0, ',', '.') }}</p>
-                            @endif
-                        </div>
+            {{-- Stats detail --}}
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-bar-chart me-2 text-primary"></i>Statistiche</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <span class="small text-muted"><i class="bi bi-journal-bookmark me-2"></i>Totali</span>
+                        <span class="fw-bold">{{ $stats['total_bookings'] }}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <span class="small text-muted"><i class="bi bi-calendar-event me-2"></i>Prossime</span>
+                        <span class="fw-bold text-primary">{{ $stats['upcoming_bookings'] }}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between py-2">
+                        <span class="small text-muted"><i class="bi bi-cash-coin me-2"></i>Ricavi</span>
+                        <span class="fw-bold text-success">€{{ number_format($stats['total_revenue'], 2, ',', '.') }}</span>
                     </div>
                 </div>
+            </div>
 
-                {{-- Quick Actions --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Azioni Rapide</h2>
-                    <div class="space-y-2">
-                        <form action="{{ route('admin.catamarans.toggle', $catamaran) }}" method="POST">
-                            @csrf
-                            <button type="submit" 
-                                    class="w-full px-4 py-2 text-left text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 {{ $catamaran->is_active ? 'text-yellow-600' : 'text-green-600' }}">
-                                @if($catamaran->is_active)
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                    </svg>
-                                    Disattiva Catamarano
-                                @else
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    Attiva Catamarano
-                                @endif
-                            </button>
-                        </form>
-                        <a href="{{ route('catamarans.show', $catamaran) }}" 
-                           target="_blank"
-                           class="w-full px-4 py-2 text-left text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Vedi sul Sito
-                        </a>
+            {{-- Quick actions --}}
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-lightning-charge me-2 text-warning"></i>Azioni rapide</h3>
+                </div>
+                <div class="dash-card-body d-flex flex-column gap-2">
+                    <form action="{{ route('admin.catamarans.toggle', $catamaran) }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                                class="btn w-100 rounded-pill fw-semibold {{ $catamaran->is_active ? 'btn-outline-warning' : 'btn-success' }}">
+                            @if($catamaran->is_active)
+                                <i class="bi bi-pause-circle me-2"></i>Disattiva catamarano
+                            @else
+                                <i class="bi bi-play-circle me-2"></i>Attiva catamarano
+                            @endif
+                        </button>
+                    </form>
+                    <a href="{{ route('admin.availability.calendar', $catamaran) }}"
+                       class="btn btn-light border rounded-pill fw-semibold">
+                        <i class="bi bi-calendar3 me-2"></i>Gestisci disponibilità
+                    </a>
+                    <a href="{{ route('admin.catamarans.edit', $catamaran) }}"
+                       class="btn btn-primary rounded-pill fw-semibold">
+                        <i class="bi bi-pencil-square me-2"></i>Modifica dettagli
+                    </a>
+                </div>
+            </div>
+
+            {{-- Slug / URL --}}
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-link-45deg me-2 text-primary"></i>URL pubblico</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div class="bg-light rounded-3 p-2 small font-monospace text-muted text-truncate">
+                        /catamarani/{{ $catamaran->slug }}
                     </div>
                 </div>
             </div>

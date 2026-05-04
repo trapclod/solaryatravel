@@ -1,0 +1,1048 @@
+// =====================================================================
+// Solarya Travel - Bootstrap 5 + Custom Brand Theme
+// =====================================================================
+
+// 1) Override Bootstrap variables BEFORE importing Bootstrap
+// ---------------------------------------------------------------------
+
+// Brand palette (Luxury - Solarya Travel)
+$primary:   #0284c7; // sky 600
+$secondary: #475569; // navy 600
+$success:   #16a34a;
+$info:      #0ea5e9;
+$warning:   #eab308; // gold 500
+$danger:    #dc2626;
+$light:     #f8fafc;
+$dark:      #0f172a; // navy 900
+
+// Custom brand colors (extra)
+$navy-900:  #0f172a;
+$navy-800:  #1e293b;
+$navy-700:  #334155;
+$gold-400:  #facc15;
+$gold-500:  #eab308;
+$gold-600:  #ca8a04;
+$sand-50:   #fefce8;
+$sand-100:  #fef9c3;
+$sand-200:  #fde68a;
+$sand-300:  #fcd34d;
+
+// Body
+$body-bg:    #fefce8; // sand-50
+$body-color: $navy-900;
+
+// Typography
+$font-family-sans-serif: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+$font-family-serif:      'Playfair Display', Georgia, serif;
+$headings-font-family:   $font-family-serif;
+$headings-font-weight:   600;
+$headings-color:         $navy-900;
+
+// Components
+$border-radius:    .75rem;
+$border-radius-sm: .5rem;
+$border-radius-lg: 1rem;
+$border-radius-xl: 1.25rem;
+
+// Buttons
+$btn-padding-y:    .625rem;
+$btn-padding-x:    1.25rem;
+$btn-font-weight:  600;
+
+// Cards
+$card-border-color: rgba(0,0,0,.06);
+$card-border-radius: 1rem;
+$card-cap-bg: transparent;
+
+// Navbar
+$navbar-padding-y: .75rem;
+
+// 2) Import Bootstrap
+// ---------------------------------------------------------------------
+@import "bootstrap/scss/bootstrap";
+
+// 3) Add custom utilities/classes for the brand
+// ---------------------------------------------------------------------
+
+// Custom theme color utilities
+.text-navy   { color: $navy-900 !important; }
+.text-navy-700 { color: $navy-700 !important; }
+.text-gold   { color: $gold-500 !important; }
+.text-gold-400 { color: $gold-400 !important; }
+.text-sand   { color: $sand-300 !important; }
+
+.bg-navy     { background-color: $navy-900 !important; }
+.bg-navy-800 { background-color: $navy-800 !important; }
+.bg-gold     { background-color: $gold-500 !important; }
+.bg-gold-400 { background-color: $gold-400 !important; }
+.bg-sand-50  { background-color: $sand-50 !important; }
+.bg-sand-100 { background-color: $sand-100 !important; }
+
+.border-gold { border-color: $gold-500 !important; }
+.border-navy { border-color: $navy-900 !important; }
+
+// Serif font utility
+.font-serif { font-family: $font-family-serif !important; }
+
+// Brand-specific gradients
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: #fff;
+}
+.bg-gradient-gold {
+    background: linear-gradient(135deg, $gold-400 0%, $gold-500 100%);
+    color: $navy-900;
+}
+.bg-gradient-navy {
+    background: linear-gradient(135deg, $navy-800 0%, $navy-900 100%);
+    color: #fff;
+}
+.bg-gradient-hero {
+    background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 50%, #0ea5e9 100%);
+    color: #fff;
+}
+
+// Buttons - branded variants
+.btn-gold {
+    background: linear-gradient(135deg, $gold-400 0%, $gold-500 100%);
+    color: $navy-900;
+    border: none;
+    font-weight: 600;
+    &:hover, &:focus {
+        background: linear-gradient(135deg, $gold-500 0%, $gold-600 100%);
+        color: $navy-900;
+    }
+}
+.btn-navy {
+    background: $navy-900;
+    color: #fff;
+    border: none;
+    &:hover, &:focus { background: $navy-800; color: #fff; }
+}
+
+// Sidebar (admin)
+.sidebar-bg {
+    background: linear-gradient(180deg, $navy-900 0%, #020617 100%);
+}
+.nav-active {
+    background: linear-gradient(90deg, $gold-400 0%, $gold-500 100%) !important;
+    color: $navy-900 !important;
+    box-shadow: 0 4px 14px rgba(234,179,8,.4);
+}
+
+// Card hover effect
+.card-hover {
+    transition: transform .2s ease, box-shadow .2s ease;
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,.1);
+    }
+}
+
+// Hero / sections
+.section { padding: 4rem 0; }
+.section-sm { padding: 2.5rem 0; }
+.section-lg { padding: 6rem 0; }
+
+// Stat cards
+.stat-card {
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    background: #fff;
+    transition: box-shadow .2s ease, transform .2s ease;
+    &:hover { box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.08); transform: translateY(-2px); }
+}
+
+// Skip link helpers
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px; height: 1px; overflow: hidden;
+    &:focus {
+        position: absolute;
+        left: 1rem; top: 1rem;
+        width: auto; height: auto;
+        background: $gold-500; color: #fff;
+        padding: .5rem 1rem; border-radius: .5rem;
+        z-index: 1080;
+    }
+}
+
+// Sticky header backdrop
+.header-blur {
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+// WhatsApp floating button
+.whatsapp-float {
+    position: fixed;
+    right: 1.25rem; bottom: 1.25rem;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #25d366;
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    z-index: 1040;
+    transition: transform .2s ease;
+    &:hover { transform: scale(1.08); color: #fff; background: #1ebe5d; }
+}
+
+// Alpine cloak
+[x-cloak] { display: none !important; }
+
+// Forms - brand focus
+.form-control:focus,
+.form-select:focus {
+    border-color: rgba(2,132,199,.5);
+    box-shadow: 0 0 0 .2rem rgba(2,132,199,.15);
+}
+
+// Bootstrap icons
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+// =====================================================================
+// Admin theme — Google Sans everywhere, no other fonts
+// =====================================================================
+$admin-font: 'Google Sans', 'Google Sans Text', 'Google Sans Display',
+             system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+body.admin-body,
+body.admin-body h1, body.admin-body h2, body.admin-body h3,
+body.admin-body h4, body.admin-body h5, body.admin-body h6,
+body.admin-body .font-serif,
+body.admin-body input, body.admin-body select,
+body.admin-body textarea, body.admin-body button,
+body.admin-body .btn, body.admin-body .form-control,
+body.admin-body .form-select, body.admin-body .form-label,
+body.admin-body .nav-link, body.admin-body .dropdown-menu,
+body.admin-body label, body.admin-body table {
+    font-family: $admin-font !important;
+}
+
+body.admin-body { letter-spacing: -.01em; }
+
+// =====================================================================
+// Admin dashboard styling
+// =====================================================================
+.dash-stat {
+    position: relative;
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.06);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .75rem 1.5rem rgba(15,23,42,.08);
+        border-color: rgba(15,23,42,.1);
+    }
+
+    .dash-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: .85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+    }
+
+    .dash-stat-value {
+        font-size: 1.875rem;
+        font-weight: 700;
+        line-height: 1.1;
+        color: $navy-900;
+        letter-spacing: -.02em;
+    }
+
+    .dash-stat-label {
+        font-size: .8rem;
+        color: #64748b;
+        font-weight: 500;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .dash-stat-trend {
+        font-size: .75rem;
+        font-weight: 600;
+        padding: .15rem .55rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        right: -40px;
+        bottom: -40px;
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        opacity: .04;
+        background: currentColor;
+        pointer-events: none;
+    }
+}
+
+.dash-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.06);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.dash-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(15,23,42,.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        color: $navy-900;
+        letter-spacing: -.01em;
+    }
+}
+
+.dash-card-body { padding: 1.25rem 1.5rem; }
+
+.dash-welcome {
+    background: linear-gradient(135deg, #0f172a 0%, #0c4a6e 60%, #0284c7 100%);
+    color: #fff;
+    border-radius: 1.25rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        right: -80px; top: -80px;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(234,179,8,.25) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    h2 {
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: -.02em;
+    }
+}
+
+.dash-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .85rem 1rem;
+    border-radius: .75rem;
+    color: $navy-900;
+    text-decoration: none;
+    transition: background-color .15s ease;
+
+    &:hover {
+        background: #f8fafc;
+        color: $navy-900;
+    }
+
+    & + .dash-list-item {
+        margin-top: .25rem;
+    }
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: .85rem;
+    flex-shrink: 0;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .75rem 0;
+
+    & + .activity-item { border-top: 1px solid rgba(15,23,42,.05); }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: .9rem;
+    }
+}
+
+.popular-cat-card {
+    text-align: center;
+    background: #f8fafc;
+    border-radius: .85rem;
+    padding: 1.5rem 1rem;
+    transition: background .2s ease, transform .2s ease;
+
+    &:hover {
+        background: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(15,23,42,.06);
+    }
+
+    .popular-cat-icon {
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+        color: $primary;
+        font-size: 1.5rem;
+        margin-bottom: .75rem;
+    }
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .25rem .65rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+
+    &::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+}
+
+// =====================================================================
+// Admin shared components — page header, filters, tables, pagination
+// =====================================================================
+.dash-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: $navy-900;
+        letter-spacing: -.02em;
+        margin: 0 0 .25rem;
+    }
+    p { margin: 0; color: #64748b; font-size: .9rem; }
+}
+
+.dash-filter-bar {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.06);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+
+    .form-label {
+        font-size: .75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-bottom: .35rem;
+    }
+    .form-control, .form-select {
+        border: 1px solid rgba(15,23,42,.1);
+        border-radius: .65rem;
+        padding: .55rem .85rem;
+        font-size: .9rem;
+        background-color: #f8fafc;
+        transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+
+        &:focus {
+            background-color: #fff;
+            border-color: $primary;
+            box-shadow: 0 0 0 .2rem rgba(2,132,199,.12);
+        }
+    }
+    .input-group-text {
+        background: #f8fafc;
+        border: 1px solid rgba(15,23,42,.1);
+        border-right: 0;
+        color: #94a3b8;
+        border-radius: .65rem 0 0 .65rem;
+    }
+    .input-group .form-control { border-left: 0; border-radius: 0 .65rem .65rem 0; }
+}
+
+.dash-mini-stat {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.06);
+    border-radius: .85rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    transition: box-shadow .2s ease, border-color .2s ease;
+
+    &:hover {
+        box-shadow: 0 .5rem 1rem rgba(15,23,42,.05);
+    }
+    .mini-stat-icon {
+        width: 40px; height: 40px;
+        border-radius: .65rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+    .mini-stat-value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        line-height: 1;
+        color: $navy-900;
+        letter-spacing: -.02em;
+    }
+    .mini-stat-label {
+        font-size: .72rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    &.is-active {
+        border-color: $primary;
+        background: linear-gradient(180deg, #fff 0%, #f0f9ff 100%);
+    }
+}
+
+.dash-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    thead th {
+        background: #f8fafc;
+        font-size: .72rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        padding: .85rem 1rem;
+        border-bottom: 1px solid rgba(15,23,42,.06);
+        white-space: nowrap;
+    }
+    tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(15,23,42,.05);
+        vertical-align: middle;
+        font-size: .9rem;
+    }
+    tbody tr {
+        transition: background .15s ease;
+        &:hover { background: #f8fafc; }
+        &:last-child td { border-bottom: 0; }
+    }
+}
+
+.dash-icon-btn {
+    width: 34px; height: 34px;
+    border-radius: .55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #64748b;
+    transition: all .15s ease;
+    text-decoration: none;
+
+    &:hover {
+        background: #f1f5f9;
+        color: $navy-900;
+    }
+    &.is-success:hover { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    &.is-danger:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+    &.is-primary:hover { background: #e0f2fe; color: $primary; border-color: #bae6fd; }
+}
+
+// Status pill colored variants
+.status-pill {
+    &.s-pending    { background: #fef3c7; color: #b45309; }
+    &.s-confirmed  { background: #dcfce7; color: #15803d; }
+    &.s-checked_in { background: #e0f2fe; color: $primary; }
+    &.s-completed  { background: #f1f5f9; color: #475569; }
+    &.s-cancelled  { background: #fee2e2; color: #b91c1c; }
+    &.s-no_show    { background: #f1f5f9; color: #64748b; }
+}
+
+// Pagination admin overrides
+.pagination {
+    --bs-pagination-border-radius: .55rem;
+    --bs-pagination-padding-y: .4rem;
+    --bs-pagination-padding-x: .8rem;
+    --bs-pagination-color: #475569;
+    --bs-pagination-active-bg: #{$primary};
+    --bs-pagination-active-border-color: #{$primary};
+    gap: .25rem;
+    .page-link { border-radius: .55rem !important; border-color: rgba(15,23,42,.08); }
+}
+
+// =====================================================================
+// Admin — FullCalendar (programma) theming
+// =====================================================================
+.dash-calendar {
+    .fc {
+        --fc-border-color: rgba(15,23,42,.06);
+        --fc-page-bg-color: #fff;
+        --fc-neutral-bg-color: #f8fafc;
+        --fc-today-bg-color: rgba(2,132,199,.06);
+        --fc-event-border-color: transparent;
+        --fc-button-bg-color: #fff;
+        --fc-button-border-color: rgba(15,23,42,.1);
+        --fc-button-text-color: #{$navy-900};
+        --fc-button-hover-bg-color: #f1f5f9;
+        --fc-button-hover-border-color: rgba(15,23,42,.15);
+        --fc-button-active-bg-color: #{$primary};
+        --fc-button-active-border-color: #{$primary};
+        font-family: 'Google Sans', system-ui, sans-serif;
+    }
+
+    .fc .fc-toolbar.fc-header-toolbar {
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: .75rem;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: $navy-900;
+        letter-spacing: -.01em;
+        text-transform: capitalize;
+    }
+    .fc .fc-button {
+        border-radius: .55rem !important;
+        padding: .4rem .85rem;
+        font-size: .82rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        box-shadow: none !important;
+        transition: all .15s ease;
+    }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+        color: #fff;
+    }
+    .fc .fc-button-group > .fc-button {
+        border-radius: 0 !important;
+        &:first-child { border-top-left-radius: .55rem !important; border-bottom-left-radius: .55rem !important; }
+        &:last-child  { border-top-right-radius: .55rem !important; border-bottom-right-radius: .55rem !important; }
+    }
+    .fc .fc-col-header-cell {
+        background: #f8fafc;
+        padding: .6rem 0;
+    }
+    .fc .fc-col-header-cell-cushion {
+        font-size: .72rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        text-decoration: none;
+        padding: .4rem;
+    }
+    .fc .fc-daygrid-day-number {
+        font-size: .85rem;
+        font-weight: 500;
+        color: $navy-900;
+        text-decoration: none;
+        padding: .5rem .6rem;
+    }
+    .fc .fc-day-today .fc-daygrid-day-number {
+        background: $primary;
+        color: #fff;
+        border-radius: 999px;
+        width: 26px; height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: .35rem;
+        font-weight: 700;
+    }
+    .fc .fc-event {
+        border-radius: .45rem;
+        padding: .15rem .4rem;
+        font-size: .75rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-left-width: 3px !important;
+        transition: transform .12s ease, box-shadow .12s ease;
+        &:hover { transform: translateY(-1px); box-shadow: 0 .25rem .5rem rgba(15,23,42,.1); }
+    }
+    .fc .fc-list-event:hover td { background: #f8fafc; }
+    .fc .fc-list-day-cushion { background: #f8fafc !important; }
+    .fc .fc-scrollgrid { border-radius: .75rem; overflow: hidden; }
+}
+
+.cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    .cal-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        font-size: .8rem;
+        color: #475569;
+    }
+    .cal-legend-dot {
+        width: 10px; height: 10px;
+        border-radius: 999px;
+        display: inline-block;
+    }
+}
+
+// =====================================================================
+// Admin — Catamaran fleet card
+// =====================================================================
+.cat-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.06);
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: rgba(2,132,199,.25);
+        box-shadow: 0 1rem 2rem rgba(15,23,42,.08);
+
+        .cat-card-media img { transform: scale(1.04); }
+    }
+
+    .cat-card-media {
+        position: relative;
+        aspect-ratio: 16/10;
+        background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+        overflow: hidden;
+
+        img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform .4s ease;
+        }
+        .cat-media-placeholder {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: $primary;
+            font-size: 3rem;
+            opacity: .35;
+        }
+        .cat-status-badge {
+            position: absolute; top: .75rem; right: .75rem;
+            padding: .3rem .7rem;
+            border-radius: 999px;
+            font-size: .7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,.85);
+
+            &.active   { color: #15803d; }
+            &.inactive { color: #64748b; }
+
+            &::before {
+                content: '';
+                display: inline-block;
+                width: 6px; height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+                margin-right: .35rem;
+                vertical-align: middle;
+            }
+        }
+        .cat-bookings-badge {
+            position: absolute; bottom: .75rem; left: .75rem;
+            padding: .3rem .7rem;
+            border-radius: 999px;
+            font-size: .72rem;
+            font-weight: 600;
+            background: rgba(15,23,42,.78);
+            color: #fff;
+            backdrop-filter: blur(8px);
+        }
+    }
+
+    .cat-card-body {
+        padding: 1.1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: $navy-900;
+            margin: 0 0 .35rem;
+            letter-spacing: -.01em;
+        }
+    }
+
+    .cat-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem .75rem;
+        font-size: .8rem;
+        color: #64748b;
+        margin-bottom: .9rem;
+
+        span {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+        }
+    }
+
+    .cat-prices {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .5rem;
+        background: #f8fafc;
+        border-radius: .65rem;
+        padding: .7rem .85rem;
+        margin-bottom: .9rem;
+
+        .cat-price-block {
+            .cat-price-label {
+                font-size: .65rem;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: .05em;
+                font-weight: 600;
+                margin-bottom: .15rem;
+            }
+            .cat-price-value {
+                font-size: 1rem;
+                font-weight: 700;
+                color: $navy-900;
+            }
+            &:last-child { text-align: right; }
+        }
+    }
+
+    .cat-card-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+        padding-top: .85rem;
+        border-top: 1px solid rgba(15,23,42,.05);
+        margin-top: auto;
+    }
+}
+
+// Catamaran image gallery (edit page)
+.cat-image-tile {
+    border: 1px solid rgba(15,23,42,.06);
+    transition: transform .2s ease, box-shadow .2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(15,23,42,.12);
+
+        .cat-image-overlay { opacity: 1; }
+    }
+
+    .cat-image-overlay {
+        position: absolute; inset: 0;
+        background: rgba(15,23,42,.55);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity .2s ease;
+    }
+}
+
+// Catamaran upload dropzone
+.cat-dropzone {
+    border: 2px dashed rgba(2,132,199,.25);
+    border-radius: 1rem;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    transition: border-color .2s ease, background .2s ease;
+
+    &:hover {
+        border-color: $primary;
+        background: linear-gradient(180deg, #f0f9ff 0%, #fff 100%);
+    }
+}
+
+// Catamaran show page hero
+.cat-show-hero {
+    position: relative;
+    min-height: 320px;
+    background: linear-gradient(135deg, #0f172a 0%, #0284c7 100%);
+
+    .cat-show-hero-img {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        object-fit: cover;
+    }
+    .cat-show-hero-placeholder {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 6rem; color: rgba(255,255,255,.2);
+    }
+    .cat-show-hero-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(15,23,42,.45) 0%, rgba(15,23,42,.85) 100%);
+    }
+    .cat-show-hero-content {
+        position: relative;
+        padding: 1.5rem;
+        display: flex; flex-direction: column;
+        gap: 1.5rem;
+        min-height: 320px;
+        justify-content: space-between;
+
+        @media (min-width: 768px) {
+            padding: 2rem;
+        }
+    }
+    .text-white-75 { color: rgba(255,255,255,.78) !important; }
+
+    .cat-show-hero-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .75rem;
+
+        @media (min-width: 768px) {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    .cat-hero-stat {
+        background: rgba(255,255,255,.12);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: .85rem;
+        padding: .85rem 1rem;
+        display: flex; align-items: center; gap: .75rem;
+        color: #fff;
+
+        > i {
+            font-size: 1.5rem;
+            opacity: .9;
+        }
+        .cat-hero-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .cat-hero-stat-label {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            opacity: .8;
+        }
+    }
+}
+
+// Catamaran show page price block
+.cat-price-block {
+    .cat-price-label {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: .35rem;
+    }
+    .cat-price-value {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: $navy-900;
+        line-height: 1;
+        margin-bottom: .5rem;
+    }
+    .cat-price-extra {
+        font-size: .82rem;
+        color: #64748b;
+        display: flex; align-items: center; gap: .4rem;
+        padding: .15rem 0;
+    }
+}
+
+// Time slot pill (availability index)
+.time-slot-pill {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .65rem .85rem;
+    background: linear-gradient(135deg, rgba(2,132,199,.06) 0%, rgba(234,179,8,.06) 100%);
+    border: 1px solid rgba(2,132,199,.14);
+    border-radius: .85rem;
+
+    .time-slot-icon {
+        flex-shrink: 0;
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: rgba(2,132,199,.12);
+        color: $primary;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem;
+    }
+}
+
+// Catamaran card hover CTA (used on availability index)
+.cat-card-link {
+    .cat-card-cta {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: .85rem 1rem;
+        background: linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,.85) 100%);
+        color: #fff;
+        font-weight: 600;
+        display: flex; align-items: center; justify-content: space-between;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity .25s ease, transform .25s ease;
+    }
+    &:hover .cat-card-cta {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+

@@ -1,38 +1,33 @@
 @extends('layouts.admin')
 
-@section('title', 'Nuovo Codice Sconto')
+@section('title', 'Nuovo codice sconto')
 
 @section('content')
-    <div class="max-w-3xl mx-auto space-y-6">
-        {{-- Header --}}
-        <div class="flex items-center gap-4">
-            <a href="{{ route('admin.discounts.index') }}" 
-               class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
+    <div class="dash-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.discounts.index') }}" class="dash-icon-btn" title="Torna ai codici sconto">
+                <i class="bi bi-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Nuovo Codice Sconto</h1>
-                <p class="text-gray-600">Crea un nuovo codice promozionale</p>
+                <h1 class="mb-0">Nuovo codice sconto</h1>
+                <p class="mt-1 mb-0">Crea un codice promozionale e definiscine condizioni e validità.</p>
             </div>
         </div>
+    </div>
 
-        <form action="{{ route('admin.discounts.store') }}" method="POST" class="space-y-6">
-            @csrf
-            
-            @include('admin.discounts._form')
+    <form action="{{ route('admin.discounts.store') }}" method="POST">
+        @csrf
+        @include('admin.discounts._form')
 
-            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-                <a href="{{ route('admin.discounts.index') }}" 
-                   class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <div class="dash-card mt-3">
+            <div class="dash-card-body d-flex justify-content-end gap-2 flex-wrap">
+                <a href="{{ route('admin.discounts.index') }}" class="btn btn-light border rounded-pill px-4 fw-semibold">
                     Annulla
                 </a>
-                <button type="submit" 
-                        class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                    Crea Codice
+                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                    <i class="bi bi-plus-lg me-2"></i>Crea codice
                 </button>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 @endsection

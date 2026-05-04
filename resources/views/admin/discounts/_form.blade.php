@@ -1,256 +1,253 @@
-{{-- Form fields for discount codes --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Codice e Descrizione</h2>
-    
-    {{-- Code --}}
-    <div>
-        <label for="code" class="block text-sm font-medium text-gray-700 mb-2">
-            Codice <span class="text-red-500">*</span>
-        </label>
-        <div class="flex gap-2">
-            <input type="text" 
-                   name="code" 
-                   id="code" 
-                   value="{{ old('code', $discount->code ?? '') }}"
-                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono uppercase @error('code') border-red-500 @enderror"
-                   placeholder="ES. SUMMER2024"
-                   required>
-            <button type="button" 
-                    onclick="generateCode()"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                Genera
-            </button>
-        </div>
-        <p class="text-xs text-gray-500 mt-1">Il codice verrà convertito automaticamente in maiuscolo</p>
-        @error('code')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
+{{-- Shared form fields for discount codes --}}
+@php $d = $discount ?? null; @endphp
 
-    {{-- Description --}}
-    <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-            Descrizione
-        </label>
-        <input type="text" 
-               name="description" 
-               id="description" 
-               value="{{ old('description', $discount->description ?? '') }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('description') border-red-500 @enderror"
-               placeholder="es. Sconto estate 2024">
-        @error('description')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-</div>
-
-{{-- Discount Details --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Dettagli Sconto</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {{-- Discount Type --}}
-        <div>
-            <label for="discount_type" class="block text-sm font-medium text-gray-700 mb-2">
-                Tipo Sconto <span class="text-red-500">*</span>
-            </label>
-            <select name="discount_type" 
-                    id="discount_type"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('discount_type') border-red-500 @enderror"
-                    required>
-                <option value="percentage" {{ old('discount_type', $discount->discount_type ?? 'percentage') == 'percentage' ? 'selected' : '' }}>Percentuale (%)</option>
-                <option value="fixed" {{ old('discount_type', $discount->discount_type ?? '') == 'fixed' ? 'selected' : '' }}>Fisso (€)</option>
-            </select>
-            @error('discount_type')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Discount Value --}}
-        <div>
-            <label for="discount_value" class="block text-sm font-medium text-gray-700 mb-2">
-                Valore Sconto <span class="text-red-500">*</span>
-            </label>
-            <div class="relative">
-                <input type="number" 
-                       name="discount_value" 
-                       id="discount_value" 
-                       value="{{ old('discount_value', $discount->discount_value ?? '') }}"
-                       step="0.01"
-                       min="0"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('discount_value') border-red-500 @enderror"
-                       required>
-                <span id="discount_suffix" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+<div class="row g-3">
+    {{-- LEFT COLUMN --}}
+    <div class="col-lg-8">
+        {{-- Code & description --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-ticket-perforated me-2 text-warning"></i>Codice e descrizione</h3>
             </div>
-            @error('discount_value')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
+            <div class="dash-card-body">
+                <div class="mb-3">
+                    <label for="code" class="form-label fw-semibold">Codice <span class="text-danger">*</span></label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-warning-subtle text-warning border-end-0"><i class="bi bi-tag-fill"></i></span>
+                        <input type="text" name="code" id="code"
+                               value="{{ old('code', $d->code ?? '') }}"
+                               class="form-control font-monospace text-uppercase fw-bold @error('code') is-invalid @enderror"
+                               placeholder="ES. SUMMER2026" required
+                               style="letter-spacing:0.05em">
+                        <button type="button" onclick="generateCode()" class="btn btn-light border" title="Genera codice casuale">
+                            <i class="bi bi-shuffle me-1"></i>Genera
+                        </button>
+                        @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="form-text"><i class="bi bi-info-circle me-1"></i>Convertito automaticamente in maiuscolo</div>
+                </div>
+
+                <div>
+                    <label for="description" class="form-label fw-semibold">Descrizione</label>
+                    <input type="text" name="description" id="description"
+                           value="{{ old('description', $d->description ?? '') }}"
+                           class="form-control @error('description') is-invalid @enderror"
+                           placeholder="es. Sconto estate 2026">
+                    @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+            </div>
         </div>
 
-        {{-- Min Amount --}}
-        <div>
-            <label for="min_amount" class="block text-sm font-medium text-gray-700 mb-2">
-                Importo Minimo (€)
-            </label>
-            <input type="number" 
-                   name="min_amount" 
-                   id="min_amount" 
-                   value="{{ old('min_amount', $discount->min_amount ?? '') }}"
-                   step="0.01"
-                   min="0"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('min_amount') border-red-500 @enderror"
-                   placeholder="Nessun minimo">
-            <p class="text-xs text-gray-500 mt-1">Importo minimo dell'ordine per applicare lo sconto</p>
-            @error('min_amount')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
+        {{-- Discount details --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-percent me-2 text-primary"></i>Dettagli sconto</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="discount_type" class="form-label fw-semibold">Tipo sconto <span class="text-danger">*</span></label>
+                        <select name="discount_type" id="discount_type"
+                                class="form-select @error('discount_type') is-invalid @enderror" required>
+                            <option value="percentage" {{ old('discount_type', $d->discount_type ?? 'percentage') == 'percentage' ? 'selected' : '' }}>📊 Percentuale (%)</option>
+                            <option value="fixed" {{ old('discount_type', $d->discount_type ?? '') == 'fixed' ? 'selected' : '' }}>💶 Fisso (€)</option>
+                        </select>
+                        @error('discount_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="discount_value" class="form-label fw-semibold">Valore <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" name="discount_value" id="discount_value"
+                                   value="{{ old('discount_value', $d->discount_value ?? '') }}"
+                                   step="0.01" min="0"
+                                   class="form-control fw-bold fs-5 @error('discount_value') is-invalid @enderror" required>
+                            <span class="input-group-text fw-bold" id="discount_suffix">%</span>
+                            @error('discount_value') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="min_amount" class="form-label fw-semibold">Importo minimo</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="number" name="min_amount" id="min_amount"
+                                   value="{{ old('min_amount', $d->min_amount ?? '') }}"
+                                   step="0.01" min="0"
+                                   class="form-control @error('min_amount') is-invalid @enderror"
+                                   placeholder="Nessun minimo">
+                            @error('min_amount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-text">Importo minimo dell'ordine</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="max_discount" class="form-label fw-semibold">Sconto massimo</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="number" name="max_discount" id="max_discount"
+                                   value="{{ old('max_discount', $d->max_discount ?? '') }}"
+                                   step="0.01" min="0"
+                                   class="form-control @error('max_discount') is-invalid @enderror"
+                                   placeholder="Nessun limite">
+                            @error('max_discount') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-text">Solo per sconti percentuali</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {{-- Max Discount --}}
-        <div>
-            <label for="max_discount" class="block text-sm font-medium text-gray-700 mb-2">
-                Sconto Massimo (€)
-            </label>
-            <input type="number" 
-                   name="max_discount" 
-                   id="max_discount" 
-                   value="{{ old('max_discount', $discount->max_discount ?? '') }}"
-                   step="0.01"
-                   min="0"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('max_discount') border-red-500 @enderror"
-                   placeholder="Nessun limite">
-            <p class="text-xs text-gray-500 mt-1">Limite massimo di sconto applicabile (per sconti percentuali)</p>
-            @error('max_discount')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
+        {{-- Usage limits --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-stack me-2 text-primary"></i>Limiti di utilizzo</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="usage_limit" class="form-label fw-semibold">Utilizzi totali</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-people"></i></span>
+                            <input type="number" name="usage_limit" id="usage_limit"
+                                   value="{{ old('usage_limit', $d->usage_limit ?? '') }}"
+                                   min="1"
+                                   class="form-control @error('usage_limit') is-invalid @enderror"
+                                   placeholder="Illimitati">
+                            @error('usage_limit') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-text">Numero massimo totale di utilizzi</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="user_limit" class="form-label fw-semibold">Utilizzi per utente</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="number" name="user_limit" id="user_limit"
+                                   value="{{ old('user_limit', $d->user_limit ?? 1) }}"
+                                   min="1"
+                                   class="form-control @error('user_limit') is-invalid @enderror">
+                            @error('user_limit') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-text">Quante volte un singolo utente può usare il codice</div>
+                    </div>
+                </div>
+
+                @if(isset($d) && $d && $d->usage_count > 0)
+                    <div class="alert alert-info border-0 d-flex align-items-center gap-2 mt-3 mb-0">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>
+                            Questo codice è già stato utilizzato <strong>{{ $d->usage_count }}</strong>
+                            {{ $d->usage_count == 1 ? 'volta' : 'volte' }}.
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Validity period --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-calendar-range me-2 text-primary"></i>Periodo di validità</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="valid_from" class="form-label fw-semibold">Valido da</label>
+                        <input type="datetime-local" name="valid_from" id="valid_from"
+                               value="{{ old('valid_from', isset($d->valid_from) ? $d->valid_from->format('Y-m-d\TH:i') : '') }}"
+                               class="form-control @error('valid_from') is-invalid @enderror">
+                        @error('valid_from') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text">Vuoto = attivazione immediata</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="valid_until" class="form-label fw-semibold">Valido fino a</label>
+                        <input type="datetime-local" name="valid_until" id="valid_until"
+                               value="{{ old('valid_until', isset($d->valid_until) ? $d->valid_until->format('Y-m-d\TH:i') : '') }}"
+                               class="form-control @error('valid_until') is-invalid @enderror">
+                        @error('valid_until') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text">Vuoto = nessuna scadenza</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-{{-- Usage Limits --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Limiti di Utilizzo</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {{-- Usage Limit --}}
-        <div>
-            <label for="usage_limit" class="block text-sm font-medium text-gray-700 mb-2">
-                Utilizzi Totali
-            </label>
-            <input type="number" 
-                   name="usage_limit" 
-                   id="usage_limit" 
-                   value="{{ old('usage_limit', $discount->usage_limit ?? '') }}"
-                   min="1"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('usage_limit') border-red-500 @enderror"
-                   placeholder="Illimitati">
-            <p class="text-xs text-gray-500 mt-1">Numero massimo di utilizzi totali</p>
-            @error('usage_limit')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
+    {{-- RIGHT SIDEBAR --}}
+    <div class="col-lg-4">
+        <div style="position:sticky; top:1rem">
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-toggles me-2 text-primary"></i>Stato</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div class="bg-light rounded-3 p-3">
+                        <input type="hidden" name="is_active" value="0">
+                        <div class="form-check form-switch form-switch-lg d-flex align-items-center gap-2 mb-0">
+                            <input class="form-check-input" type="checkbox" id="is_active"
+                                   name="is_active" value="1"
+                                   {{ old('is_active', $d->is_active ?? true) ? 'checked' : '' }}
+                                   style="width:2.75em; height:1.5em">
+                            <label class="form-check-label fw-semibold ms-2" for="is_active">
+                                Codice attivo
+                            </label>
+                        </div>
+                        <div class="form-text mt-2 mb-0">Solo i codici attivi sono utilizzabili dai clienti.</div>
+                    </div>
+                </div>
+            </div>
 
-        {{-- User Limit --}}
-        <div>
-            <label for="user_limit" class="block text-sm font-medium text-gray-700 mb-2">
-                Utilizzi per Utente
-            </label>
-            <input type="number" 
-                   name="user_limit" 
-                   id="user_limit" 
-                   value="{{ old('user_limit', $discount->user_limit ?? 1) }}"
-                   min="1"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('user_limit') border-red-500 @enderror">
-            <p class="text-xs text-gray-500 mt-1">Quante volte un singolo utente può usare questo codice</p>
-            @error('user_limit')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
+            @if(isset($d) && $d)
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-bar-chart me-2 text-primary"></i>Statistiche</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="d-flex justify-content-between py-2 border-bottom small">
+                            <span class="text-muted"><i class="bi bi-graph-up me-2"></i>Utilizzi</span>
+                            <span class="fw-bold">{{ $d->usage_count }}{{ $d->usage_limit ? ' / '.$d->usage_limit : '' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2 small">
+                            <span class="text-muted"><i class="bi bi-calendar-plus me-2"></i>Creato</span>
+                            <span class="text-dark">{{ $d->created_at->format('d/m/Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
-    @if(isset($discount) && $discount->usage_count > 0)
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p class="text-sm text-blue-800">
-                <strong>Nota:</strong> Questo codice è stato già utilizzato {{ $discount->usage_count }} 
-                {{ $discount->usage_count == 1 ? 'volta' : 'volte' }}.
-            </p>
-        </div>
-    @endif
-</div>
-
-{{-- Validity Period --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Periodo di Validità</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {{-- Valid From --}}
-        <div>
-            <label for="valid_from" class="block text-sm font-medium text-gray-700 mb-2">
-                Valido Da
-            </label>
-            <input type="datetime-local" 
-                   name="valid_from" 
-                   id="valid_from" 
-                   value="{{ old('valid_from', isset($discount->valid_from) ? $discount->valid_from->format('Y-m-d\TH:i') : '') }}"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('valid_from') border-red-500 @enderror">
-            <p class="text-xs text-gray-500 mt-1">Lascia vuoto per attivazione immediata</p>
-            @error('valid_from')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Valid Until --}}
-        <div>
-            <label for="valid_until" class="block text-sm font-medium text-gray-700 mb-2">
-                Valido Fino A
-            </label>
-            <input type="datetime-local" 
-                   name="valid_until" 
-                   id="valid_until" 
-                   value="{{ old('valid_until', isset($discount->valid_until) ? $discount->valid_until->format('Y-m-d\TH:i') : '') }}"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('valid_until') border-red-500 @enderror">
-            <p class="text-xs text-gray-500 mt-1">Lascia vuoto per nessuna scadenza</p>
-            @error('valid_until')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-lightbulb me-2 text-warning"></i>Suggerimenti</h3>
+                </div>
+                <div class="dash-card-body small text-muted">
+                    <ul class="ps-3 mb-0">
+                        <li class="mb-1">Usa codici facili da ricordare</li>
+                        <li class="mb-1">Imposta un periodo di validità per creare urgenza</li>
+                        <li class="mb-0">Limita gli utilizzi per controllare i costi</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
-{{-- Status --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Stato</h2>
-    
-    <label class="flex items-center gap-3">
-        <input type="hidden" name="is_active" value="0">
-        <input type="checkbox" 
-               name="is_active" 
-               value="1"
-               class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-               {{ old('is_active', $discount->is_active ?? true) ? 'checked' : '' }}>
-        <span class="text-sm font-medium text-gray-700">Codice attivo</span>
-        <span class="text-sm text-gray-500">- Il codice sarà utilizzabile dai clienti</span>
-    </label>
 </div>
 
 @push('scripts')
 <script>
-    // Update suffix based on discount type
-    document.getElementById('discount_type').addEventListener('change', function() {
-        const suffix = document.getElementById('discount_suffix');
-        suffix.textContent = this.value === 'percentage' ? '%' : '€';
-    });
-    
-    // Initialize suffix
-    document.addEventListener('DOMContentLoaded', function() {
-        const type = document.getElementById('discount_type');
-        const suffix = document.getElementById('discount_suffix');
-        suffix.textContent = type.value === 'percentage' ? '%' : '€';
-    });
+    (function() {
+        const typeEl = document.getElementById('discount_type');
+        const suffixEl = document.getElementById('discount_suffix');
 
-    // Generate random code
+        function updateSuffix() {
+            suffixEl.textContent = typeEl.value === 'percentage' ? '%' : '€';
+        }
+
+        typeEl.addEventListener('change', updateSuffix);
+        updateSuffix();
+    })();
+
     function generateCode() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let code = '';
         for (let i = 0; i < 8; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));

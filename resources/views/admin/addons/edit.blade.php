@@ -1,39 +1,69 @@
 @extends('layouts.admin')
 
-@section('title', 'Modifica Extra')
+@section('title', 'Modifica ' . $addon->name)
 
 @section('content')
-    <div class="max-w-3xl mx-auto space-y-6">
-        {{-- Header --}}
-        <div class="flex items-center gap-4">
-            <a href="{{ route('admin.addons.index') }}" 
-               class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
+    <div class="dash-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.addons.index') }}" class="dash-icon-btn" title="Torna agli extra">
+                <i class="bi bi-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Modifica Extra</h1>
-                <p class="text-gray-600">{{ $addon->name }}</p>
+                <h1>Modifica <span class="text-primary">{{ $addon->name }}</span></h1>
+                <p>Aggiorna prezzo, descrizione, immagine e disponibilità dell'extra.</p>
             </div>
         </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.addons.show', $addon) }}" class="btn btn-light rounded-pill px-3 fw-semibold border">
+                <i class="bi bi-eye me-2"></i>Dettagli
+            </a>
+        </div>
+    </div>
 
-        <form action="{{ route('admin.addons.update', $addon) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-            @csrf
-            @method('PUT')
-            
-            @include('admin.addons._form')
+    <form action="{{ route('admin.addons.update', $addon) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
 
-            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-                <a href="{{ route('admin.addons.index') }}" 
-                   class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Annulla
-                </a>
-                <button type="submit" 
-                        class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                    Salva Modifiche
+        @include('admin.addons._form', ['addon' => $addon])
+
+        <div class="dash-card mb-4">
+            <div class="dash-card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-semibold"
+                        data-bs-toggle="modal" data-bs-target="#deleteAddonModal">
+                    <i class="bi bi-trash me-2"></i>Elimina extra
                 </button>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.addons.show', $addon) }}" class="btn btn-light rounded-pill px-4 border fw-semibold">Annulla</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                        <i class="bi bi-check-lg me-2"></i>Salva modifiche
+                    </button>
+                </div>
             </div>
-        </form>
+        </div>
+    </form>
+
+    {{-- Delete confirm modal --}}
+    <div class="modal fade" id="deleteAddonModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:1rem">
+                <div class="modal-body text-center p-4">
+                    <div class="mx-auto mb-3 rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center" style="width:72px;height:72px">
+                        <i class="bi bi-exclamation-triangle fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Eliminare {{ $addon->name }}?</h4>
+                    <p class="text-muted">L'azione è irreversibile. Se ci sono prenotazioni associate l'eliminazione fallirà.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">Annulla</button>
+                    <form action="{{ route('admin.addons.destroy', $addon) }}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">
+                            <i class="bi bi-trash me-2"></i>Elimina
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

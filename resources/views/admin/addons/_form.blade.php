@@ -1,206 +1,200 @@
-{{-- Form fields for addons --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Informazioni Base</h2>
-    
-    {{-- Name --}}
-    <div>
-        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-            Nome <span class="text-red-500">*</span>
-        </label>
-        <input type="text" 
-               name="name" 
-               id="name" 
-               value="{{ old('name', $addon->name ?? '') }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('name') border-red-500 @enderror"
-               placeholder="es. Aperitivo al tramonto"
-               required>
-        @error('name')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
+{{-- Shared addon form. Uses $addon (model or null) --}}
+@php $a = $addon ?? null; @endphp
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        {{-- Basic info --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-info-circle me-2 text-primary"></i>Informazioni base</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="name" class="form-label fw-semibold small">Nome <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="name" required
+                               value="{{ old('name', $a->name ?? '') }}"
+                               placeholder="es. Aperitivo al tramonto"
+                               class="form-control form-control-lg @error('name') is-invalid @enderror">
+                        @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-12">
+                        <label for="slug" class="form-label fw-semibold small">Slug</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-link-45deg"></i></span>
+                            <input type="text" name="slug" id="slug"
+                                   value="{{ old('slug', $a->slug ?? '') }}"
+                                   placeholder="aperitivo-tramonto (auto)"
+                                   class="form-control @error('slug') is-invalid @enderror">
+                        </div>
+                        <div class="form-text small">Lascia vuoto per generazione automatica.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="description" class="form-label fw-semibold small">Descrizione</label>
+                        <textarea name="description" id="description" rows="3"
+                                  placeholder="Descrivi cosa include questo extra..."
+                                  class="form-control @error('description') is-invalid @enderror">{{ old('description', $a->description ?? '') }}</textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold small">Immagine</label>
+                        @if($a && $a->image_path)
+                            <div class="mb-2 d-flex align-items-center gap-3 p-2 bg-light rounded-3">
+                                <img src="{{ Storage::url($a->image_path) }}" alt=""
+                                     class="rounded-3" style="width:64px; height:64px; object-fit:cover">
+                                <div class="small text-muted">Immagine corrente. Caricane una nuova per sostituirla.</div>
+                            </div>
+                        @endif
+                        <div class="cat-dropzone text-center">
+                            <div class="mx-auto mb-2 rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center"
+                                 style="width:48px; height:48px">
+                                <i class="bi bi-cloud-arrow-up fs-4"></i>
+                            </div>
+                            <input type="file" name="image" id="image"
+                                   accept="image/jpeg,image/png,image/jpg,image/webp"
+                                   class="form-control" style="max-width:340px; margin:0 auto">
+                            <div class="form-text small mt-2">JPG, PNG o WebP – max 2MB.</div>
+                            @error('image')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Pricing --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-currency-euro me-2 text-warning"></i>Prezzo</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="price" class="form-label fw-semibold small">Prezzo <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">€</span>
+                            <input type="number" name="price" id="price" required step="0.01" min="0"
+                                   value="{{ old('price', $a->price ?? '0') }}"
+                                   class="form-control @error('price') is-invalid @enderror">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="price_type" class="form-label fw-semibold small">Tipo prezzo <span class="text-danger">*</span></label>
+                        <select name="price_type" id="price_type" required class="form-select">
+                            <option value="per_person" {{ old('price_type', $a->price_type ?? '') == 'per_person' ? 'selected' : '' }}>👤 Per persona</option>
+                            <option value="per_booking" {{ old('price_type', $a->price_type ?? '') == 'per_booking' ? 'selected' : '' }}>🎫 Per prenotazione</option>
+                            <option value="per_unit" {{ old('price_type', $a->price_type ?? '') == 'per_unit' ? 'selected' : '' }}>📦 Per unità</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="max_quantity" class="form-label fw-semibold small">Quantità massima</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-stack"></i></span>
+                            <input type="number" name="max_quantity" id="max_quantity" min="1"
+                                   value="{{ old('max_quantity', $a->max_quantity ?? '') }}"
+                                   placeholder="Illimitata"
+                                   class="form-control">
+                        </div>
+                        <div class="form-text small">Lascia vuoto per quantità illimitata.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="sort_order" class="form-label fw-semibold small">Ordine</label>
+                        <input type="number" name="sort_order" id="sort_order" min="0"
+                               value="{{ old('sort_order', $a->sort_order ?? 0) }}"
+                               class="form-control">
+                        <div class="form-text small">I valori più bassi appaiono per primi.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Advance booking --}}
+        <div class="dash-card mb-3">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-clock-history me-2 text-primary"></i>Prenotazione anticipata</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 mb-3">
+                    <div>
+                        <div class="fw-semibold mb-1">Richiede prenotazione anticipata</div>
+                        <p class="small text-muted mb-0">Il cliente deve aggiungerlo con un certo anticipo rispetto alla partenza.</p>
+                    </div>
+                    <div class="form-check form-switch m-0" style="font-size:1.4rem">
+                        <input type="hidden" name="requires_advance_booking" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="requires_advance_booking"
+                               name="requires_advance_booking" value="1"
+                               {{ old('requires_advance_booking', $a->requires_advance_booking ?? false) ? 'checked' : '' }}>
+                    </div>
+                </div>
+
+                <div id="advance_hours_container"
+                     class="{{ old('requires_advance_booking', $a->requires_advance_booking ?? false) ? '' : 'd-none' }}">
+                    <label for="advance_hours" class="form-label fw-semibold small">Ore di anticipo richieste</label>
+                    <div class="input-group" style="max-width:240px">
+                        <input type="number" name="advance_hours" id="advance_hours" min="0"
+                               value="{{ old('advance_hours', $a->advance_hours ?? 24) }}"
+                               class="form-control">
+                        <span class="input-group-text bg-light">ore</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {{-- Slug --}}
-    <div>
-        <label for="slug" class="block text-sm font-medium text-gray-700 mb-2">
-            Slug
-        </label>
-        <input type="text" 
-               name="slug" 
-               id="slug" 
-               value="{{ old('slug', $addon->slug ?? '') }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('slug') border-red-500 @enderror"
-               placeholder="aperitivo-tramonto">
-        <p class="text-xs text-gray-500 mt-1">Lascia vuoto per generazione automatica</p>
-        @error('slug')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
+    <div class="col-lg-4">
+        {{-- Status --}}
+        <div class="dash-card mb-3" style="position:sticky; top:1rem">
+            <div class="dash-card-header">
+                <h3><i class="bi bi-toggles me-2 text-primary"></i>Stato</h3>
+            </div>
+            <div class="dash-card-body">
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3">
+                    <div>
+                        <div class="fw-semibold mb-1">Extra attivo</div>
+                        <p class="small text-muted mb-0">Visibile e selezionabile dal cliente.</p>
+                    </div>
+                    <div class="form-check form-switch m-0" style="font-size:1.4rem">
+                        <input type="hidden" name="is_active" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="is_active"
+                               name="is_active" value="1"
+                               {{ old('is_active', $a->is_active ?? true) ? 'checked' : '' }}>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    {{-- Description --}}
-    <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-            Descrizione
-        </label>
-        <textarea name="description" 
-                  id="description" 
-                  rows="3"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('description') border-red-500 @enderror"
-                  placeholder="Descrivi l'extra...">{{ old('description', $addon->description ?? '') }}</textarea>
-        @error('description')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-    {{-- Image --}}
-    <div>
-        <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
-            Immagine
-        </label>
-        @if(isset($addon) && $addon->image_path)
-            <div class="mb-3">
-                <img src="{{ Storage::url($addon->image_path) }}" 
-                     alt="{{ $addon->name }}" 
-                     class="w-32 h-32 object-cover rounded-lg">
+        @if($a)
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-bar-chart me-2 text-primary"></i>Statistiche</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <span class="small text-muted"><i class="bi bi-journal-bookmark me-2"></i>Prenotazioni</span>
+                        <span class="fw-bold">{{ $a->bookings()->count() ?? 0 }}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between py-2">
+                        <span class="small text-muted"><i class="bi bi-clock me-2"></i>Creato</span>
+                        <span class="fw-medium small">{{ $a->created_at?->format('d/m/Y') }}</span>
+                    </div>
+                </div>
             </div>
         @endif
-        <input type="file" 
-               name="image" 
-               id="image" 
-               accept="image/jpeg,image/png,image/jpg,image/webp"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('image') border-red-500 @enderror">
-        <p class="text-xs text-gray-500 mt-1">JPG, PNG o WebP. Max 2MB</p>
-        @error('image')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-</div>
-
-{{-- Pricing --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Prezzo</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {{-- Price --}}
-        <div>
-            <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
-                Prezzo (€) <span class="text-red-500">*</span>
-            </label>
-            <input type="number" 
-                   name="price" 
-                   id="price" 
-                   value="{{ old('price', $addon->price ?? '0') }}"
-                   step="0.01"
-                   min="0"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('price') border-red-500 @enderror"
-                   required>
-            @error('price')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Price Type --}}
-        <div>
-            <label for="price_type" class="block text-sm font-medium text-gray-700 mb-2">
-                Tipo Prezzo <span class="text-red-500">*</span>
-            </label>
-            <select name="price_type" 
-                    id="price_type"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('price_type') border-red-500 @enderror"
-                    required>
-                <option value="per_person" {{ old('price_type', $addon->price_type ?? '') == 'per_person' ? 'selected' : '' }}>Per persona</option>
-                <option value="per_booking" {{ old('price_type', $addon->price_type ?? '') == 'per_booking' ? 'selected' : '' }}>Per prenotazione</option>
-                <option value="per_unit" {{ old('price_type', $addon->price_type ?? '') == 'per_unit' ? 'selected' : '' }}>Per unità</option>
-            </select>
-            @error('price_type')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Max Quantity --}}
-        <div>
-            <label for="max_quantity" class="block text-sm font-medium text-gray-700 mb-2">
-                Quantità Massima
-            </label>
-            <input type="number" 
-                   name="max_quantity" 
-                   id="max_quantity" 
-                   value="{{ old('max_quantity', $addon->max_quantity ?? '') }}"
-                   min="1"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('max_quantity') border-red-500 @enderror"
-                   placeholder="Illimitata">
-            <p class="text-xs text-gray-500 mt-1">Lascia vuoto per quantità illimitata</p>
-            @error('max_quantity')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Sort Order --}}
-        <div>
-            <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-2">
-                Ordine
-            </label>
-            <input type="number" 
-                   name="sort_order" 
-                   id="sort_order" 
-                   value="{{ old('sort_order', $addon->sort_order ?? 0) }}"
-                   min="0"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 @error('sort_order') border-red-500 @enderror">
-            @error('sort_order')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
-</div>
-
-{{-- Advanced Options --}}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900 border-b pb-3">Opzioni Avanzate</h2>
-    
-    <div class="space-y-4">
-        {{-- Is Active --}}
-        <label class="flex items-center gap-3">
-            <input type="hidden" name="is_active" value="0">
-            <input type="checkbox" 
-                   name="is_active" 
-                   value="1"
-                   class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                   {{ old('is_active', $addon->is_active ?? true) ? 'checked' : '' }}>
-            <span class="text-sm font-medium text-gray-700">Attivo</span>
-            <span class="text-sm text-gray-500">- L'extra sarà disponibile per le prenotazioni</span>
-        </label>
-
-        {{-- Requires Advance Booking --}}
-        <label class="flex items-center gap-3">
-            <input type="hidden" name="requires_advance_booking" value="0">
-            <input type="checkbox" 
-                   name="requires_advance_booking" 
-                   value="1"
-                   id="requires_advance_booking"
-                   class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                   {{ old('requires_advance_booking', $addon->requires_advance_booking ?? false) ? 'checked' : '' }}>
-            <span class="text-sm font-medium text-gray-700">Richiede prenotazione anticipata</span>
-        </label>
-
-        {{-- Advance Hours --}}
-        <div id="advance_hours_container" class="ml-8 {{ old('requires_advance_booking', $addon->requires_advance_booking ?? false) ? '' : 'hidden' }}">
-            <label for="advance_hours" class="block text-sm font-medium text-gray-700 mb-2">
-                Ore di anticipo richieste
-            </label>
-            <input type="number" 
-                   name="advance_hours" 
-                   id="advance_hours" 
-                   value="{{ old('advance_hours', $addon->advance_hours ?? 24) }}"
-                   min="0"
-                   class="w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-            <p class="text-xs text-gray-500 mt-1">Quante ore prima della partenza deve essere prenotato</p>
-        </div>
     </div>
 </div>
 
 @push('scripts')
 <script>
-    document.getElementById('requires_advance_booking').addEventListener('change', function() {
-        document.getElementById('advance_hours_container').classList.toggle('hidden', !this.checked);
+    document.addEventListener('DOMContentLoaded', function () {
+        const sw = document.getElementById('requires_advance_booking');
+        const box = document.getElementById('advance_hours_container');
+        if (sw && box) {
+            sw.addEventListener('change', () => box.classList.toggle('d-none', !sw.checked));
+        }
     });
 </script>
 @endpush

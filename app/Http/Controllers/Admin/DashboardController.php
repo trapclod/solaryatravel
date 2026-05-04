@@ -158,6 +158,7 @@ class DashboardController extends Controller
                     'extendedProps' => [
                         'booking_number' => $booking->booking_number,
                         'catamaran' => $booking->catamaran->name ?? 'N/A',
+                        'catamaran_id' => $booking->catamaran_id,
                         'guests' => $booking->seats,
                         'status' => $booking->status->value ?? $booking->status,
                     ],

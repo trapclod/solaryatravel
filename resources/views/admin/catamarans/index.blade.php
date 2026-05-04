@@ -3,150 +3,180 @@
 @section('title', 'Catamarani')
 
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Catamarani</h1>
-                <p class="text-gray-600">Gestisci la flotta di catamarani</p>
-            </div>
-            <a href="{{ route('admin.catamarans.create') }}" 
-               class="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Nuovo Catamarano
+    @php
+        $totalActive = $catamarans->where('is_active', true)->count();
+        $totalInactive = $catamarans->where('is_active', false)->count();
+        $totalCapacity = $catamarans->sum('capacity');
+        $totalBookings = $catamarans->sum('bookings_count');
+    @endphp
+
+    {{-- Page header --}}
+    <div class="dash-page-header">
+        <div>
+            <h1>Catamarani</h1>
+            <p>Gestisci la flotta, prezzi, immagini e disponibilità.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.catamarans.create') }}" class="btn btn-primary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-plus-lg me-2"></i>Nuovo catamarano
             </a>
         </div>
+    </div>
 
-        {{-- Catamarans Grid --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($catamarans as $catamaran)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-shadow">
-                    {{-- Image --}}
-                    <div class="relative aspect-video bg-gray-100">
+    {{-- Mini stats --}}
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <span class="mini-stat-icon bg-primary-subtle text-primary"><i class="bi bi-water"></i></span>
+                <div>
+                    <div class="mini-stat-value">{{ $catamarans->total() }}</div>
+                    <div class="mini-stat-label">Totale flotta</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <span class="mini-stat-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></span>
+                <div>
+                    <div class="mini-stat-value">{{ $totalActive }}</div>
+                    <div class="mini-stat-label">Attivi</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <span class="mini-stat-icon bg-warning-subtle text-warning"><i class="bi bi-people-fill"></i></span>
+                <div>
+                    <div class="mini-stat-value">{{ $totalCapacity }}</div>
+                    <div class="mini-stat-label">Posti totali</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <span class="mini-stat-icon bg-info-subtle text-info"><i class="bi bi-journal-bookmark"></i></span>
+                <div>
+                    <div class="mini-stat-value">{{ $totalBookings }}</div>
+                    <div class="mini-stat-label">Prenotazioni</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Catamarans grid --}}
+    <div class="row g-3 mb-4">
+        @forelse($catamarans as $catamaran)
+            <div class="col-sm-6 col-xl-4">
+                <div class="cat-card">
+                    {{-- Media --}}
+                    <a href="{{ route('admin.catamarans.show', $catamaran) }}" class="cat-card-media text-decoration-none">
                         @if($catamaran->images->first())
-                            <img src="{{ Storage::url($catamaran->images->first()->path) }}" 
-                                 alt="{{ $catamaran->name }}"
-                                 class="w-full h-full object-cover">
+                            <img src="{{ Storage::url($catamaran->images->first()->path) }}" alt="{{ $catamaran->name }}">
                         @else
-                            <div class="w-full h-full flex items-center justify-center">
-                                <svg class="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
+                            <div class="cat-media-placeholder"><i class="bi bi-image"></i></div>
                         @endif
-                        
-                        {{-- Status Badge --}}
-                        <div class="absolute top-3 right-3">
-                            @if($catamaran->is_active)
-                                <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
-                                    Attivo
-                                </span>
-                            @else
-                                <span class="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">
-                                    Inattivo
-                                </span>
-                            @endif
-                        </div>
-                    </div>
 
-                    {{-- Content --}}
-                    <div class="p-5">
-                        <h3 class="font-semibold text-gray-900 text-lg mb-1">{{ $catamaran->name }}</h3>
-                        
-                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                            <span class="flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                {{ $catamaran->capacity }} posti
+                        <span class="cat-status-badge {{ $catamaran->is_active ? 'active' : 'inactive' }}">
+                            {{ $catamaran->is_active ? 'Attivo' : 'Inattivo' }}
+                        </span>
+
+                        @if(($catamaran->bookings_count ?? 0) > 0)
+                            <span class="cat-bookings-badge">
+                                <i class="bi bi-journal-bookmark me-1"></i>{{ $catamaran->bookings_count }} prenotazioni
                             </span>
+                        @endif
+                    </a>
+
+                    {{-- Body --}}
+                    <div class="cat-card-body">
+                        <h3>
+                            <a href="{{ route('admin.catamarans.show', $catamaran) }}" class="text-decoration-none text-reset stretched-link-disabled">
+                                {{ $catamaran->name }}
+                            </a>
+                        </h3>
+
+                        @if($catamaran->description_short)
+                            <p class="small text-muted mb-2 text-truncate" title="{{ $catamaran->description_short }}">
+                                {{ $catamaran->description_short }}
+                            </p>
+                        @endif
+
+                        <div class="cat-meta">
+                            <span><i class="bi bi-people text-primary"></i>{{ $catamaran->capacity }} posti</span>
                             @if($catamaran->length_meters)
-                                <span class="flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                    </svg>
-                                    {{ $catamaran->length_meters }}m
-                                </span>
+                                <span><i class="bi bi-rulers text-primary"></i>{{ $catamaran->length_meters }} m</span>
+                            @endif
+                            @if($catamaran->slug)
+                                <span class="text-muted"><i class="bi bi-link-45deg"></i>{{ Str::limit($catamaran->slug, 18) }}</span>
                             @endif
                         </div>
 
-                        <div class="flex items-center justify-between text-sm mb-4">
-                            <div>
-                                <p class="text-gray-500">Mezza giornata</p>
-                                <p class="font-semibold text-gray-900">€{{ number_format($catamaran->base_price_half_day, 0, ',', '.') }}</p>
+                        <div class="cat-prices">
+                            <div class="cat-price-block">
+                                <div class="cat-price-label">Mezza giornata</div>
+                                <div class="cat-price-value">€{{ number_format($catamaran->base_price_half_day, 0, ',', '.') }}</div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-gray-500">Giornata intera</p>
-                                <p class="font-semibold text-gray-900">€{{ number_format($catamaran->base_price_full_day, 0, ',', '.') }}</p>
+                            <div class="cat-price-block">
+                                <div class="cat-price-label">Giornata intera</div>
+                                <div class="cat-price-value">€{{ number_format($catamaran->base_price_full_day, 0, ',', '.') }}</div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                            <span class="text-sm text-gray-500">
-                                {{ $catamaran->bookings_count ?? 0 }} prenotazioni
-                            </span>
-                            <div class="flex items-center gap-2">
-                                <form action="{{ route('admin.catamarans.toggle', $catamaran) }}" method="POST">
+                        <div class="cat-card-actions">
+                            <a href="{{ route('admin.catamarans.show', $catamaran) }}"
+                               class="btn btn-sm btn-light rounded-pill border fw-medium">
+                                <i class="bi bi-eye me-1"></i>Dettagli
+                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <form action="{{ route('admin.catamarans.toggle', $catamaran) }}" method="POST" class="d-inline">
                                     @csrf
-                                    <button type="submit" 
-                                            class="p-2 text-gray-400 hover:text-yellow-600 transition-colors"
-                                            title="{{ $catamaran->is_active ? 'Disattiva' : 'Attiva' }}">
-                                        @if($catamaran->is_active)
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                            </svg>
-                                        @else
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        @endif
+                                    <button type="submit"
+                                            class="dash-icon-btn {{ $catamaran->is_active ? 'is-danger' : 'is-success' }}"
+                                            title="{{ $catamaran->is_active ? 'Disattiva' : 'Attiva' }}"
+                                            data-bs-toggle="tooltip">
+                                        <i class="bi {{ $catamaran->is_active ? 'bi-toggle-on' : 'bi-toggle-off' }}"></i>
                                     </button>
                                 </form>
-                                <a href="{{ route('admin.catamarans.edit', $catamaran) }}" 
-                                   class="p-2 text-gray-400 hover:text-primary-600 transition-colors"
-                                   title="Modifica">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </a>
-                                <a href="{{ route('admin.catamarans.show', $catamaran) }}" 
-                                   class="p-2 text-gray-400 hover:text-primary-600 transition-colors"
-                                   title="Dettagli">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
+                                <a href="{{ route('admin.catamarans.edit', $catamaran) }}"
+                                   class="dash-icon-btn is-primary" title="Modifica" data-bs-toggle="tooltip">
+                                    <i class="bi bi-pencil"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            @empty
-                <div class="col-span-full">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nessun catamarano</h3>
-                        <p class="text-gray-500 mb-4">Inizia aggiungendo il primo catamarano alla flotta</p>
-                        <a href="{{ route('admin.catamarans.create') }}" 
-                           class="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Aggiungi Catamarano
+            </div>
+        @empty
+            <div class="col-12">
+                <div class="dash-card">
+                    <div class="dash-card-body text-center py-5">
+                        <i class="bi bi-water display-3 text-primary opacity-50 d-block mb-3"></i>
+                        <h3 class="fw-bold mb-2">Nessun catamarano nella flotta</h3>
+                        <p class="text-muted mb-4">Inizia ad aggiungere il primo catamarano per iniziare a ricevere prenotazioni.</p>
+                        <a href="{{ route('admin.catamarans.create') }}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                            <i class="bi bi-plus-lg me-2"></i>Aggiungi catamarano
                         </a>
                     </div>
                 </div>
-            @endforelse
-        </div>
-
-        @if($catamarans->hasPages())
-            <div class="mt-6">
-                {{ $catamarans->links() }}
             </div>
-        @endif
+        @endforelse
     </div>
+
+    @if($catamarans->hasPages())
+        <div class="d-flex justify-content-between align-items-center small text-muted">
+            <div>
+                Mostrando <strong>{{ $catamarans->firstItem() }}–{{ $catamarans->lastItem() }}</strong>
+                di <strong>{{ $catamarans->total() }}</strong>
+            </div>
+            <div>{{ $catamarans->links() }}</div>
+        </div>
+    @endif
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+    });
+</script>
+@endpush

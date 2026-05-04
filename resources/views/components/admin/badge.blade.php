@@ -1,39 +1,33 @@
 @props([
-    'type' => 'default', // success, warning, danger, info, default, primary
-    'size' => 'md', // sm, md, lg
+    'type' => 'default',
+    'size' => 'md',
     'dot' => false,
     'pulse' => false,
 ])
 
 @php
     $colors = [
-        'success' => 'bg-emerald-100 text-emerald-800 ring-emerald-600/20',
-        'warning' => 'bg-amber-100 text-amber-800 ring-amber-600/20',
-        'danger' => 'bg-red-100 text-red-800 ring-red-600/20',
-        'info' => 'bg-blue-100 text-blue-800 ring-blue-600/20',
-        'default' => 'bg-gray-100 text-gray-800 ring-gray-600/20',
-        'primary' => 'bg-primary-100 text-primary-800 ring-primary-600/20',
+        'success' => 'bg-success-subtle text-success border border-success-subtle',
+        'warning' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+        'danger'  => 'bg-danger-subtle text-danger border border-danger-subtle',
+        'info'    => 'bg-info-subtle text-info-emphasis border border-info-subtle',
+        'default' => 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle',
+        'primary' => 'bg-primary-subtle text-primary-emphasis border border-primary-subtle',
     ];
-    
     $sizes = [
-        'sm' => 'px-2 py-0.5 text-xs',
-        'md' => 'px-2.5 py-1 text-xs',
-        'lg' => 'px-3 py-1.5 text-sm',
+        'sm' => 'small px-2 py-0',
+        'md' => 'small px-2 py-1',
+        'lg' => 'px-3 py-2',
     ];
-    
-    $dotColors = [
-        'success' => 'bg-emerald-500',
-        'warning' => 'bg-amber-500',
-        'danger' => 'bg-red-500',
-        'info' => 'bg-blue-500',
-        'default' => 'bg-gray-500',
-        'primary' => 'bg-primary-500',
+    $dotBg = [
+        'success' => 'bg-success', 'warning' => 'bg-warning', 'danger' => 'bg-danger',
+        'info' => 'bg-info', 'default' => 'bg-secondary', 'primary' => 'bg-primary',
     ];
 @endphp
 
-<span {{ $attributes->merge(['class' => 'inline-flex items-center gap-1.5 font-medium rounded-full ring-1 ring-inset ' . $colors[$type] . ' ' . $sizes[$size]]) }}>
+<span {{ $attributes->merge(['class' => 'badge rounded-pill d-inline-flex align-items-center gap-1 fw-medium ' . $colors[$type] . ' ' . $sizes[$size]]) }}>
     @if($dot)
-        <span class="w-1.5 h-1.5 rounded-full {{ $dotColors[$type] }} {{ $pulse ? 'animate-pulse' : '' }}"></span>
+        <span class="d-inline-block rounded-circle {{ $dotBg[$type] }} {{ $pulse ? 'placeholder-glow' : '' }}" style="width:6px;height:6px"></span>
     @endif
     {{ $slot }}
 </span>

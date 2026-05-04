@@ -1,96 +1,183 @@
 @extends('layouts.admin')
 
-@section('title', 'Nuovo Utente')
+@section('title', 'Nuovo utente')
 
 @section('content')
-<div class="p-6 max-w-2xl">
-
-    {{-- Header --}}
-    <div class="flex items-center gap-4 mb-6">
-        <a href="{{ route('admin.users.index') }}" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-        </a>
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Nuovo Utente</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Crea un nuovo account utente</p>
+    <div class="dash-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.users.index') }}" class="dash-icon-btn" title="Torna agli utenti">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="mb-0">Nuovo utente</h1>
+                <p class="mt-1 mb-0">Crea un nuovo account utente e assegna un ruolo.</p>
+            </div>
         </div>
     </div>
 
-    <form method="POST" action="{{ route('admin.users.store') }}" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+    @if($errors->any())
+        <div class="alert alert-danger border-0 mb-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Si sono verificati alcuni errori:</strong>
+            </div>
+            <ul class="mb-0 ps-4">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('admin.users.store') }}">
         @csrf
 
-        {{-- Nome --}}
-        <div>
-            <label for="name" class="block text-sm font-semibold text-gray-700 mb-1.5">Nome completo <span class="text-red-500">*</span></label>
-            <input type="text" id="name" name="name" value="{{ old('name') }}" required
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none @error('name') border-red-300 @enderror">
-            @error('name')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
+        <div class="row g-3">
+            {{-- LEFT --}}
+            <div class="col-lg-8">
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-person-vcard me-2 text-primary"></i>Dati personali</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label fw-semibold">Nome completo <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-person text-muted"></i></span>
+                                <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                                       class="form-control border-start-0 @error('name') is-invalid @enderror"
+                                       placeholder="es. Mario Rossi">
+                                @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label for="email" class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                                           class="form-control @error('email') is-invalid @enderror"
+                                           placeholder="nome@esempio.com">
+                                    @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-5">
+                                <label for="phone" class="form-label fw-semibold">Telefono</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" id="phone" name="phone" value="{{ old('phone') }}"
+                                           class="form-control @error('phone') is-invalid @enderror"
+                                           placeholder="+39 ...">
+                                    @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-key me-2 text-primary"></i>Password</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                    <input type="password" id="password" name="password" required minlength="8"
+                                           class="form-control @error('password') is-invalid @enderror"
+                                           placeholder="Min. 8 caratteri">
+                                    <button type="button" class="btn btn-light border" onclick="togglePwd('password', this)" title="Mostra/nascondi">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password_confirmation" class="form-label fw-semibold">Conferma password <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                    <input type="password" id="password_confirmation" name="password_confirmation" required minlength="8"
+                                           class="form-control" placeholder="Ripeti password">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>Lunghezza minima: 8 caratteri.</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- RIGHT --}}
+            <div class="col-lg-4">
+                <div style="position:sticky; top:1rem">
+                    <div class="dash-card mb-3">
+                        <div class="dash-card-header">
+                            <h3><i class="bi bi-shield-lock me-2 text-primary"></i>Ruolo</h3>
+                        </div>
+                        <div class="dash-card-body">
+                            <div class="d-flex flex-column gap-2">
+                                @php
+                                    $roleConfig = [
+                                        'super_admin' => ['icon' => 'bi-shield-fill-check', 'desc' => 'Accesso completo a tutte le funzionalità', 'color' => 'warning'],
+                                        'admin'       => ['icon' => 'bi-shield-fill',       'desc' => 'Gestisce prenotazioni e contenuti', 'color' => 'info'],
+                                        'customer'    => ['icon' => 'bi-person-fill',       'desc' => 'Cliente standard della piattaforma', 'color' => 'secondary'],
+                                    ];
+                                @endphp
+                                @foreach($roles as $value => $label)
+                                    @php $rc = $roleConfig[$value] ?? ['icon' => 'bi-person', 'desc' => '', 'color' => 'secondary']; @endphp
+                                    <label class="border rounded-3 p-3 d-flex gap-2 align-items-start"
+                                           style="cursor:pointer; transition:all .15s"
+                                           onmouseover="this.style.background='rgba(2,132,199,.04)'"
+                                           onmouseout="this.style.background=''">
+                                        <input type="radio" name="role" value="{{ $value }}"
+                                               class="form-check-input mt-1 flex-shrink-0"
+                                               {{ old('role', 'customer') === $value ? 'checked' : '' }} required>
+                                        <span class="rounded-circle bg-{{ $rc['color'] }}-subtle text-{{ $rc['color'] }} d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                                              style="width:36px; height:36px">
+                                            <i class="bi {{ $rc['icon'] }}"></i>
+                                        </span>
+                                        <span class="min-w-0">
+                                            <span class="fw-semibold d-block">{{ $label }}</span>
+                                            <span class="small text-muted">{{ $rc['desc'] }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('role') <div class="text-danger small mt-2">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {{-- Email --}}
-        <div>
-            <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">Email <span class="text-red-500">*</span></label>
-            <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none @error('email') border-red-300 @enderror">
-            @error('email')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Telefono --}}
-        <div>
-            <label for="phone" class="block text-sm font-semibold text-gray-700 mb-1.5">Telefono</label>
-            <input type="text" id="phone" name="phone" value="{{ old('phone') }}"
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none @error('phone') border-red-300 @enderror">
-            @error('phone')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Ruolo --}}
-        <div>
-            <label for="role" class="block text-sm font-semibold text-gray-700 mb-1.5">Ruolo <span class="text-red-500">*</span></label>
-            <select id="role" name="role" required
-                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white @error('role') border-red-300 @enderror">
-                @foreach($roles as $value => $label)
-                    <option value="{{ $value }}" {{ old('role', 'customer') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-            @error('role')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Password --}}
-        <div>
-            <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">Password <span class="text-red-500">*</span></label>
-            <input type="password" id="password" name="password" required minlength="8"
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none @error('password') border-red-300 @enderror">
-            @error('password')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-        </div>
-
-        {{-- Conferma password --}}
-        <div>
-            <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-1.5">Conferma password <span class="text-red-500">*</span></label>
-            <input type="password" id="password_confirmation" name="password_confirmation" required minlength="8"
-                   class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
-        </div>
-
-        {{-- Buttons --}}
-        <div class="flex items-center gap-3 pt-2">
-            <button type="submit" class="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold">
-                Crea Utente
-            </button>
-            <a href="{{ route('admin.users.index') }}" class="btn-secondary px-6 py-2.5 rounded-xl text-sm font-semibold">
-                Annulla
-            </a>
+        <div class="dash-card mt-3">
+            <div class="dash-card-body d-flex justify-content-end gap-2 flex-wrap">
+                <a href="{{ route('admin.users.index') }}" class="btn btn-light border rounded-pill px-4 fw-semibold">
+                    Annulla
+                </a>
+                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                    <i class="bi bi-person-plus me-2"></i>Crea utente
+                </button>
+            </div>
         </div>
     </form>
-</div>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePwd(id, btn) {
+        const input = document.getElementById(id);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+</script>
+@endpush

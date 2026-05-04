@@ -1,215 +1,212 @@
 @extends('layouts.admin')
 
-@section('title', 'Report')
+@section('title', 'Report e statistiche')
+
+@php
+    $periodLabels = [
+        'today' => 'Oggi',
+        'week' => 'Questa settimana',
+        'month' => 'Questo mese',
+        'quarter' => 'Questo trimestre',
+        'year' => "Quest'anno",
+        'all' => 'Tutto lo storico',
+    ];
+@endphp
 
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Report e Statistiche</h1>
-                <p class="text-gray-600">Panoramica delle performance</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <form action="{{ route('admin.reports.index') }}" method="GET" class="flex items-center gap-2">
-                    <select name="period" onchange="this.form.submit()" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                        <option value="today" {{ $period === 'today' ? 'selected' : '' }}>Oggi</option>
-                        <option value="week" {{ $period === 'week' ? 'selected' : '' }}>Questa settimana</option>
-                        <option value="month" {{ $period === 'month' ? 'selected' : '' }}>Questo mese</option>
-                        <option value="quarter" {{ $period === 'quarter' ? 'selected' : '' }}>Questo trimestre</option>
-                        <option value="year" {{ $period === 'year' ? 'selected' : '' }}>Quest'anno</option>
-                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>Tutto</option>
-                    </select>
-                </form>
-                <a href="{{ route('admin.reports.export', ['period' => $period]) }}" 
-                   class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                </a>
-            </div>
+    {{-- Page header --}}
+    <div class="dash-page-header">
+        <div>
+            <h1>Report e statistiche</h1>
+            <p>
+                <i class="bi bi-calendar3 me-1"></i>
+                {{ $periodLabels[$period] ?? 'Periodo' }}
+                <span class="text-muted">·</span>
+                {{ $startDate->format('d/m/Y') }} → {{ $endDate->format('d/m/Y') }}
+            </p>
         </div>
-
-        {{-- Period Info --}}
-        <div class="text-sm text-gray-500">
-            Periodo: {{ $startDate->format('d/m/Y') }} - {{ $endDate->format('d/m/Y') }}
+        <div class="d-flex gap-2 flex-wrap">
+            <form action="{{ route('admin.reports.index') }}" method="GET">
+                <select name="period" onchange="this.form.submit()" class="form-select rounded-pill px-3 fw-semibold">
+                    @foreach($periodLabels as $value => $label)
+                        <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </form>
+            <a href="{{ route('admin.reports.export', ['period' => $period]) }}"
+               class="btn btn-light border rounded-pill px-3 fw-semibold">
+                <i class="bi bi-download me-2"></i>Esporta CSV
+            </a>
         </div>
+    </div>
 
-        {{-- Quick Stats --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {{-- Revenue --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Ricavi</p>
-                        <p class="text-2xl font-bold text-gray-900">€{{ number_format($revenue, 2, ',', '.') }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
+    {{-- Quick KPI stats --}}
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-lg-3">
+            <div class="dash-stat" style="background: linear-gradient(135deg, #10b981, #059669)">
+                <div class="dash-stat-icon"><i class="bi bi-cash-coin"></i></div>
+                <div class="dash-stat-label">Ricavi</div>
+                <div class="dash-stat-value">€{{ number_format($revenue, 0, ',', '.') }}</div>
                 @if($previousRevenue > 0)
-                    @php
-                        $change = (($revenue - $previousRevenue) / $previousRevenue) * 100;
-                    @endphp
-                    <div class="mt-2 flex items-center text-sm {{ $change >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            @if($change >= 0)
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            @else
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                            @endif
-                        </svg>
-                        {{ number_format(abs($change), 1) }}% vs periodo precedente
+                    @php $change = (($revenue - $previousRevenue) / $previousRevenue) * 100; @endphp
+                    <div class="dash-stat-trend">
+                        <i class="bi {{ $change >= 0 ? 'bi-arrow-up-right' : 'bi-arrow-down-right' }}"></i>
+                        {{ number_format(abs($change), 1, ',', '.') }}% vs precedente
                     </div>
                 @endif
             </div>
-
-            {{-- Bookings --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Prenotazioni</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $totalBookings }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="mt-2 text-sm text-gray-500">
-                    {{ $confirmedBookings }} confermate
-                </div>
-            </div>
-
-            {{-- Passengers --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Passeggeri</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $totalPassengers }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Average --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Valore Medio</p>
-                        <p class="text-2xl font-bold text-gray-900">€{{ number_format($avgBookingValue, 2, ',', '.') }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                    </div>
-                </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="dash-stat" style="background: linear-gradient(135deg, #0284c7, #0369a1)">
+                <div class="dash-stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="dash-stat-label">Prenotazioni</div>
+                <div class="dash-stat-value">{{ $totalBookings }}</div>
+                <div class="dash-stat-trend"><i class="bi bi-check2-circle"></i>{{ $confirmedBookings }} confermate</div>
             </div>
         </div>
-
-        {{-- Report Links --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="{{ route('admin.reports.revenue', ['period' => $period]) }}" 
-               class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Report Ricavi</h3>
-                        <p class="text-sm text-gray-500">Analisi dettagliata dei guadagni</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ route('admin.reports.bookings', ['period' => $period]) }}" 
-               class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Report Prenotazioni</h3>
-                        <p class="text-sm text-gray-500">Statistiche sulle prenotazioni</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ route('admin.reports.occupancy', ['period' => $period]) }}" 
-               class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Report Occupazione</h3>
-                        <p class="text-sm text-gray-500">Tasso di occupazione catamarani</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Revenue Chart --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Andamento Ricavi</h3>
-                <div class="h-64">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-            </div>
-
-            {{-- Bookings by Status --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Prenotazioni per Stato</h3>
-                <div class="h-64">
-                    <canvas id="statusChart"></canvas>
-                </div>
+        <div class="col-6 col-lg-3">
+            <div class="dash-stat" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9)">
+                <div class="dash-stat-icon"><i class="bi bi-people-fill"></i></div>
+                <div class="dash-stat-label">Passeggeri</div>
+                <div class="dash-stat-value">{{ $totalPassengers }}</div>
             </div>
         </div>
+        <div class="col-6 col-lg-3">
+            <div class="dash-stat" style="background: linear-gradient(135deg, #eab308, #ca8a04)">
+                <div class="dash-stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="dash-stat-label">Valore medio</div>
+                <div class="dash-stat-value">€{{ number_format($avgBookingValue, 0, ',', '.') }}</div>
+            </div>
+        </div>
+    </div>
 
-        {{-- Top Catamarans --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Catamarani più Prenotati</h3>
-            <div class="space-y-4">
-                @forelse($topCatamarans as $index => $catamaran)
-                    <div class="flex items-center gap-4">
-                        <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm">
-                            {{ $index + 1 }}
+    {{-- Report navigation cards --}}
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <a href="{{ route('admin.reports.revenue', ['period' => $period]) }}"
+               class="dash-card h-100 d-block text-decoration-none cat-card-link"
+               style="border-color:rgba(16,185,129,.25)">
+                <div class="dash-card-body">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="rounded-3 bg-success-subtle text-success d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:48px; height:48px; font-size:1.5rem">
+                            <i class="bi bi-cash-coin"></i>
                         </span>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-medium text-gray-900">{{ $catamaran->name }}</span>
-                                <span class="text-sm text-gray-600">{{ $catamaran->bookings_count }} prenotazioni</span>
-                            </div>
-                            <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                @php
-                                    $maxBookings = $topCatamarans->max('bookings_count');
-                                    $percentage = $maxBookings > 0 ? ($catamaran->bookings_count / $maxBookings) * 100 : 0;
-                                @endphp
-                                <div class="h-full bg-primary-600 rounded-full" style="width: {{ $percentage }}%"></div>
-                            </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h3 class="fw-bold text-dark mb-1">Report ricavi</h3>
+                            <p class="small text-muted mb-2">Analisi dettagliata di guadagni, transazioni e metodi di pagamento.</p>
+                            <span class="small fw-semibold text-success">
+                                Apri report <i class="bi bi-arrow-right ms-1"></i>
+                            </span>
                         </div>
                     </div>
-                @empty
-                    <p class="text-gray-500 text-center py-4">Nessun dato disponibile</p>
-                @endforelse
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('admin.reports.bookings', ['period' => $period]) }}"
+               class="dash-card h-100 d-block text-decoration-none cat-card-link"
+               style="border-color:rgba(2,132,199,.25)">
+                <div class="dash-card-body">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:48px; height:48px; font-size:1.5rem">
+                            <i class="bi bi-receipt"></i>
+                        </span>
+                        <div class="flex-grow-1 min-w-0">
+                            <h3 class="fw-bold text-dark mb-1">Report prenotazioni</h3>
+                            <p class="small text-muted mb-2">Statistiche per stato, fascia oraria e catamarano.</p>
+                            <span class="small fw-semibold text-primary">
+                                Apri report <i class="bi bi-arrow-right ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('admin.reports.occupancy', ['period' => $period]) }}"
+               class="dash-card h-100 d-block text-decoration-none cat-card-link"
+               style="border-color:rgba(139,92,246,.25)">
+                <div class="dash-card-body">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="rounded-3 d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:48px; height:48px; font-size:1.5rem; background:rgba(139,92,246,.12); color:#8b5cf6">
+                            <i class="bi bi-bar-chart-fill"></i>
+                        </span>
+                        <div class="flex-grow-1 min-w-0">
+                            <h3 class="fw-bold text-dark mb-1">Report occupazione</h3>
+                            <p class="small text-muted mb-2">Tasso di riempimento dei catamarani e fasce più popolari.</p>
+                            <span class="small fw-semibold" style="color:#8b5cf6">
+                                Apri report <i class="bi bi-arrow-right ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {{-- Charts --}}
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-graph-up me-2 text-success"></i>Andamento ricavi</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div style="height:320px"><canvas id="revenueChart"></canvas></div>
+                </div>
             </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-pie-chart me-2 text-primary"></i>Per stato</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div style="height:320px"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Top catamarans --}}
+    <div class="dash-card mb-4">
+        <div class="dash-card-header">
+            <h3><i class="bi bi-trophy me-2 text-warning"></i>Catamarani più prenotati</h3>
+        </div>
+        <div class="dash-card-body">
+            @php $maxBookings = $topCatamarans->max('bookings_count') ?? 0; @endphp
+            @forelse($topCatamarans as $index => $catamaran)
+                @php
+                    $pct = $maxBookings > 0 ? ($catamaran->bookings_count / $maxBookings) * 100 : 0;
+                    $medal = ['🥇', '🥈', '🥉'][$index] ?? '';
+                @endphp
+                <div class="d-flex align-items-center gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                    <span class="rounded-circle bg-warning-subtle text-warning d-inline-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                          style="width:36px; height:36px">
+                        {{ $medal ?: $index + 1 }}
+                    </span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="fw-semibold text-dark text-truncate">{{ $catamaran->name }}</span>
+                            <span class="small text-muted ms-2">{{ $catamaran->bookings_count }} prenotazioni</span>
+                        </div>
+                        <div class="progress" style="height:8px; border-radius:999px">
+                            <div class="progress-bar bg-primary" style="width: {{ $pct }}%; border-radius:999px"></div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-bar-chart fs-1 d-block mb-2 opacity-50"></i>
+                    <p class="mb-0">Nessun dato disponibile per questo periodo</p>
+                </div>
+            @endforelse
         </div>
     </div>
 @endsection
@@ -217,15 +214,21 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Revenue Chart
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    Chart.defaults.font.family = "'Google Sans', 'Inter', system-ui, sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    // Revenue chart
     const revenueData = @json($revenueByDay);
     const revenueLabels = Object.keys(revenueData).map(date => {
-        const d = new Date(date);
-        return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+        return new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
     });
     const revenueValues = Object.values(revenueData);
-    
+
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const gradient = revenueCtx.createLinearGradient(0, 0, 0, 320);
+    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
     new Chart(revenueCtx, {
         type: 'line',
         data: {
@@ -233,60 +236,65 @@
             datasets: [{
                 label: 'Ricavi (€)',
                 data: revenueValues,
-                borderColor: 'rgb(14, 165, 233)',
-                backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                borderColor: '#10b981',
+                backgroundColor: gradient,
+                borderWidth: 2.5,
                 fill: true,
-                tension: 0.3
+                tension: 0.35,
+                pointRadius: 3,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                        label: (ctx) => '€' + ctx.parsed.y.toLocaleString('it-IT', { minimumFractionDigits: 2 })
+                    }
+                }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        callback: value => '€' + value.toLocaleString('it-IT')
-                    }
-                }
+                    grid: { color: 'rgba(15,23,42,0.05)' },
+                    ticks: { callback: v => '€' + v.toLocaleString('it-IT') }
+                },
+                x: { grid: { display: false } }
             }
         }
     });
 
-    // Status Chart
-    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    // Status chart
     const statusData = @json($bookingsByStatus);
-    const statusLabels = {
-        'pending': 'In attesa',
-        'confirmed': 'Confermate',
-        'completed': 'Completate',
-        'cancelled': 'Cancellate'
-    };
-    
-    new Chart(statusCtx, {
+    const statusLabels = { pending: 'In attesa', confirmed: 'Confermate', completed: 'Completate', cancelled: 'Cancellate' };
+    const statusColors = { pending: '#eab308', confirmed: '#10b981', completed: '#0284c7', cancelled: '#ef4444' };
+
+    new Chart(document.getElementById('statusChart').getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: Object.keys(statusData).map(s => statusLabels[s] || s),
             datasets: [{
                 data: Object.values(statusData),
-                backgroundColor: [
-                    'rgb(251, 191, 36)',
-                    'rgb(34, 197, 94)',
-                    'rgb(59, 130, 246)',
-                    'rgb(239, 68, 68)'
-                ]
+                backgroundColor: Object.keys(statusData).map(s => statusColors[s] || '#94a3b8'),
+                borderWidth: 3,
+                borderColor: '#fff',
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '65%',
             plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+                legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } },
+                tooltip: { backgroundColor: '#0f172a', padding: 12, cornerRadius: 10 }
             }
         }
     });

@@ -2,61 +2,50 @@
     'title',
     'value',
     'change' => null,
-    'changeType' => 'neutral', // positive, negative, neutral
+    'changeType' => 'neutral',
     'icon' => null,
-    'iconBg' => 'bg-primary-100',
-    'iconColor' => 'text-primary-600',
+    'iconBg' => 'bg-primary-subtle',
+    'iconColor' => 'text-primary',
     'href' => null,
 ])
 
 @php
     $changeColors = [
-        'positive' => 'text-emerald-600 bg-emerald-50',
-        'negative' => 'text-red-600 bg-red-50',
-        'neutral' => 'text-gray-600 bg-gray-100',
+        'positive' => 'bg-success-subtle text-success',
+        'negative' => 'bg-danger-subtle text-danger',
+        'neutral'  => 'bg-secondary-subtle text-secondary',
     ];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'bg-white rounded-2xl shadow-sm border border-gray-100 p-6 card-hover stat-card']) }}>
-    <div class="flex items-start justify-between">
-        <div class="flex-1">
-            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">{{ $title }}</p>
-            <p class="mt-2 text-3xl font-bold text-gray-900">{{ $value }}</p>
-            
+<div {{ $attributes->merge(['class' => 'stat-card card-hover']) }}>
+    <div class="d-flex align-items-start justify-content-between">
+        <div class="flex-grow-1">
+            <p class="small text-uppercase text-muted fw-medium m-0" style="letter-spacing:.05em">{{ $title }}</p>
+            <p class="h3 fw-bold text-dark mt-2 mb-0">{{ $value }}</p>
+
             @if($change !== null)
-                <div class="mt-3 flex items-center gap-2">
-                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium {{ $changeColors[$changeType] }}">
-                        @if($changeType === 'positive')
-                            <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                            </svg>
-                        @elseif($changeType === 'negative')
-                            <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                            </svg>
+                <div class="d-flex align-items-center gap-2 mt-3">
+                    <span class="badge rounded-pill px-2 py-1 small d-inline-flex align-items-center {{ $changeColors[$changeType] }}">
+                        @if($changeType === 'positive')<i class="bi bi-arrow-up me-1"></i>
+                        @elseif($changeType === 'negative')<i class="bi bi-arrow-down me-1"></i>
                         @endif
                         {{ $change }}
                     </span>
-                    <span class="text-xs text-gray-500">vs mese scorso</span>
+                    <small class="text-muted">vs mese scorso</small>
                 </div>
             @endif
         </div>
-        
+
         @if($icon)
-            <div class="flex-shrink-0 w-12 h-12 {{ $iconBg }} rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 {{ $iconColor }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    {!! $icon !!}
-                </svg>
+            <div class="flex-shrink-0 {{ $iconBg }} rounded-3 d-inline-flex align-items-center justify-content-center" style="width:48px;height:48px">
+                <span class="{{ $iconColor }}">{!! $icon !!}</span>
             </div>
         @endif
     </div>
-    
+
     @if($href)
-        <a href="{{ $href }}" class="mt-4 inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 group">
-            Vedi dettagli
-            <svg class="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+        <a href="{{ $href }}" class="d-inline-flex align-items-center mt-3 small fw-medium text-primary text-decoration-none">
+            Vedi dettagli<i class="bi bi-arrow-right ms-1"></i>
         </a>
     @endif
 </div>

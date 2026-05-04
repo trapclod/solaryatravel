@@ -2,51 +2,81 @@
 
 @section('title', 'Pagamenti')
 
+@php
+    $statusMeta = [
+        'pending'            => ['icon' => 'bi-hourglass-split',   'pill' => 's-pending',   'text' => 'text-warning'],
+        'processing'         => ['icon' => 'bi-arrow-repeat',      'pill' => 's-pending',   'text' => 'text-info'],
+        'succeeded'          => ['icon' => 'bi-check-circle-fill', 'pill' => 's-confirmed', 'text' => 'text-success'],
+        'failed'             => ['icon' => 'bi-x-octagon-fill',    'pill' => 's-cancelled', 'text' => 'text-danger'],
+        'cancelled'          => ['icon' => 'bi-slash-circle',      'pill' => 's-no_show',   'text' => 'text-secondary'],
+        'refunded'           => ['icon' => 'bi-arrow-counterclockwise', 'pill' => 's-inactive', 'text' => 'text-primary'],
+        'partially_refunded' => ['icon' => 'bi-arrow-90deg-left',  'pill' => 's-pending',   'text' => 'text-warning'],
+    ];
+    $gatewayMeta = [
+        'stripe' => ['icon' => 'bi-stripe',     'label' => 'Stripe',  'class' => 'text-primary'],
+        'paypal' => ['icon' => 'bi-paypal',     'label' => 'PayPal',  'class' => 'text-info'],
+    ];
+@endphp
+
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Pagamenti</h1>
-                <p class="text-gray-600">Gestione transazioni e rimborsi</p>
+    {{-- Page header --}}
+    <div class="dash-page-header">
+        <div>
+            <h1>Pagamenti</h1>
+            <p><i class="bi bi-credit-card-2-front me-1"></i>Gestione transazioni e rimborsi</p>
+        </div>
+    </div>
+
+    {{-- Mini stats --}}
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md">
+            <div class="dash-mini-stat is-active">
+                <div class="dash-mini-stat-label"><i class="bi bi-receipt me-1"></i>Totale</div>
+                <div class="dash-mini-stat-value">{{ $stats['total'] }}</div>
             </div>
         </div>
-
-        {{-- Stats --}}
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-sm text-gray-500">Totale Pagamenti</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $stats['total'] }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-sm text-gray-500">Completati</p>
-                <p class="text-2xl font-bold text-green-600">{{ $stats['succeeded'] }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-sm text-gray-500">In Attesa</p>
-                <p class="text-2xl font-bold text-yellow-600">{{ $stats['pending'] }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-sm text-gray-500">Incassato</p>
-                <p class="text-2xl font-bold text-primary-600">€{{ number_format($stats['total_amount'], 2, ',', '.') }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-sm text-gray-500">Rimborsato</p>
-                <p class="text-2xl font-bold text-red-600">€{{ number_format($stats['refunded_amount'], 2, ',', '.') }}</p>
+        <div class="col-6 col-md">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-check-circle me-1"></i>Completati</div>
+                <div class="dash-mini-stat-value text-success">{{ $stats['succeeded'] }}</div>
             </div>
         </div>
+        <div class="col-6 col-md">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-hourglass-split me-1"></i>In attesa</div>
+                <div class="dash-mini-stat-value text-warning">{{ $stats['pending'] }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-cash-coin me-1"></i>Incassato</div>
+                <div class="dash-mini-stat-value text-primary">€{{ number_format($stats['total_amount'], 2, ',', '.') }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-arrow-counterclockwise me-1"></i>Rimborsato</div>
+                <div class="dash-mini-stat-value text-danger">€{{ number_format($stats['refunded_amount'], 2, ',', '.') }}</div>
+            </div>
+        </div>
+    </div>
 
-        {{-- Filters --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <form action="{{ route('admin.payments.index') }}" method="GET" class="flex flex-wrap gap-4">
-                <div class="flex-1 min-w-[200px]">
-                    <input type="text" name="search" value="{{ request('search') }}" 
-                           placeholder="Cerca per ID pagamento, prenotazione..."
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+    {{-- Filters --}}
+    <div class="dash-card mb-3">
+        <div class="dash-card-body">
+            <form action="{{ route('admin.payments.index') }}" method="GET" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted mb-1">Cerca</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="search" value="{{ request('search') }}"
+                               placeholder="ID pagamento, prenotazione..." class="form-control">
+                    </div>
                 </div>
-                <div>
-                    <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                        <option value="">Tutti gli stati</option>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Stato</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tutti</option>
                         @foreach($statuses as $status)
                             <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
                                 {{ $status->label() }}
@@ -54,139 +84,140 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <select name="gateway" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                        <option value="">Tutti i gateway</option>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Gateway</label>
+                    <select name="gateway" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tutti</option>
                         <option value="stripe" {{ request('gateway') === 'stripe' ? 'selected' : '' }}>Stripe</option>
                         <option value="paypal" {{ request('gateway') === 'paypal' ? 'selected' : '' }}>PayPal</option>
                     </select>
                 </div>
-                <div>
-                    <input type="date" name="from" value="{{ request('from') }}" 
-                           class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                           placeholder="Da">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Da</label>
+                    <input type="date" name="from" value="{{ request('from') }}" class="form-control">
                 </div>
-                <div>
-                    <input type="date" name="to" value="{{ request('to') }}" 
-                           class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                           placeholder="A">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">A</label>
+                    <input type="date" name="to" value="{{ request('to') }}" class="form-control">
                 </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                        Filtra
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-funnel me-1"></i>Filtra
                     </button>
                     @if(request()->hasAny(['search', 'status', 'gateway', 'from', 'to']))
-                        <a href="{{ route('admin.payments.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                            Reset
+                        <a href="{{ route('admin.payments.index') }}" class="btn btn-light border rounded-pill px-3 fw-semibold">
+                            <i class="bi bi-x-lg me-1"></i>Reset
                         </a>
                     @endif
                 </div>
             </form>
         </div>
+    </div>
 
-        {{-- Payments Table --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-100">
+    {{-- Payments table --}}
+    <div class="dash-card mb-4">
+        <div class="table-responsive">
+            <table class="dash-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Prenotazione</th>
+                        <th>Cliente</th>
+                        <th>Gateway</th>
+                        <th class="text-end">Importo</th>
+                        <th class="text-center">Stato</th>
+                        <th class="text-end">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($payments as $payment)
+                        @php
+                            $sv = $payment->status->value;
+                            $meta = $statusMeta[$sv] ?? ['icon' => 'bi-circle', 'pill' => 's-pending', 'text' => 'text-secondary'];
+                            $gw = $gatewayMeta[$payment->gateway] ?? ['icon' => 'bi-wallet2', 'label' => ucfirst($payment->gateway), 'class' => 'text-secondary'];
+                        @endphp
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Prenotazione</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cliente</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Gateway</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Importo</th>
-                            <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Stato</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($payments as $payment)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 text-sm text-gray-600">
-                                    {{ $payment->created_at->format('d/m/Y H:i') }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if($payment->booking)
-                                        <a href="{{ route('admin.bookings.show', $payment->booking) }}" 
-                                           class="text-primary-600 hover:text-primary-800 font-medium">
-                                            {{ $payment->booking->booking_number }}
-                                        </a>
-                                    @else
-                                        <span class="text-gray-400">-</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if($payment->booking)
-                                        <div class="text-sm">
-                                            <p class="font-medium text-gray-900">
-                                                {{ $payment->booking->customer_first_name }} {{ $payment->booking->customer_last_name }}
-                                            </p>
-                                            <p class="text-gray-500">{{ $payment->booking->customer_email }}</p>
-                                        </div>
-                                    @else
-                                        <span class="text-gray-400">-</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        @if($payment->gateway === 'stripe')
-                                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/>
-                                            </svg>
-                                        @else
-                                            <span class="text-gray-600 text-sm">{{ ucfirst($payment->gateway) }}</span>
-                                        @endif
+                            <td>
+                                <div class="small fw-semibold text-dark">
+                                    <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                    {{ $payment->created_at->format('d/m/Y') }}
+                                </div>
+                                <div class="small text-muted">{{ $payment->created_at->format('H:i') }}</div>
+                            </td>
+                            <td>
+                                @if($payment->booking)
+                                    <a href="{{ route('admin.bookings.show', $payment->booking) }}"
+                                       class="text-primary fw-semibold text-decoration-none">
+                                        <i class="bi bi-receipt me-1"></i>{{ $payment->booking->booking_number }}
+                                    </a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->booking)
+                                    <div class="fw-semibold text-dark text-truncate" style="max-width:200px">
+                                        {{ $payment->booking->customer_first_name }} {{ $payment->booking->customer_last_name }}
+                                    </div>
+                                    <div class="small text-muted text-truncate" style="max-width:200px">
+                                        {{ $payment->booking->customer_email }}
+                                    </div>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi {{ $gw['icon'] }} fs-5 {{ $gw['class'] }}"></i>
+                                    <div>
+                                        <div class="small fw-semibold text-dark">{{ $gw['label'] }}</div>
                                         @if($payment->card_last_four)
-                                            <span class="text-xs text-gray-500">•••• {{ $payment->card_last_four }}</span>
+                                            <div class="small text-muted font-monospace">•••• {{ $payment->card_last_four }}</div>
                                         @endif
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <p class="font-semibold text-gray-900">€{{ number_format($payment->amount, 2, ',', '.') }}</p>
-                                    @if($payment->refunded_amount > 0)
-                                        <p class="text-xs text-red-600">-€{{ number_format($payment->refunded_amount, 2, ',', '.') }}</p>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    @php
-                                        $statusColors = [
-                                            'pending' => 'bg-yellow-100 text-yellow-800',
-                                            'processing' => 'bg-blue-100 text-blue-800',
-                                            'succeeded' => 'bg-green-100 text-green-800',
-                                            'failed' => 'bg-red-100 text-red-800',
-                                            'cancelled' => 'bg-gray-100 text-gray-800',
-                                            'refunded' => 'bg-purple-100 text-purple-800',
-                                            'partially_refunded' => 'bg-orange-100 text-orange-800',
-                                        ];
-                                        $colorClass = $statusColors[$payment->status->value] ?? 'bg-gray-100 text-gray-800';
-                                    @endphp
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $colorClass }}">
-                                        {{ $payment->status->label() }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <a href="{{ route('admin.payments.show', $payment) }}" 
-                                       class="text-primary-600 hover:text-primary-800">
-                                        Dettagli
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                    Nessun pagamento trovato
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            @if($payments->hasPages())
-                <div class="px-6 py-4 border-t border-gray-100">
-                    {{ $payments->links() }}
-                </div>
-            @endif
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <div class="fw-bold text-dark">€{{ number_format($payment->amount, 2, ',', '.') }}</div>
+                                @if($payment->refunded_amount > 0)
+                                    <div class="small text-danger">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                                        -€{{ number_format($payment->refunded_amount, 2, ',', '.') }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="status-pill {{ $meta['pill'] }}">
+                                    <i class="bi {{ $meta['icon'] }}"></i>
+                                    {{ $payment->status->label() }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ route('admin.payments.show', $payment) }}"
+                                   class="dash-icon-btn" title="Dettagli">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-credit-card-2-front fs-1 d-block mb-2 opacity-50"></i>
+                                    <p class="fw-semibold mb-1">Nessun pagamento trovato</p>
+                                    <p class="small mb-0">Prova a modificare i filtri di ricerca</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        @if($payments->hasPages())
+            <div class="border-top px-3 py-3">
+                {{ $payments->withQueryString()->links() }}
+            </div>
+        @endif
     </div>
 @endsection

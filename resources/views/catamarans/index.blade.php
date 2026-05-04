@@ -3,103 +3,64 @@
 @section('title', 'I Nostri Catamarani - Solarya Travel')
 
 @section('content')
-    {{-- Hero Section --}}
-    <section class="relative bg-gradient-to-r from-navy-900 to-navy-800 text-white py-20">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="max-w-3xl">
-                <h1 class="text-4xl lg:text-5xl font-bold mb-4">I Nostri Catamarani</h1>
-                <p class="text-xl text-gray-300">
-                    Scopri la nostra flotta di catamarani di lusso. Comfort, eleganza e prestazioni 
+    {{-- Hero --}}
+    <section class="bg-gradient-navy text-white py-5">
+        <div class="container py-4">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3 font-serif">I Nostri Catamarani</h1>
+                <p class="lead text-white-50 mb-0">
+                    Scopri la nostra flotta di catamarani di lusso. Comfort, eleganza e prestazioni
                     per un'esperienza di navigazione indimenticabile.
                 </p>
             </div>
         </div>
     </section>
 
-    {{-- Availability Search --}}
-    <section class="relative -mt-10 z-10">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="bg-white rounded-3xl shadow-xl border border-sand-200 p-5 lg:p-6">
-                <form method="GET" action="{{ route('catamarans.index') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-end">
-                    <div class="md:col-span-5">
-                        <label for="filter_date" class="block text-sm font-semibold text-navy-900 mb-2">Data escursione</label>
-                        <input
-                            id="filter_date"
-                            type="date"
-                            name="date"
+    {{-- Search box --}}
+    <section class="position-relative" style="margin-top:-2.5rem;z-index:10;">
+        <div class="container">
+            <div class="card border-0 shadow-lg rounded-4 p-4">
+                <form method="GET" action="{{ route('catamarans.index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="filter_date" class="form-label fw-semibold text-navy">Data escursione</label>
+                        <input id="filter_date" type="date" name="date" required
                             value="{{ $search['date'] ?? '' }}"
                             min="{{ now()->addHours(config('booking.advance_hours', 24))->toDateString() }}"
-                            required
-                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
-                        />
+                            class="form-control form-control-lg rounded-3">
                     </div>
-
-                    <div class="md:col-span-2">
-                        <label for="filter_adults" class="block text-sm font-semibold text-navy-900 mb-2">Adulti</label>
-                        <input
-                            id="filter_adults"
-                            type="number"
-                            name="adults"
-                            min="1"
-                            max="20"
-                            value="{{ $search['adults'] ?? 2 }}"
-                            required
-                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
-                        />
+                    <div class="col-md-2 col-6">
+                        <label for="filter_adults" class="form-label fw-semibold text-navy">Adulti</label>
+                        <input id="filter_adults" type="number" name="adults" min="1" max="20" required
+                            value="{{ $search['adults'] ?? 2 }}" class="form-control form-control-lg rounded-3">
                     </div>
-
-                    <div class="md:col-span-2">
-                        <label for="filter_children" class="block text-sm font-semibold text-navy-900 mb-2">Bambini</label>
-                        <input
-                            id="filter_children"
-                            type="number"
-                            name="children"
-                            min="0"
-                            max="20"
-                            value="{{ $search['children'] ?? 0 }}"
-                            required
-                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
-                        />
+                    <div class="col-md-2 col-6">
+                        <label for="filter_children" class="form-label fw-semibold text-navy">Bambini</label>
+                        <input id="filter_children" type="number" name="children" min="0" max="20" required
+                            value="{{ $search['children'] ?? 0 }}" class="form-control form-control-lg rounded-3">
                     </div>
-
-                    <div class="md:col-span-2">
-                        <label for="filter_slot_type" class="block text-sm font-semibold text-navy-900 mb-2">Durata</label>
-                        <select
-                            id="filter_slot_type"
-                            name="slot_type"
-                            class="w-full rounded-xl border border-sand-300 bg-white text-navy-900 px-4 py-3 focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
-                        >
+                    <div class="col-md-2">
+                        <label for="filter_slot_type" class="form-label fw-semibold text-navy">Durata</label>
+                        <select id="filter_slot_type" name="slot_type" class="form-select form-select-lg rounded-3">
                             <option value="">Tutte</option>
                             <option value="half_day" @selected(($search['slot_type'] ?? null) === 'half_day')>Mezza giornata</option>
                             <option value="full_day" @selected(($search['slot_type'] ?? null) === 'full_day')>Giornata intera</option>
                         </select>
                     </div>
-
-                    <div class="md:col-span-1">
-                        <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-gold-500 to-gold-600 text-white font-semibold rounded-xl hover:from-gold-600 hover:to-gold-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                            Cerca
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-gold btn-lg w-100 rounded-3 shadow-sm fw-semibold">
+                            <i class="bi bi-search"></i>
                         </button>
                     </div>
                 </form>
 
                 @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']))
-                    <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 font-medium">
-                            {{ $search['results'] }} catamarani disponibili
-                        </span>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
-                            {{ \Carbon\Carbon::parse($search['date'])->locale('it')->isoFormat('D MMMM YYYY') }}
-                        </span>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
-                            {{ $search['adults'] }} adulti
-                        </span>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
-                            {{ $search['children'] }} bambini
-                        </span>
+                    <div class="mt-3 d-flex flex-wrap gap-2">
+                        <span class="badge rounded-pill bg-primary-subtle text-primary fw-medium px-3 py-2">{{ $search['results'] }} catamarani disponibili</span>
+                        <span class="badge rounded-pill bg-light text-secondary px-3 py-2">{{ \Carbon\Carbon::parse($search['date'])->locale('it')->isoFormat('D MMMM YYYY') }}</span>
+                        <span class="badge rounded-pill bg-light text-secondary px-3 py-2">{{ $search['adults'] }} adulti</span>
+                        <span class="badge rounded-pill bg-light text-secondary px-3 py-2">{{ $search['children'] }} bambini</span>
                         @if(!empty($search['slot_type']))
-                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-sand-100 text-navy-700">
-                                {{ $search['slot_type'] === 'half_day' ? 'Mezza giornata' : 'Giornata intera' }}
-                            </span>
+                            <span class="badge rounded-pill bg-light text-secondary px-3 py-2">{{ $search['slot_type'] === 'half_day' ? 'Mezza giornata' : 'Giornata intera' }}</span>
                         @endif
                     </div>
                 @endif
@@ -108,112 +69,67 @@
     </section>
 
     {{-- Catamarans Grid --}}
-    <section class="py-16 lg:py-24 bg-sand-50">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <section class="py-5 bg-sand-50">
+        <div class="container py-4">
+            <div class="row g-4">
                 @forelse($catamarans as $catamaran)
-                    <article class="bg-white rounded-2xl shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-                        {{-- Image --}}
-                        <a href="{{ route('catamarans.show', $catamaran) }}" class="block relative aspect-[4/3] overflow-hidden">
-                            @if($catamaran->primaryImage)
-                                <img src="{{ asset('storage/' . $catamaran->primaryImage->image_path) }}" 
-                                     alt="{{ $catamaran->name }}"
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            @else
-                                <div class="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-                                    <svg class="w-16 h-16 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                                    </svg>
-                                </div>
-                            @endif
-                            <div class="absolute top-4 right-4 flex flex-col gap-2 items-end">
-                                @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']) && isset($catamaran->matched_seats_available))
-                                    <span class="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
-                                        Disponibile per {{ $catamaran->matched_seats_available }} persone
-                                    </span>
+                    @php
+                        $rawFeatures = $catamaran->features;
+                        $features = is_string($rawFeatures) ? (json_decode($rawFeatures, true) ?? []) : (is_array($rawFeatures) ? $rawFeatures : []);
+                    @endphp
+                    <div class="col-md-6 col-lg-4">
+                        <article class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden card-hover">
+                            <a href="{{ route('catamarans.show', $catamaran) }}" class="d-block position-relative ratio ratio-4x3">
+                                @if($catamaran->primaryImage)
+                                    <img src="{{ asset('storage/' . $catamaran->primaryImage->image_path) }}"
+                                         alt="{{ $catamaran->name }}" class="object-fit-cover w-100 h-100">
+                                @else
+                                    <div class="bg-gradient-primary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-water display-1 text-white opacity-50"></i>
+                                    </div>
                                 @endif
-                                <span class="bg-gold-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                                    Max {{ $catamaran->capacity }} ospiti
-                                </span>
-                            </div>
-                        </a>
-
-                        {{-- Content --}}
-                        <div class="p-6">
-                            <h2 class="text-xl font-bold text-navy-900 mb-2">
-                                <a href="{{ route('catamarans.show', $catamaran) }}" class="hover:text-primary-600 transition-colors">
-                                    {{ $catamaran->name }}
-                                </a>
-                            </h2>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                {{ $catamaran->description_short }}
-                            </p>
-
-                            {{-- Features --}}
-                            <div class="flex flex-wrap gap-2 mb-4">
-                                <span class="inline-flex items-center text-sm text-gray-500">
-                                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                                    </svg>
-                                    {{ $catamaran->length_meters }}m
-                                </span>
-                                @php 
-                                    $rawFeatures = $catamaran->features;
-                                    if (is_string($rawFeatures)) {
-                                        $features = json_decode($rawFeatures, true) ?? [];
-                                    } else {
-                                        $features = is_array($rawFeatures) ? $rawFeatures : [];
-                                    }
-                                @endphp
-                                @foreach(array_slice($features, 0, 2) as $feature)
-                                    <span class="inline-flex items-center text-sm text-gray-500">
-                                        <svg class="w-4 h-4 mr-1 text-gold-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                        </svg>
-                                        {{ $feature }}
-                                    </span>
-                                @endforeach
-                            </div>
-
-                            {{-- Price & CTA --}}
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                <div>
-                                    <span class="text-sm text-gray-500">Da</span>
-                                    <p class="text-2xl font-bold text-primary-600">
-                                        €{{ number_format($catamaran->price_per_person_half_day, 0) }}
-                                        <span class="text-sm font-normal text-gray-500">/persona</span>
-                                    </p>
+                                <div class="position-absolute top-0 end-0 p-3 d-flex flex-column align-items-end gap-2">
+                                    @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']) && isset($catamaran->matched_seats_available))
+                                        <span class="badge rounded-pill bg-success shadow-sm">Disponibile per {{ $catamaran->matched_seats_available }} persone</span>
+                                    @endif
+                                    <span class="badge rounded-pill bg-warning text-dark shadow-sm">Max {{ $catamaran->capacity }} ospiti</span>
                                 </div>
-                                @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']))
-                                <a href="{{ route('booking.start', ['catamaran_slug' => $catamaran->slug, 'date' => $search['date']]) }}"
-                                   class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
-                                    Prenota
-                                    <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            @else
-                                <a href="{{ route('catamarans.show', $catamaran) }}"
-                                   class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
-                                    Scopri
-                                    <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                            @endif
+                            </a>
+                            <div class="card-body p-4">
+                                <h2 class="h5 fw-bold text-navy mb-2">
+                                    <a href="{{ route('catamarans.show', $catamaran) }}" class="text-decoration-none stretched-link-no text-navy">{{ $catamaran->name }}</a>
+                                </h2>
+                                <p class="text-secondary mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ $catamaran->description_short }}</p>
+
+                                <div class="d-flex flex-wrap gap-3 small text-muted mb-3">
+                                    <span><i class="bi bi-rulers me-1"></i>{{ $catamaran->length_meters }}m</span>
+                                    @foreach(array_slice($features, 0, 2) as $feature)
+                                        <span><i class="bi bi-check-circle-fill text-warning me-1"></i>{{ $feature }}</span>
+                                    @endforeach
+                                </div>
+
+                                <hr>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <small class="text-muted d-block">Da</small>
+                                        <p class="h4 fw-bold text-primary mb-0">€{{ number_format($catamaran->price_per_person_half_day, 0) }}<small class="fw-normal text-muted fs-6">/persona</small></p>
+                                    </div>
+                                    @if(($search['isAvailabilitySearch'] ?? false) && !empty($search['date']))
+                                        <a href="{{ route('booking.start', ['catamaran_slug' => $catamaran->slug, 'date' => $search['date']]) }}" class="btn btn-primary rounded-pill px-3 fw-semibold">Prenota <i class="bi bi-arrow-right ms-1"></i></a>
+                                    @else
+                                        <a href="{{ route('catamarans.show', $catamaran) }}" class="btn btn-primary rounded-pill px-3 fw-semibold">Scopri <i class="bi bi-arrow-right ms-1"></i></a>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
-                    </article>
+                        </article>
+                    </div>
                 @empty
-                    <div class="col-span-full text-center py-12">
-                        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                        </svg>
-                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun catamarano disponibile</h3>
-                        <p class="text-gray-500">
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-water display-1 text-muted opacity-50 mb-3"></i>
+                        <h3 class="h4 fw-semibold text-secondary mb-2">Nessun catamarano disponibile</h3>
+                        <p class="text-muted">
                             @if($search['isAvailabilitySearch'] ?? false)
-                                Nessuna disponibilita trovata per i criteri selezionati. Prova a cambiare data o numero ospiti.
+                                Nessuna disponibilità trovata per i criteri selezionati. Prova a cambiare data o numero ospiti.
                             @else
                                 Torna a trovarci presto per scoprire la nostra flotta.
                             @endif
@@ -224,73 +140,42 @@
         </div>
     </section>
 
-    {{-- Features Section --}}
-    <section class="py-16 lg:py-24 bg-white">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl lg:text-4xl font-bold text-navy-900 mb-4">Perché Scegliere Solarya Travel</h2>
-                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                    Qualità, sicurezza e comfort per un'esperienza di navigazione senza paragoni
-                </p>
+    {{-- Why us --}}
+    <section class="py-5 bg-white">
+        <div class="container py-4">
+            <div class="text-center mb-5">
+                <h2 class="display-6 fw-bold text-navy mb-3 font-serif">Perché Scegliere Solarya Travel</h2>
+                <p class="lead text-secondary mx-auto" style="max-width:560px">Qualità, sicurezza e comfort per un'esperienza di navigazione senza paragoni</p>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
+            <div class="row g-4">
+                @php
+                    $why = [
+                        ['icon' => 'shield-check', 'bg' => 'primary', 'title' => 'Sicurezza Certificata', 'desc' => 'Tutti i nostri catamarani sono regolarmente ispezionati e certificati'],
+                        ['icon' => 'stars', 'bg' => 'warning', 'title' => 'Equipaggio Esperto', 'desc' => 'Skipper professionisti con anni di esperienza nella navigazione'],
+                        ['icon' => 'cash-coin', 'bg' => 'success', 'title' => 'Prezzi Trasparenti', 'desc' => 'Nessun costo nascosto, tutto incluso nel prezzo che vedi'],
+                        ['icon' => 'gem', 'bg' => 'info', 'title' => 'Esperienza Premium', 'desc' => 'Servizio personalizzato per rendere ogni viaggio unico'],
+                    ];
+                @endphp
+                @foreach($why as $w)
+                    <div class="col-6 col-md-3 text-center">
+                        <div class="rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center bg-{{ $w['bg'] }}-subtle text-{{ $w['bg'] }}" style="width:64px;height:64px;">
+                            <i class="bi bi-{{ $w['icon'] }} fs-2"></i>
+                        </div>
+                        <h3 class="h6 fw-semibold text-navy mb-2">{{ $w['title'] }}</h3>
+                        <p class="text-secondary small mb-0">{{ $w['desc'] }}</p>
                     </div>
-                    <h3 class="text-lg font-semibold text-navy-900 mb-2">Sicurezza Certificata</h3>
-                    <p class="text-gray-600">Tutti i nostri catamarani sono regolarmente ispezionati e certificati</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-gold-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-navy-900 mb-2">Equipaggio Esperto</h3>
-                    <p class="text-gray-600">Skipper professionisti con anni di esperienza nella navigazione</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-navy-900 mb-2">Prezzi Trasparenti</h3>
-                    <p class="text-gray-600">Nessun costo nascosto, tutto incluso nel prezzo che vedi</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-navy-900 mb-2">Esperienza Premium</h3>
-                    <p class="text-gray-600">Servizio personalizzato per rendere ogni viaggio unico</p>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
 
-    {{-- CTA Section --}}
-    <section class="py-16 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
-        <div class="container mx-auto px-4 lg:px-8 text-center">
-            <h2 class="text-3xl lg:text-4xl font-bold mb-4">Pronto per Salpare?</h2>
-            <p class="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-                Scegli il catamarano perfetto per la tua avventura e prenota oggi stesso
-            </p>
-            <a href="{{ route('booking.start') }}" 
-               class="inline-flex items-center px-8 py-4 bg-white text-primary-600 font-semibold rounded-full hover:bg-primary-50 transition-colors shadow-lg">
-                Prenota Ora
-                <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+    {{-- CTA --}}
+    <section class="py-5 bg-gradient-primary text-white">
+        <div class="container py-4 text-center">
+            <h2 class="display-6 fw-bold mb-3 font-serif">Pronto per Salpare?</h2>
+            <p class="lead text-white-50 mb-4 mx-auto" style="max-width:560px">Scegli il catamarano perfetto per la tua avventura e prenota oggi stesso</p>
+            <a href="{{ route('booking.start') }}" class="btn btn-light btn-lg rounded-pill shadow fw-semibold">
+                Prenota Ora <i class="bi bi-arrow-right ms-2"></i>
             </a>
         </div>
     </section>

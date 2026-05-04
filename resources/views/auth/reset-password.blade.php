@@ -3,12 +3,12 @@
 @section('title', 'Reimposta Password')
 
 @section('content')
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-serif font-bold text-navy-900 mb-2">Reimposta la Password</h1>
-        <p class="text-gray-600">Inserisci la tua nuova password</p>
+    <div class="text-center mb-4">
+        <h1 class="font-serif fw-bold text-navy h3 mb-2">Reimposta la Password</h1>
+        <p class="text-muted">Inserisci la tua nuova password</p>
     </div>
 
-    <form method="POST" action="{{ route('password.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('password.store') }}">
         @csrf
 
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
@@ -40,8 +40,6 @@
             autocomplete="new-password"
         />
 
-        <x-button type="primary" class="w-full">
-            Reimposta Password
-        </x-button>
+        <x-button type="primary" class="w-100">Reimposta Password</x-button>
     </form>
 @endsection

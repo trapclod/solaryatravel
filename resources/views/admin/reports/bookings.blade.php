@@ -1,166 +1,202 @@
 @extends('layouts.admin')
 
-@section('title', 'Report Prenotazioni')
+@section('title', 'Report prenotazioni')
+
+@php
+    $periodLabels = [
+        'today' => 'Oggi', 'week' => 'Questa settimana', 'month' => 'Questo mese',
+        'quarter' => 'Questo trimestre', 'year' => "Quest'anno", 'all' => 'Tutto lo storico',
+    ];
+@endphp
 
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('admin.reports.index') }}" 
-                   class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Report Prenotazioni</h1>
-                    <p class="text-gray-600">Statistiche sulle prenotazioni</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <form action="{{ route('admin.reports.bookings') }}" method="GET" class="flex items-center gap-2">
-                    <select name="period" onchange="this.form.submit()" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                        <option value="today" {{ $period === 'today' ? 'selected' : '' }}>Oggi</option>
-                        <option value="week" {{ $period === 'week' ? 'selected' : '' }}>Questa settimana</option>
-                        <option value="month" {{ $period === 'month' ? 'selected' : '' }}>Questo mese</option>
-                        <option value="quarter" {{ $period === 'quarter' ? 'selected' : '' }}>Questo trimestre</option>
-                        <option value="year" {{ $period === 'year' ? 'selected' : '' }}>Quest'anno</option>
-                        <option value="all" {{ $period === 'all' ? 'selected' : '' }}>Tutto</option>
-                    </select>
-                </form>
-                <a href="{{ route('admin.reports.export', ['type' => 'bookings', 'period' => $period]) }}" 
-                   class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                    Esporta CSV
-                </a>
-            </div>
-        </div>
-
-        {{-- Period Info --}}
-        <div class="text-sm text-gray-500">
-            Periodo: {{ $startDate->format('d/m/Y') }} - {{ $endDate->format('d/m/Y') }}
-        </div>
-
-        {{-- Stats --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-gray-500">Totale Prenotazioni</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $stats['total'] }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-gray-500">Confermate</p>
-                <p class="text-2xl font-bold text-green-600">{{ $stats['confirmed'] }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-gray-500">Passeggeri Totali</p>
-                <p class="text-2xl font-bold text-blue-600">{{ $stats['passengers'] }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-gray-500">Tasso Cancellazione</p>
-                <p class="text-2xl font-bold {{ $stats['cancellation_rate'] > 10 ? 'text-red-600' : 'text-gray-900' }}">
-                    {{ $stats['cancellation_rate'] }}%
+    <div class="dash-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.reports.index') }}" class="dash-icon-btn" title="Torna ai report">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="mb-0">Report prenotazioni</h1>
+                <p class="mt-1 mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ $startDate->format('d/m/Y') }} → {{ $endDate->format('d/m/Y') }}
                 </p>
             </div>
         </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <form action="{{ route('admin.reports.bookings') }}" method="GET">
+                <select name="period" onchange="this.form.submit()" class="form-select rounded-pill px-3 fw-semibold">
+                    @foreach($periodLabels as $value => $label)
+                        <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </form>
+            <a href="{{ route('admin.reports.export', ['type' => 'bookings', 'period' => $period]) }}"
+               class="btn btn-primary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-download me-2"></i>Esporta CSV
+            </a>
+        </div>
+    </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Bookings by Status --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Prenotazioni per Stato</h3>
-                <div class="h-64">
-                    <canvas id="statusChart"></canvas>
+    {{-- Stats --}}
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat is-active">
+                <div class="dash-mini-stat-label"><i class="bi bi-receipt me-1"></i>Totale</div>
+                <div class="dash-mini-stat-value">{{ $stats['total'] }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-check2-circle me-1"></i>Confermate</div>
+                <div class="dash-mini-stat-value text-success">{{ $stats['confirmed'] }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-people-fill me-1"></i>Passeggeri</div>
+                <div class="dash-mini-stat-value text-primary">{{ $stats['passengers'] }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="dash-mini-stat">
+                <div class="dash-mini-stat-label"><i class="bi bi-x-circle me-1"></i>Tasso cancellazione</div>
+                <div class="dash-mini-stat-value {{ $stats['cancellation_rate'] > 10 ? 'text-danger' : 'text-dark' }}">
+                    {{ $stats['cancellation_rate'] }}%
                 </div>
             </div>
+        </div>
+    </div>
 
-            {{-- Bookings by Time Slot --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Prenotazioni per Fascia Oraria</h3>
-                <div class="space-y-3">
+    {{-- Charts row --}}
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-pie-chart me-2 text-primary"></i>Per stato</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div style="height:320px"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-clock me-2 text-warning"></i>Per fascia oraria</h3>
+                </div>
+                <div class="dash-card-body">
+                    @php $maxSlot = $bookingsByTimeSlot->max('count') ?? 0; @endphp
                     @forelse($bookingsByTimeSlot as $slot)
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-gray-700">{{ $slot->time_slot }}</span>
-                                <span class="text-sm text-gray-600">{{ $slot->count }} prenotazioni</span>
+                        @php $pct = $maxSlot > 0 ? ($slot->count / $maxSlot) * 100 : 0; @endphp
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="small fw-semibold text-dark">
+                                    <i class="bi bi-clock me-1 text-warning"></i>{{ $slot->time_slot }}
+                                </span>
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                    {{ $slot->count }} prenotazioni
+                                </span>
                             </div>
-                            <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                                @php
-                                    $maxSlot = $bookingsByTimeSlot->max('count');
-                                    $percentage = $maxSlot > 0 ? ($slot->count / $maxSlot) * 100 : 0;
-                                @endphp
-                                <div class="h-full bg-blue-500 rounded-full" style="width: {{ $percentage }}%"></div>
+                            <div class="progress" style="height:10px; border-radius:999px">
+                                <div class="progress-bar bg-warning" style="width: {{ $pct }}%; border-radius:999px"></div>
                             </div>
                         </div>
                     @empty
-                        <p class="text-gray-500 text-center py-4">Nessun dato disponibile</p>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-clock fs-1 d-block mb-2 opacity-50"></i>
+                            <p class="mb-0">Nessun dato disponibile</p>
+                        </div>
                     @endforelse
                 </div>
             </div>
         </div>
+    </div>
 
-        {{-- Bookings by Catamaran --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Prenotazioni per Catamarano</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {{-- By catamaran --}}
+    <div class="dash-card mb-3">
+        <div class="dash-card-header">
+            <h3><i class="bi bi-water me-2 text-primary"></i>Per catamarano</h3>
+        </div>
+        <div class="dash-card-body">
+            <div class="row g-3">
                 @forelse($bookingsByCatamaran as $item)
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="font-semibold text-gray-900">{{ $item->catamaran->name ?? 'Sconosciuto' }}</p>
-                        <div class="flex justify-between mt-2 text-sm">
-                            <span class="text-gray-500">Prenotazioni</span>
-                            <span class="font-medium text-gray-900">{{ $item->total }}</span>
-                        </div>
-                        <div class="flex justify-between mt-1 text-sm">
-                            <span class="text-gray-500">Passeggeri</span>
-                            <span class="font-medium text-gray-900">{{ $item->passengers }}</span>
-                        </div>
-                        <div class="flex justify-between mt-1 text-sm">
-                            <span class="text-gray-500">Media passeggeri</span>
-                            <span class="font-medium text-gray-900">{{ $item->total > 0 ? number_format($item->passengers / $item->total, 1) : 0 }}</span>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center"
+                                      style="width:36px; height:36px">
+                                    <i class="bi bi-water"></i>
+                                </span>
+                                <span class="fw-semibold text-dark text-truncate">{{ $item->catamaran->name ?? 'Sconosciuto' }}</span>
+                            </div>
+                            <div class="row g-2 small mt-2">
+                                <div class="col-4">
+                                    <div class="text-muted">Prenot.</div>
+                                    <div class="fw-bold text-dark">{{ $item->total }}</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted">Pass.</div>
+                                    <div class="fw-bold text-primary">{{ $item->passengers }}</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted">Media</div>
+                                    <div class="fw-bold text-dark">{{ $item->total > 0 ? number_format($item->passengers / $item->total, 1, ',', '.') : 0 }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500 text-center py-4 col-span-3">Nessun dato disponibile</p>
+                    <div class="col-12 text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                        <p class="mb-0">Nessun dato disponibile</p>
+                    </div>
                 @endforelse
             </div>
         </div>
+    </div>
 
-        {{-- Daily Bookings Table --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-gray-900">Dettaglio Giornaliero</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-100">
+    {{-- Daily detail --}}
+    <div class="dash-card mb-4">
+        <div class="dash-card-header">
+            <h3><i class="bi bi-calendar3 me-2 text-primary"></i>Dettaglio giornaliero</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="dash-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th class="text-end">Prenotazioni</th>
+                        <th class="text-end">Passeggeri</th>
+                        <th class="text-end">Media</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($dailyBookings as $day)
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Prenotazioni</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Passeggeri</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Media</th>
+                            <td class="fw-semibold text-dark">
+                                <i class="bi bi-calendar-event me-2 text-muted"></i>
+                                {{ \Carbon\Carbon::parse($day->date)->locale('it')->isoFormat('ddd D MMM YYYY') }}
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-light text-dark border">{{ $day->total }}</span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">{{ $day->passengers }}</td>
+                            <td class="text-end text-muted">{{ $day->total > 0 ? number_format($day->passengers / $day->total, 1, ',', '.') : 0 }}</td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($dailyBookings as $day)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900">
-                                    {{ \Carbon\Carbon::parse($day->date)->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 text-right text-gray-600">{{ $day->total }}</td>
-                                <td class="px-6 py-4 text-right text-blue-600 font-semibold">{{ $day->passengers }}</td>
-                                <td class="px-6 py-4 text-right text-gray-600">
-                                    {{ $day->total > 0 ? number_format($day->passengers / $day->total, 1) : 0 }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                                    Nessun dato disponibile per questo periodo
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="4">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                    <p class="mb-0">Nessun dato disponibile per questo periodo</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 @endsection
@@ -168,35 +204,31 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    Chart.defaults.font.family = "'Google Sans', 'Inter', system-ui, sans-serif";
+    Chart.defaults.color = '#64748b';
+
     const statusData = @json($bookingsByStatus);
-    const statusLabels = {
-        'pending': 'In attesa',
-        'confirmed': 'Confermate',
-        'completed': 'Completate',
-        'cancelled': 'Cancellate'
-    };
-    
+    const statusLabels = { pending: 'In attesa', confirmed: 'Confermate', completed: 'Completate', cancelled: 'Cancellate', no_show: 'No show' };
+    const statusColors = { pending: '#eab308', confirmed: '#10b981', completed: '#0284c7', cancelled: '#ef4444', no_show: '#94a3b8' };
+
     new Chart(document.getElementById('statusChart').getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: Object.keys(statusData).map(s => statusLabels[s] || s),
             datasets: [{
                 data: Object.values(statusData),
-                backgroundColor: [
-                    'rgb(251, 191, 36)',
-                    'rgb(34, 197, 94)',
-                    'rgb(59, 130, 246)',
-                    'rgb(239, 68, 68)'
-                ]
+                backgroundColor: Object.keys(statusData).map(s => statusColors[s] || '#94a3b8'),
+                borderWidth: 3,
+                borderColor: '#fff',
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '65%',
             plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+                legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } },
+                tooltip: { backgroundColor: '#0f172a', padding: 12, cornerRadius: 10 }
             }
         }
     });

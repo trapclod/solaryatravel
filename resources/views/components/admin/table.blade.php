@@ -4,33 +4,25 @@
     'hover' => true,
 ])
 
-<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-    <div class="overflow-x-auto">
-        <table {{ $attributes->merge(['class' => 'min-w-full divide-y divide-gray-200']) }}>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table {{ $attributes->merge(['class' => 'table mb-0 align-middle' . ($striped ? ' table-striped' : '') . ($hover ? ' table-hover' : '')]) }}>
             @if(count($headers) > 0)
-                <thead class="bg-gray-50">
+                <thead class="table-light">
                     <tr>
                         @foreach($headers as $header)
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                {{ $header }}
-                            </th>
+                            <th scope="col" class="text-uppercase small text-muted fw-semibold py-3" style="letter-spacing:.05em">{{ $header }}</th>
                         @endforeach
                     </tr>
                 </thead>
             @elseif(isset($head))
-                <thead class="bg-gray-50">
-                    {{ $head }}
-                </thead>
+                <thead class="table-light">{{ $head }}</thead>
             @endif
-            
-            <tbody class="divide-y divide-gray-200 {{ $striped ? '' : '' }}">
-                {{ $slot }}
-            </tbody>
-            
+
+            <tbody>{{ $slot }}</tbody>
+
             @if(isset($foot))
-                <tfoot class="bg-gray-50">
-                    {{ $foot }}
-                </tfoot>
+                <tfoot class="table-light">{{ $foot }}</tfoot>
             @endif
         </table>
     </div>

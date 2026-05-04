@@ -1,248 +1,344 @@
 @extends('layouts.admin')
 
-@section('title', 'Dettagli Pagamento')
+@section('title', 'Dettagli pagamento')
+
+@php
+    $statusMeta = [
+        'pending'            => ['icon' => 'bi-hourglass-split',         'pill' => 's-pending',   'bg' => 'rgba(234,179,8,.08)',  'border' => 'rgba(234,179,8,.25)'],
+        'processing'         => ['icon' => 'bi-arrow-repeat',            'pill' => 's-pending',   'bg' => 'rgba(59,130,246,.08)', 'border' => 'rgba(59,130,246,.25)'],
+        'succeeded'          => ['icon' => 'bi-check-circle-fill',       'pill' => 's-confirmed', 'bg' => 'rgba(16,185,129,.08)', 'border' => 'rgba(16,185,129,.25)'],
+        'failed'             => ['icon' => 'bi-x-octagon-fill',          'pill' => 's-cancelled', 'bg' => 'rgba(239,68,68,.08)',  'border' => 'rgba(239,68,68,.25)'],
+        'cancelled'          => ['icon' => 'bi-slash-circle',             'pill' => 's-no_show',  'bg' => 'rgba(148,163,184,.1)', 'border' => 'rgba(148,163,184,.3)'],
+        'refunded'           => ['icon' => 'bi-arrow-counterclockwise',   'pill' => 's-inactive', 'bg' => 'rgba(2,132,199,.08)',  'border' => 'rgba(2,132,199,.25)'],
+        'partially_refunded' => ['icon' => 'bi-arrow-90deg-left',         'pill' => 's-pending',  'bg' => 'rgba(234,179,8,.08)',  'border' => 'rgba(234,179,8,.25)'],
+    ];
+    $sv = $payment->status->value;
+    $meta = $statusMeta[$sv] ?? ['icon' => 'bi-circle', 'pill' => 's-pending', 'bg' => 'rgba(148,163,184,.1)', 'border' => 'rgba(148,163,184,.3)'];
+
+    $gatewayMeta = [
+        'stripe' => ['icon' => 'bi-stripe', 'label' => 'Stripe', 'class' => 'text-primary'],
+        'paypal' => ['icon' => 'bi-paypal', 'label' => 'PayPal', 'class' => 'text-info'],
+    ];
+    $gw = $gatewayMeta[$payment->gateway] ?? ['icon' => 'bi-wallet2', 'label' => ucfirst($payment->gateway), 'class' => 'text-secondary'];
+@endphp
 
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('admin.payments.index') }}" 
-                   class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Pagamento #{{ substr($payment->uuid, 0, 8) }}</h1>
-                    <p class="text-gray-600">Dettagli della transazione</p>
-                </div>
-            </div>
+    {{-- Page header --}}
+    <div class="dash-page-header">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <a href="{{ route('admin.payments.index') }}" class="dash-icon-btn" title="Torna ai pagamenti">
+                <i class="bi bi-arrow-left"></i>
+            </a>
             <div>
-                @php
-                    $statusColors = [
-                        'pending' => 'bg-yellow-100 text-yellow-800',
-                        'processing' => 'bg-blue-100 text-blue-800',
-                        'succeeded' => 'bg-green-100 text-green-800',
-                        'failed' => 'bg-red-100 text-red-800',
-                        'cancelled' => 'bg-gray-100 text-gray-800',
-                        'refunded' => 'bg-purple-100 text-purple-800',
-                        'partially_refunded' => 'bg-orange-100 text-orange-800',
-                    ];
-                    $colorClass = $statusColors[$payment->status->value] ?? 'bg-gray-100 text-gray-800';
-                @endphp
-                <span class="px-4 py-2 text-sm font-semibold rounded-full {{ $colorClass }}">
-                    {{ $payment->status->label() }}
-                </span>
+                <h1 class="mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-credit-card-2-front text-primary"></i>
+                    Pagamento <span class="font-monospace text-muted">#{{ substr($payment->uuid, 0, 8) }}</span>
+                </h1>
+                <p class="mt-1 mb-0">
+                    <i class="bi bi-clock-history me-1"></i>
+                    {{ $payment->created_at->locale('it')->isoFormat('D MMM YYYY') }} alle {{ $payment->created_at->format('H:i') }}
+                </p>
             </div>
         </div>
+        <div>
+            <span class="status-pill {{ $meta['pill'] }}" style="font-size:.95rem; padding:.5rem 1rem">
+                <i class="bi {{ $meta['icon'] }}"></i>
+                {{ $payment->status->label() }}
+            </span>
+        </div>
+    </div>
 
-        {{-- Alert Messages --}}
-        @if(session('success'))
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div class="flex items-center gap-2 text-green-800">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{{ session('success') }}</span>
-                </div>
-            </div>
-        @endif
+    {{-- Flash messages --}}
+    @if(session('success'))
+        <div class="alert alert-success border-0 rounded-3 d-flex align-items-center gap-2 mb-3"
+             style="background:rgba(16,185,129,.1); color:#059669">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger border-0 rounded-3 d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
 
-        @if(session('error'))
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div class="flex items-center gap-2 text-red-800">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <span>{{ session('error') }}</span>
-                </div>
-            </div>
-        @endif
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- Payment Details --}}
-            <div class="lg:col-span-2 space-y-6">
-                {{-- Amount Card --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Importo</h2>
-                    <div class="flex items-end gap-4">
+    <div class="row g-3">
+        {{-- Main column --}}
+        <div class="col-lg-8">
+            {{-- Hero amount card --}}
+            <div class="dash-card mb-3 overflow-hidden">
+                <div class="dash-card-body p-4"
+                     style="background: linear-gradient(135deg, {{ $meta['bg'] }}, rgba(254,252,232,.4)); border-bottom: 1px solid {{ $meta['border'] }}">
+                    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
                         <div>
-                            <p class="text-4xl font-bold text-gray-900">€{{ number_format($payment->amount, 2, ',', '.') }}</p>
-                            <p class="text-sm text-gray-500">{{ strtoupper($payment->currency) }}</p>
+                            <div class="small text-muted text-uppercase fw-semibold mb-1">
+                                <i class="bi bi-cash-coin me-1"></i>Importo
+                            </div>
+                            <div class="display-4 fw-bold text-dark lh-1">
+                                €{{ number_format($payment->amount, 2, ',', '.') }}
+                            </div>
+                            <div class="small text-muted mt-1">
+                                <i class="bi bi-globe me-1"></i>{{ strtoupper($payment->currency) }}
+                            </div>
                         </div>
                         @if($payment->refunded_amount > 0)
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-red-600">-€{{ number_format($payment->refunded_amount, 2, ',', '.') }}</p>
-                                <p class="text-sm text-gray-500">Rimborsato</p>
+                            <div class="text-end">
+                                <div class="small text-muted text-uppercase fw-semibold mb-1">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Rimborsato
+                                </div>
+                                <div class="fs-2 fw-bold text-danger">
+                                    -€{{ number_format($payment->refunded_amount, 2, ',', '.') }}
+                                </div>
                             </div>
                         @endif
                     </div>
-                    @if($payment->fee_amount)
-                        <div class="mt-4 pt-4 border-t border-gray-100">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-500">Commissioni</span>
-                                <span class="text-gray-900">€{{ number_format($payment->fee_amount, 2, ',', '.') }}</span>
-                            </div>
-                            <div class="flex justify-between text-sm mt-1">
-                                <span class="text-gray-500">Netto</span>
-                                <span class="font-medium text-gray-900">€{{ number_format($payment->net_amount, 2, ',', '.') }}</span>
-                            </div>
-                        </div>
-                    @endif
                 </div>
+                @if($payment->fee_amount)
+                    <div class="dash-card-body py-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="small text-muted">Commissioni</div>
+                                <div class="fw-semibold text-dark">€{{ number_format($payment->fee_amount, 2, ',', '.') }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted">Netto incassato</div>
+                                <div class="fw-bold text-success">€{{ number_format($payment->net_amount, 2, ',', '.') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
 
-                {{-- Transaction Details --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Dettagli Transazione</h2>
-                    <dl class="space-y-3">
-                        <div class="flex justify-between">
-                            <dt class="text-gray-500">Gateway</dt>
-                            <dd class="font-medium text-gray-900">{{ ucfirst($payment->gateway) }}</dd>
-                        </div>
+            {{-- Transaction details --}}
+            <div class="dash-card mb-3">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-receipt-cutoff me-2 text-primary"></i>Dettagli transazione</h3>
+                </div>
+                <div class="dash-card-body">
+                    <dl class="row g-0 mb-0">
+                        <dt class="col-sm-4 py-2 small text-muted border-bottom">
+                            <i class="bi bi-bank me-1"></i>Gateway
+                        </dt>
+                        <dd class="col-sm-8 py-2 border-bottom mb-0">
+                            <i class="bi {{ $gw['icon'] }} fs-5 {{ $gw['class'] }} me-1"></i>
+                            <span class="fw-semibold text-dark">{{ $gw['label'] }}</span>
+                        </dd>
+
                         @if($payment->gateway_payment_id)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-500">Payment ID</dt>
-                                <dd class="font-mono text-sm text-gray-900">{{ $payment->gateway_payment_id }}</dd>
-                            </div>
+                            <dt class="col-sm-4 py-2 small text-muted border-bottom">
+                                <i class="bi bi-hash me-1"></i>Payment ID
+                            </dt>
+                            <dd class="col-sm-8 py-2 border-bottom mb-0">
+                                <code class="small text-dark">{{ $payment->gateway_payment_id }}</code>
+                            </dd>
                         @endif
+
                         @if($payment->gateway_transaction_id)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-500">Transaction ID</dt>
-                                <dd class="font-mono text-sm text-gray-900">{{ $payment->gateway_transaction_id }}</dd>
-                            </div>
+                            <dt class="col-sm-4 py-2 small text-muted border-bottom">
+                                <i class="bi bi-arrow-left-right me-1"></i>Transaction ID
+                            </dt>
+                            <dd class="col-sm-8 py-2 border-bottom mb-0">
+                                <code class="small text-dark">{{ $payment->gateway_transaction_id }}</code>
+                            </dd>
                         @endif
+
                         @if($payment->card_brand || $payment->card_last_four)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-500">Carta</dt>
-                                <dd class="font-medium text-gray-900">
-                                    {{ ucfirst($payment->card_brand ?? 'Carta') }} •••• {{ $payment->card_last_four }}
-                                </dd>
-                            </div>
+                            <dt class="col-sm-4 py-2 small text-muted border-bottom">
+                                <i class="bi bi-credit-card me-1"></i>Carta
+                            </dt>
+                            <dd class="col-sm-8 py-2 border-bottom mb-0">
+                                <span class="fw-semibold text-dark">{{ ucfirst($payment->card_brand ?? 'Carta') }}</span>
+                                <span class="font-monospace text-muted ms-2">•••• {{ $payment->card_last_four }}</span>
+                            </dd>
                         @endif
-                        <div class="flex justify-between">
-                            <dt class="text-gray-500">Data Creazione</dt>
-                            <dd class="text-gray-900">{{ $payment->created_at->format('d/m/Y H:i:s') }}</dd>
-                        </div>
+
+                        <dt class="col-sm-4 py-2 small text-muted {{ $payment->paid_at || $payment->refunded_at ? 'border-bottom' : '' }}">
+                            <i class="bi bi-calendar-plus me-1"></i>Creato
+                        </dt>
+                        <dd class="col-sm-8 py-2 mb-0 {{ $payment->paid_at || $payment->refunded_at ? 'border-bottom' : '' }}">
+                            <span class="text-dark">{{ $payment->created_at->format('d/m/Y H:i:s') }}</span>
+                        </dd>
+
                         @if($payment->paid_at)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-500">Data Pagamento</dt>
-                                <dd class="text-gray-900">{{ $payment->paid_at->format('d/m/Y H:i:s') }}</dd>
-                            </div>
+                            <dt class="col-sm-4 py-2 small text-muted {{ $payment->refunded_at ? 'border-bottom' : '' }}">
+                                <i class="bi bi-check2-circle me-1 text-success"></i>Pagato
+                            </dt>
+                            <dd class="col-sm-8 py-2 mb-0 {{ $payment->refunded_at ? 'border-bottom' : '' }}">
+                                <span class="text-success fw-semibold">{{ $payment->paid_at->format('d/m/Y H:i:s') }}</span>
+                            </dd>
                         @endif
+
                         @if($payment->refunded_at)
-                            <div class="flex justify-between">
-                                <dt class="text-gray-500">Data Rimborso</dt>
-                                <dd class="text-gray-900">{{ $payment->refunded_at->format('d/m/Y H:i:s') }}</dd>
-                            </div>
+                            <dt class="col-sm-4 py-2 small text-muted">
+                                <i class="bi bi-arrow-counterclockwise me-1 text-danger"></i>Rimborsato
+                            </dt>
+                            <dd class="col-sm-8 py-2 mb-0">
+                                <span class="text-danger fw-semibold">{{ $payment->refunded_at->format('d/m/Y H:i:s') }}</span>
+                            </dd>
                         @endif
                     </dl>
                 </div>
-
-                @if($payment->failure_reason)
-                    <div class="bg-red-50 rounded-xl border border-red-200 p-6">
-                        <h2 class="text-lg font-semibold text-red-800 mb-2">Motivo del Fallimento</h2>
-                        <p class="text-red-700">{{ $payment->failure_reason }}</p>
-                    </div>
-                @endif
-
-                @if($payment->refund_reason)
-                    <div class="bg-purple-50 rounded-xl border border-purple-200 p-6">
-                        <h2 class="text-lg font-semibold text-purple-800 mb-2">Motivo del Rimborso</h2>
-                        <p class="text-purple-700">{{ $payment->refund_reason }}</p>
-                    </div>
-                @endif
-
-                {{-- Gateway Response --}}
-                @if($payment->gateway_response)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Risposta Gateway</h2>
-                        <pre class="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 overflow-x-auto">{{ json_encode($payment->gateway_response, JSON_PRETTY_PRINT) }}</pre>
-                    </div>
-                @endif
             </div>
 
-            {{-- Sidebar --}}
-            <div class="space-y-6">
-                {{-- Linked Booking --}}
+            @if($payment->failure_reason)
+                <div class="dash-card mb-3" style="border-color: rgba(239,68,68,.3)">
+                    <div class="dash-card-body" style="background: rgba(239,68,68,.05)">
+                        <h3 class="fs-6 fw-bold text-danger mb-2">
+                            <i class="bi bi-exclamation-octagon-fill me-2"></i>Motivo del fallimento
+                        </h3>
+                        <p class="text-danger mb-0">{{ $payment->failure_reason }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if($payment->refund_reason)
+                <div class="dash-card mb-3" style="border-color: rgba(2,132,199,.3)">
+                    <div class="dash-card-body" style="background: rgba(2,132,199,.05)">
+                        <h3 class="fs-6 fw-bold text-primary mb-2">
+                            <i class="bi bi-info-circle-fill me-2"></i>Motivo del rimborso
+                        </h3>
+                        <p class="text-primary mb-0">{{ $payment->refund_reason }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if($payment->gateway_response)
+                <div class="dash-card mb-3">
+                    <div class="dash-card-header">
+                        <h3><i class="bi bi-code-slash me-2 text-primary"></i>Risposta gateway</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <pre class="bg-light rounded-3 p-3 small mb-0"
+                             style="max-height:300px; overflow:auto"><code>{{ json_encode($payment->gateway_response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</code></pre>
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        {{-- Sidebar --}}
+        <div class="col-lg-4">
+            <div class="position-sticky" style="top: 1rem">
                 @if($payment->booking)
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Prenotazione</h2>
-                        <div class="space-y-3">
-                            <a href="{{ route('admin.bookings.show', $payment->booking) }}" 
-                               class="block text-primary-600 hover:text-primary-800 font-semibold text-lg">
-                                {{ $payment->booking->booking_number }}
+                    {{-- Linked booking --}}
+                    <div class="dash-card mb-3">
+                        <div class="dash-card-header">
+                            <h3><i class="bi bi-receipt me-2 text-primary"></i>Prenotazione</h3>
+                        </div>
+                        <div class="dash-card-body">
+                            <a href="{{ route('admin.bookings.show', $payment->booking) }}"
+                               class="d-block text-primary fw-bold fs-5 text-decoration-none mb-3">
+                                <i class="bi bi-link-45deg me-1"></i>{{ $payment->booking->booking_number }}
                             </a>
-                            <div class="text-sm text-gray-600">
-                                <p><strong>Catamarano:</strong> {{ $payment->booking->catamaran->name ?? '-' }}</p>
-                                <p><strong>Data:</strong> {{ $payment->booking->booking_date->format('d/m/Y') }}</p>
-                                <p><strong>Orario:</strong> {{ $payment->booking->timeSlot->name ?? '-' }}</p>
-                                <p><strong>Posti:</strong> {{ $payment->booking->seats }}</p>
+                            <div class="d-flex flex-column gap-2 small">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-water text-primary"></i>
+                                    <span class="text-muted">Catamarano</span>
+                                    <span class="ms-auto fw-semibold text-dark text-truncate">{{ $payment->booking->catamaran->name ?? '—' }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar-event text-primary"></i>
+                                    <span class="text-muted">Data</span>
+                                    <span class="ms-auto fw-semibold text-dark">{{ $payment->booking->booking_date->format('d/m/Y') }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-clock text-primary"></i>
+                                    <span class="text-muted">Orario</span>
+                                    <span class="ms-auto fw-semibold text-dark">{{ $payment->booking->timeSlot->name ?? '—' }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-people text-primary"></i>
+                                    <span class="text-muted">Posti</span>
+                                    <span class="ms-auto fw-semibold text-dark">{{ $payment->booking->seats }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Cliente</h2>
-                        <div class="space-y-2 text-sm">
-                            <p class="font-medium text-gray-900">
-                                {{ $payment->booking->customer_first_name }} {{ $payment->booking->customer_last_name }}
-                            </p>
-                            <p class="text-gray-600">{{ $payment->booking->customer_email }}</p>
-                            @if($payment->booking->customer_phone)
-                                <p class="text-gray-600">{{ $payment->booking->customer_phone }}</p>
-                            @endif
+                    {{-- Customer --}}
+                    <div class="dash-card mb-3">
+                        <div class="dash-card-header">
+                            <h3><i class="bi bi-person me-2 text-primary"></i>Cliente</h3>
+                        </div>
+                        <div class="dash-card-body">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <span class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                                      style="width:42px; height:42px; font-size:1rem">
+                                    {{ strtoupper(substr($payment->booking->customer_first_name, 0, 1) . substr($payment->booking->customer_last_name, 0, 1)) }}
+                                </span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold text-dark text-truncate">
+                                        {{ $payment->booking->customer_first_name }} {{ $payment->booking->customer_last_name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-1 small">
+                                <a href="mailto:{{ $payment->booking->customer_email }}" class="text-decoration-none text-secondary">
+                                    <i class="bi bi-envelope me-1"></i>{{ $payment->booking->customer_email }}
+                                </a>
+                                @if($payment->booking->customer_phone)
+                                    <a href="tel:{{ $payment->booking->customer_phone }}" class="text-decoration-none text-secondary">
+                                        <i class="bi bi-telephone me-1"></i>{{ $payment->booking->customer_phone }}
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @endif
 
-                {{-- Refund Action --}}
+                {{-- Refund action --}}
                 @if(in_array($payment->status, [\App\Enums\PaymentStatus::SUCCEEDED, \App\Enums\PaymentStatus::PARTIALLY_REFUNDED]))
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Rimborso</h2>
-                        
-                        @php
-                            $maxRefund = $payment->amount - $payment->refunded_amount;
-                        @endphp
-
-                        @if($maxRefund > 0)
-                            <form action="{{ route('admin.payments.refund', $payment) }}" method="POST" 
-                                  onsubmit="return confirm('Sei sicuro di voler processare questo rimborso?');">
-                                @csrf
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Importo (max €{{ number_format($maxRefund, 2, ',', '.') }})
+                    @php $maxRefund = $payment->amount - $payment->refunded_amount; @endphp
+                    <div class="dash-card mb-3" style="border-color: rgba(239,68,68,.3)">
+                        <div class="dash-card-header" style="background: rgba(239,68,68,.05)">
+                            <h3><i class="bi bi-arrow-counterclockwise me-2 text-danger"></i>Rimborso</h3>
+                        </div>
+                        <div class="dash-card-body">
+                            @if($maxRefund > 0)
+                                <p class="small text-muted mb-3">
+                                    Importo massimo rimborsabile:
+                                    <strong class="text-dark">€{{ number_format($maxRefund, 2, ',', '.') }}</strong>
+                                </p>
+                                <form action="{{ route('admin.payments.refund', $payment) }}" method="POST"
+                                      onsubmit="return confirm('Sei sicuro di voler processare questo rimborso?');">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-secondary mb-1">
+                                            <i class="bi bi-cash-coin me-1"></i>Importo
                                         </label>
-                                        <input type="number" name="amount" step="0.01" min="0.01" max="{{ $maxRefund }}"
-                                               value="{{ $maxRefund }}"
-                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                               required>
+                                        <div class="input-group">
+                                            <span class="input-group-text">€</span>
+                                            <input type="number" name="amount" step="0.01" min="0.01" max="{{ $maxRefund }}"
+                                                   value="{{ old('amount', $maxRefund) }}"
+                                                   class="form-control @error('amount') is-invalid @enderror" required>
+                                        </div>
                                         @error('amount')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            <div class="small text-danger mt-1">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Motivo
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-secondary mb-1">
+                                            <i class="bi bi-chat-left-text me-1"></i>Motivo
                                         </label>
                                         <textarea name="reason" rows="3"
-                                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                                  class="form-control @error('reason') is-invalid @enderror"
                                                   placeholder="Inserisci il motivo del rimborso..."
                                                   required>{{ old('reason') }}</textarea>
                                         @error('reason')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            <div class="small text-danger mt-1">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                    <button type="submit" 
-                                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                        Processa Rimborso
+                                    <button type="submit" class="btn btn-danger w-100 rounded-pill fw-semibold">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Processa rimborso
                                     </button>
+                                </form>
+                            @else
+                                <div class="text-center py-3 text-muted">
+                                    <i class="bi bi-check-circle fs-1 d-block mb-2 text-success opacity-75"></i>
+                                    <p class="small mb-0">Questo pagamento è già stato completamente rimborsato.</p>
                                 </div>
-                            </form>
-                        @else
-                            <p class="text-gray-500 text-sm">Questo pagamento è già stato completamente rimborsato.</p>
-                        @endif
+                            @endif
+                        </div>
                     </div>
                 @endif
             </div>

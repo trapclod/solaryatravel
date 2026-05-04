@@ -10,17 +10,19 @@
     'hint' => null,
 ])
 
-<div {{ $attributes->only('class')->merge(['class' => 'space-y-1']) }}>
+@php
+    $errMessage = $error ?? $errors->first($name);
+@endphp
+
+<div {{ $attributes->only('class')->merge(['class' => 'mb-3']) }}>
     @if($label)
-        <label for="{{ $name }}" class="block text-sm font-medium text-gray-700">
+        <label for="{{ $name }}" class="form-label fw-medium">
             {{ $label }}
-            @if($required)
-                <span class="text-red-500">*</span>
-            @endif
+            @if($required)<span class="text-danger">*</span>@endif
         </label>
     @endif
-    
-    <input 
+
+    <input
         type="{{ $type }}"
         name="{{ $name }}"
         id="{{ $name }}"
@@ -29,17 +31,15 @@
         {{ $required ? 'required' : '' }}
         {{ $disabled ? 'disabled' : '' }}
         {{ $attributes->except('class')->merge([
-            'class' => 'w-full px-4 py-3 border rounded-xl shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ' . 
-                      ($error ?? $errors->first($name) ? 'border-red-300 text-red-900 placeholder-red-300' : 'border-gray-300 text-gray-900 placeholder-gray-400') .
-                      ($disabled ? ' bg-gray-100 cursor-not-allowed' : ' bg-white')
+            'class' => 'form-control' . ($errMessage ? ' is-invalid' : '')
         ]) }}
     >
-    
-    @if($hint && !($error ?? $errors->first($name)))
-        <p class="text-sm text-gray-500">{{ $hint }}</p>
+
+    @if($hint && !$errMessage)
+        <div class="form-text">{{ $hint }}</div>
     @endif
-    
-    @if($error ?? $errors->first($name))
-        <p class="text-sm text-red-600">{{ $error ?? $errors->first($name) }}</p>
+
+    @if($errMessage)
+        <div class="invalid-feedback d-block">{{ $errMessage }}</div>
     @endif
 </div>

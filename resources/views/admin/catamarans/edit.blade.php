@@ -3,103 +3,118 @@
 @section('title', 'Modifica ' . $catamaran->name)
 
 @section('content')
-    <div class="max-w-4xl mx-auto space-y-6">
-        {{-- Header --}}
-        <div class="flex items-center gap-4">
-            <a href="{{ route('admin.catamarans.show', $catamaran) }}" 
-               class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
+    {{-- Page header --}}
+    <div class="dash-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.catamarans.index') }}" class="dash-icon-btn" title="Torna alla flotta">
+                <i class="bi bi-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Modifica {{ $catamaran->name }}</h1>
-                <p class="text-gray-600">Aggiorna le informazioni del catamarano</p>
+                <h1>Modifica <span class="text-primary">{{ $catamaran->name }}</span></h1>
+                <p>Aggiorna informazioni, prezzi, caratteristiche e immagini del catamarano.</p>
             </div>
         </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.catamarans.show', $catamaran) }}" class="btn btn-light rounded-pill px-3 fw-semibold border">
+                <i class="bi bi-eye me-2"></i>Visualizza
+            </a>
+        </div>
+    </div>
 
-        {{-- Images Section --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Immagini</h2>
-            
+    {{-- Images section --}}
+    <div class="dash-card mb-3">
+        <div class="dash-card-header">
+            <h3><i class="bi bi-images me-2 text-primary"></i>Galleria immagini</h3>
+            <span class="small text-muted">{{ $catamaran->images->count() }} immagini</span>
+        </div>
+        <div class="dash-card-body">
             @if($catamaran->images->count() > 0)
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div class="row g-3 mb-3">
                     @foreach($catamaran->images as $image)
-                        <div class="relative group aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                            <img src="{{ Storage::url($image->path) }}" 
-                                 alt="{{ $image->filename }}"
-                                 class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <form action="{{ route('admin.catamarans.images.delete', [$catamaran, $image]) }}" 
-                                      method="POST"
-                                      onsubmit="return confirm('Eliminare questa immagine?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="p-2 bg-red-500 text-white rounded-full hover:bg-red-600">
-                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </form>
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="cat-image-tile position-relative ratio ratio-1x1 rounded-3 overflow-hidden bg-light">
+                                <img src="{{ Storage::url($image->path) }}" alt="{{ $image->filename ?? '' }}"
+                                     class="w-100 h-100" style="object-fit:cover">
+                                <div class="cat-image-overlay">
+                                    <form action="{{ route('admin.catamarans.images.delete', [$catamaran, $image]) }}"
+                                          method="POST" onsubmit="return confirm('Eliminare questa immagine?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger rounded-circle"
+                                                title="Elimina" style="width:42px; height:42px; padding:0">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
             @endif
 
-            <form action="{{ route('admin.catamarans.images.upload', $catamaran) }}" 
-                  method="POST" 
-                  enctype="multipart/form-data"
-                  class="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-primary-300 transition-colors">
+            <form action="{{ route('admin.catamarans.images.upload', $catamaran) }}"
+                  method="POST" enctype="multipart/form-data" class="cat-dropzone text-center">
                 @csrf
-                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p class="text-gray-500 mb-3">Trascina le immagini qui o clicca per selezionarle</p>
-                <input type="file" 
-                       name="images[]" 
-                       multiple 
-                       accept="image/jpeg,image/png,image/jpg,image/webp"
-                       class="hidden" 
-                       id="images-input"
-                       onchange="this.form.submit()">
-                <label for="images-input" 
-                       class="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors cursor-pointer">
-                    Seleziona Immagini
+                <div class="mx-auto mb-3 rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center" style="width:64px; height:64px">
+                    <i class="bi bi-cloud-arrow-up fs-2"></i>
+                </div>
+                <h4 class="h6 fw-bold mb-1">Aggiungi nuove immagini</h4>
+                <p class="text-muted small mb-3">JPEG, PNG o WebP – fino a 5MB ciascuna</p>
+                <input type="file" name="images[]" multiple accept="image/jpeg,image/png,image/jpg,image/webp"
+                       class="d-none" id="images-input" onchange="this.form.submit()">
+                <label for="images-input" class="btn btn-primary rounded-pill px-4 fw-semibold mb-0">
+                    <i class="bi bi-folder2-open me-2"></i>Seleziona file
                 </label>
-                <p class="text-xs text-gray-400 mt-2">JPEG, PNG, WebP - Max 5MB</p>
             </form>
         </div>
+    </div>
 
-        <form action="{{ route('admin.catamarans.update', $catamaran) }}" method="POST" class="space-y-6">
-            @csrf
-            @method('PUT')
-            
-            @include('admin.catamarans._form')
+    {{-- Main update form --}}
+    <form action="{{ route('admin.catamarans.update', $catamaran) }}" method="POST" id="catamaran-form">
+        @csrf
+        @method('PUT')
 
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <form action="{{ route('admin.catamarans.destroy', $catamaran) }}" 
-                      method="POST"
-                      onsubmit="return confirm('Sei sicuro di voler eliminare questo catamarano?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" 
-                            class="px-4 py-2 text-red-600 hover:text-red-700 font-medium">
-                        Elimina Catamarano
-                    </button>
-                </form>
+        @include('admin.catamarans._form', ['catamaran' => $catamaran])
 
-                <div class="flex items-center gap-4">
-                    <a href="{{ route('admin.catamarans.show', $catamaran) }}" 
-                       class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <div class="dash-card mb-4">
+            <div class="dash-card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#deleteCatamaranModal">
+                    <i class="bi bi-trash me-2"></i>Elimina catamarano
+                </button>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.catamarans.show', $catamaran) }}" class="btn btn-light rounded-pill px-4 border fw-semibold">
                         Annulla
                     </a>
-                    <button type="submit" 
-                            class="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
-                        Salva Modifiche
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                        <i class="bi bi-check-lg me-2"></i>Salva modifiche
                     </button>
                 </div>
             </div>
-        </form>
+        </div>
+    </form>
+
+    {{-- Delete confirmation modal --}}
+    <div class="modal fade" id="deleteCatamaranModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:1rem">
+                <div class="modal-body text-center p-4">
+                    <div class="mx-auto mb-3 rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center" style="width:72px;height:72px">
+                        <i class="bi bi-exclamation-triangle fs-2"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Eliminare {{ $catamaran->name }}?</h4>
+                    <p class="text-muted">L'azione è irreversibile e cancellerà anche le immagini associate.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">Annulla</button>
+                    <form action="{{ route('admin.catamarans.destroy', $catamaran) }}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">
+                            <i class="bi bi-trash me-2"></i>Elimina definitivamente
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

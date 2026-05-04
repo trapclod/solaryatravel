@@ -3,278 +3,303 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-gray-600">Panoramica delle attività di oggi</p>
-        </div>
+    @php
+        $statusMeta = [
+            'pending'    => ['label' => 'In attesa',  'class' => 'text-warning'],
+            'confirmed'  => ['label' => 'Confermata', 'class' => 'text-success'],
+            'checked_in' => ['label' => 'Check-in',   'class' => 'text-info'],
+            'completed'  => ['label' => 'Completata', 'class' => 'text-secondary'],
+            'cancelled'  => ['label' => 'Annullata',  'class' => 'text-danger'],
+            'no_show'    => ['label' => 'No show',    'class' => 'text-secondary'],
+        ];
+        $avatarColors = ['bg-primary-subtle text-primary', 'bg-success-subtle text-success', 'bg-warning-subtle text-warning', 'bg-info-subtle text-info', 'bg-danger-subtle text-danger'];
+    @endphp
 
-        {{-- Stats Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {{-- Today's Bookings --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Prenotazioni Oggi</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ $todayStats['bookings'] }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
+    {{-- Welcome banner --}}
+    <div class="dash-welcome mb-4">
+        <div class="position-relative" style="z-index:1">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div>
+                    <p class="mb-1 text-warning fw-medium small text-uppercase" style="letter-spacing:.12em">
+                        {{ now()->locale('it')->isoFormat('dddd, D MMMM YYYY') }}
+                    </p>
+                    <h2 class="mb-2">Ciao {{ explode(' ', auth()->user()->name ?? 'Admin')[0] }}, ecco la tua giornata</h2>
+                    <p class="mb-0 text-white-50">Panoramica in tempo reale di prenotazioni, ospiti e incassi.</p>
                 </div>
-            </div>
-
-            {{-- Today's Guests --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Ospiti Oggi</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ $todayStats['guests'] }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Today's Revenue --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Incasso Oggi</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-1">€{{ number_format($todayStats['revenue'], 0) }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Monthly Revenue --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Incasso Mese</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-1">€{{ number_format($monthlyStats['revenue'], 0) }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Charts and Tables Row --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Revenue Chart --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Incassi Ultimi 7 Giorni</h3>
-                <div class="h-64">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-            </div>
-
-            {{-- Today's Bookings List --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Prenotazioni di Oggi</h3>
-                    <a href="{{ route('admin.bookings.index', ['date_from' => today()->format('Y-m-d'), 'date_to' => today()->format('Y-m-d')]) }}" 
-                       class="text-sm text-primary-600 hover:text-primary-700">
-                        Vedi tutte
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('admin.bookings.index') }}" class="btn btn-light rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-journal-check me-2"></i>Prenotazioni
+                    </a>
+                    <a href="{{ route('admin.checkin') }}" class="btn btn-warning rounded-pill px-3 fw-semibold text-navy">
+                        <i class="bi bi-qr-code-scan me-2"></i>Check-in
                     </a>
                 </div>
-                
-                @if($todayBookings->count() > 0)
-                    <div class="space-y-3">
-                        @foreach($todayBookings->take(5) as $booking)
-                            <a href="{{ route('admin.bookings.show', $booking) }}" 
-                               class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                                        <span class="text-primary-600 font-semibold text-sm">
-                                            {{ substr($booking->customer_first_name, 0, 1) }}{{ substr($booking->customer_last_name, 0, 1) }}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ $booking->customer_first_name }} {{ $booking->customer_last_name }}</p>
-                                        <p class="text-sm text-gray-500">{{ $booking->catamaran->name }} - {{ $booking->timeSlot->name }}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-gray-900">{{ $booking->seats }} posti</p>
-                                    <span @class([
-                                        'text-xs px-2 py-1 rounded-full',
-                                        'bg-yellow-100 text-yellow-700' => $booking->status->value === 'pending',
-                                        'bg-green-100 text-green-700' => $booking->status->value === 'confirmed',
-                                        'bg-blue-100 text-blue-700' => $booking->status->value === 'checked_in',
-                                        'bg-gray-100 text-gray-700' => $booking->status->value === 'completed',
-                                        'bg-red-100 text-red-700' => $booking->status->value === 'cancelled',
-                                    ])>
-                                        {{ ucfirst($booking->status->value) }}
-                                    </span>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p>Nessuna prenotazione per oggi</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-
-        {{-- Pending Bookings and Activity --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Pending Bookings --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Prenotazioni in Attesa</h3>
-                    <span class="bg-yellow-100 text-yellow-700 text-sm font-medium px-2 py-1 rounded-full">
-                        {{ $pendingBookings->count() }}
-                    </span>
-                </div>
-                
-                @if($pendingBookings->count() > 0)
-                    <div class="space-y-3">
-                        @foreach($pendingBookings->take(5) as $booking)
-                            <a href="{{ route('admin.bookings.show', $booking) }}" 
-                               class="block p-3 rounded-lg border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-gray-900">#{{ $booking->booking_number }}</p>
-                                        <p class="text-sm text-gray-600">{{ $booking->customer_first_name }} {{ $booking->customer_last_name }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-semibold text-gray-900">€{{ number_format($booking->total_amount, 2) }}</p>
-                                        <p class="text-xs text-gray-500">{{ $booking->created_at->diffForHumans() }}</p>
-                                    </div>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <p>Nessuna prenotazione in attesa</p>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Recent Activity --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Attività Recente</h3>
-                
-                <div class="space-y-4">
-                    @foreach($recentActivity as $activity)
-                        <div class="flex items-start">
-                            <div @class([
-                                'w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0',
-                                'bg-blue-100' => $activity['color'] === 'blue',
-                                'bg-green-100' => $activity['color'] === 'green',
-                                'bg-yellow-100' => $activity['color'] === 'yellow',
-                                'bg-red-100' => $activity['color'] === 'red',
-                            ])>
-                                @if($activity['icon'] === 'calendar')
-                                    <svg @class([
-                                        'w-4 h-4',
-                                        'text-blue-600' => $activity['color'] === 'blue',
-                                        'text-green-600' => $activity['color'] === 'green',
-                                    ]) fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                @elseif($activity['icon'] === 'credit-card')
-                                    <svg @class([
-                                        'w-4 h-4',
-                                        'text-green-600' => $activity['color'] === 'green',
-                                    ]) fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                    </svg>
-                                @endif
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900">{{ $activity['message'] }}</p>
-                                <p class="text-xs text-gray-500">{{ $activity['details'] }}</p>
-                            </div>
-                            <span class="text-xs text-gray-400">{{ $activity['time']->diffForHumans() }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        {{-- Popular Catamarans --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Catamarani Più Popolari (Questo Mese)</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                @foreach($popularCatamarans as $catamaran)
-                    <div class="text-center p-4 rounded-lg bg-gray-50">
-                        <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                            </svg>
-                        </div>
-                        <p class="font-medium text-gray-900">{{ $catamaran->name }}</p>
-                        <p class="text-2xl font-bold text-primary-600">{{ $catamaran->bookings_count }}</p>
-                        <p class="text-xs text-gray-500">prenotazioni</p>
-                    </div>
-                @endforeach
             </div>
         </div>
     </div>
 
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
+    {{-- Stats grid --}}
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="dash-stat text-info">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="dash-stat-icon bg-info-subtle text-info"><i class="bi bi-journal-bookmark-fill"></i></div>
+                    <span class="dash-stat-trend bg-info-subtle text-info"><i class="bi bi-calendar3"></i>Oggi</span>
+                </div>
+                <div class="dash-stat-value">{{ $todayStats['bookings'] }}</div>
+                <div class="dash-stat-label mt-1">Prenotazioni oggi</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="dash-stat text-success">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="dash-stat-icon bg-success-subtle text-success"><i class="bi bi-people-fill"></i></div>
+                    <span class="dash-stat-trend bg-success-subtle text-success"><i class="bi bi-person-check"></i>Confermati</span>
+                </div>
+                <div class="dash-stat-value">{{ $todayStats['guests'] }}</div>
+                <div class="dash-stat-label mt-1">Ospiti oggi</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="dash-stat text-warning">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="dash-stat-icon bg-warning-subtle text-warning"><i class="bi bi-currency-euro"></i></div>
+                    <span class="dash-stat-trend bg-warning-subtle text-warning"><i class="bi bi-cash-stack"></i>Incassato</span>
+                </div>
+                <div class="dash-stat-value">€{{ number_format($todayStats['revenue'], 0, ',', '.') }}</div>
+                <div class="dash-stat-label mt-1">Incasso oggi</div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="dash-stat text-primary">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div class="dash-stat-icon bg-primary-subtle text-primary"><i class="bi bi-graph-up-arrow"></i></div>
+                    <span class="dash-stat-trend bg-primary-subtle text-primary"><i class="bi bi-calendar-month"></i>Mese</span>
+                </div>
+                <div class="dash-stat-value">€{{ number_format($monthlyStats['revenue'], 0, ',', '.') }}</div>
+                <div class="dash-stat-label mt-1">Incasso mese</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Chart + Today bookings --}}
+    <div class="row g-3 mb-4">
+        <div class="col-xl-8">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-bar-chart-line me-2 text-primary"></i>Incassi ultimi 7 giorni</h3>
+                    <a href="{{ route('admin.reports.revenue') }}" class="small text-primary text-decoration-none fw-medium">
+                        Report completo <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="dash-card-body">
+                    <div style="height:280px"><canvas id="revenueChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-calendar-event me-2 text-primary"></i>Prenotazioni oggi</h3>
+                    <a href="{{ route('admin.bookings.index', ['date_from' => today()->format('Y-m-d'), 'date_to' => today()->format('Y-m-d')]) }}" class="small text-primary text-decoration-none fw-medium">Tutte</a>
+                </div>
+                <div class="dash-card-body">
+                    @if($todayBookings->count() > 0)
+                        @foreach($todayBookings->take(5) as $booking)
+                            @php
+                                $sv = $booking->status->value;
+                                $meta = $statusMeta[$sv] ?? ['label' => ucfirst($sv), 'class' => 'text-secondary'];
+                                $color = $avatarColors[$loop->index % count($avatarColors)];
+                            @endphp
+                            <a href="{{ route('admin.bookings.show', $booking) }}" class="dash-list-item">
+                                <div class="d-flex align-items-center gap-3 min-w-0">
+                                    <span class="avatar-sm {{ $color }}">
+                                        {{ strtoupper(substr($booking->customer_first_name, 0, 1) . substr($booking->customer_last_name, 0, 1)) }}
+                                    </span>
+                                    <div class="min-w-0">
+                                        <div class="fw-semibold text-truncate">{{ $booking->customer_first_name }} {{ $booking->customer_last_name }}</div>
+                                        <div class="small text-muted text-truncate">{{ $booking->catamaran->name }} · {{ $booking->timeSlot->name }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-end ms-2">
+                                    <div class="fw-semibold small">{{ $booking->seats }} <i class="bi bi-people text-muted"></i></div>
+                                    <span class="status-pill {{ $meta['class'] }}">{{ $meta['label'] }}</span>
+                                </div>
+                            </a>
+                        @endforeach
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x display-5 opacity-50 d-block mb-2"></i>
+                            <p class="mb-0 small">Nessuna prenotazione per oggi</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Pending + Activity --}}
+    <div class="row g-3 mb-4">
+        <div class="col-xl-6">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-hourglass-split me-2 text-warning"></i>Prenotazioni in attesa</h3>
+                    <span class="status-pill text-warning">{{ $pendingBookings->count() }}</span>
+                </div>
+                <div class="dash-card-body">
+                    @if($pendingBookings->count() > 0)
+                        @foreach($pendingBookings->take(5) as $booking)
+                            <a href="{{ route('admin.bookings.show', $booking) }}" class="dash-list-item">
+                                <div class="d-flex align-items-center gap-3 min-w-0">
+                                    <span class="avatar-sm bg-warning-subtle text-warning">
+                                        <i class="bi bi-hourglass"></i>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <div class="fw-semibold">#{{ $booking->booking_number }}</div>
+                                        <div class="small text-muted text-truncate">{{ $booking->customer_first_name }} {{ $booking->customer_last_name }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-end ms-2">
+                                    <div class="fw-semibold">€{{ number_format($booking->total_amount, 2, ',', '.') }}</div>
+                                    <div class="small text-muted">{{ $booking->created_at->diffForHumans() }}</div>
+                                </div>
+                            </a>
+                        @endforeach
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-check2-circle display-5 opacity-50 d-block mb-2 text-success"></i>
+                            <p class="mb-0 small">Tutto sotto controllo, nessuna in attesa</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <h3><i class="bi bi-activity me-2 text-info"></i>Attività recente</h3>
+                </div>
+                <div class="dash-card-body">
+                    @forelse($recentActivity as $activity)
+                        @php
+                            $iconMap = [
+                                'calendar'    => ['icon' => 'bi-calendar-plus',  'cls'  => 'bg-info-subtle text-info'],
+                                'credit-card' => ['icon' => 'bi-credit-card-2-back', 'cls'  => 'bg-success-subtle text-success'],
+                            ];
+                            $i = $iconMap[$activity['icon']] ?? ['icon' => 'bi-bell', 'cls' => 'bg-light text-secondary'];
+                        @endphp
+                        <div class="activity-item">
+                            <div class="activity-icon {{ $i['cls'] }}"><i class="bi {{ $i['icon'] }}"></i></div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold small text-dark">{{ $activity['message'] }}</div>
+                                <div class="small text-muted text-truncate">{{ $activity['details'] }}</div>
+                            </div>
+                            <span class="small text-muted text-nowrap">{{ $activity['time']->diffForHumans() }}</span>
+                        </div>
+                    @empty
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-clock-history display-5 opacity-50 d-block mb-2"></i>
+                            <p class="mb-0 small">Nessuna attività recente</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Popular catamarans --}}
+    <div class="dash-card mb-4">
+        <div class="dash-card-header">
+            <h3><i class="bi bi-trophy me-2 text-warning"></i>Catamarani più richiesti</h3>
+            <span class="small text-muted">Questo mese</span>
+        </div>
+        <div class="dash-card-body">
+            @if($popularCatamarans->count() > 0)
+                <div class="row g-3">
+                    @foreach($popularCatamarans as $catamaran)
+                        <div class="col-6 col-md-4 col-xl">
+                            <a href="{{ route('admin.catamarans.show', $catamaran) }}" class="popular-cat-card d-block text-decoration-none text-reset">
+                                <div class="popular-cat-icon mx-auto"><i class="bi bi-water"></i></div>
+                                <div class="fw-semibold text-dark text-truncate">{{ $catamaran->name }}</div>
+                                <div class="display-6 fw-bold text-primary mb-0" style="font-size:1.75rem">{{ $catamaran->bookings_count }}</div>
+                                <div class="small text-muted">prenotazioni</div>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-4 text-muted small">Nessun dato disponibile</div>
+            @endif
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('revenueChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        gradient.addColorStop(0, 'rgba(2, 132, 199, 0.35)');
+        gradient.addColorStop(1, 'rgba(2, 132, 199, 0.02)');
+
         new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: {!! json_encode($chartLabels) !!},
                 datasets: [{
-                    label: 'Incasso (€)',
+                    label: 'Incasso',
                     data: {!! json_encode($chartData) !!},
-                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4,
+                    backgroundColor: gradient,
+                    borderColor: '#0284c7',
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#0284c7',
+                    pointBorderWidth: 2,
+                    tension: 0.35,
+                    fill: true,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
                 plugins: {
-                    legend: {
-                        display: false
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        padding: 12,
+                        titleFont: { family: "'Google Sans', sans-serif", weight: '600' },
+                        bodyFont: { family: "'Google Sans', sans-serif" },
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: { label: (c) => '€' + c.parsed.y.toLocaleString('it-IT') }
                     }
                 },
                 scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { family: "'Google Sans', sans-serif" } }
+                    },
                     y: {
                         beginAtZero: true,
+                        grid: { color: 'rgba(15,23,42,.05)', drawBorder: false },
                         ticks: {
-                            callback: function(value) {
-                                return '€' + value;
-                            }
+                            color: '#64748b',
+                            font: { family: "'Google Sans', sans-serif" },
+                            callback: (v) => '€' + v
                         }
                     }
                 }
             }
         });
-    </script>
-    @endpush
-@endsection
+    });
+</script>
+@endpush
