@@ -20,93 +20,91 @@
 
             {{-- Search Bar --}}
             <form method="GET" action="{{ route('catamarans.index') }}"
-                  class="mb-10 max-w-3xl mx-auto w-full">
+                  class="hero-search mb-12 max-w-4xl mx-auto w-full text-left">
 
-                {{-- Glass card wrapper --}}
-                <div class="relative rounded-3xl p-1"
-                     style="background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.12) 100%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.4);">
+                {{-- Glass border wrapper --}}
+                <div class="relative rounded-3xl p-[2px]"
+                     style="background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.15) 60%, rgba(212,175,55,0.35) 100%);
+                            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+                            box-shadow: 0 24px 60px -12px rgba(10,25,47,0.45);">
 
                     {{-- Inner white card --}}
-                    <div class="bg-white rounded-[20px] overflow-hidden">
+                    <div class="bg-white rounded-[22px] overflow-hidden">
 
                         {{-- Top label bar --}}
-                        <div class="px-6 pt-4 pb-1 flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full" style="background:linear-gradient(135deg,#3b82f6,#06b6d4);">
-                                <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <div class="px-7 sm:px-8 pt-5 pb-3 flex items-center gap-3 border-b border-gray-100">
+                            <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-navy-900">
+                                <svg class="w-4 h-4 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
                             </span>
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Trova la tua escursione in catamarano</span>
+                            <span class="text-xs font-bold uppercase tracking-[0.22em] text-navy-900">Trova la tua escursione</span>
                         </div>
 
-                        {{-- Divider --}}
-                        <div class="mx-6 border-t border-gray-100 my-2"></div>
-
                         {{-- Fields row --}}
-                        <div class="flex flex-col sm:flex-row items-stretch">
+                        <div class="flex flex-col sm:flex-row items-stretch p-3 sm:p-4 gap-3">
 
                             {{-- Data --}}
-                            <label class="group flex items-center gap-3 px-5 py-4 flex-1 min-w-0 cursor-pointer sm:border-r border-b sm:border-b-0 border-gray-100 hover:bg-gray-50/70 transition-colors duration-200">
-                                <span class="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-colors duration-200"
-                                      style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
-                                    <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <label class="hs-field group flex items-center gap-4 px-5 py-3.5 flex-1 min-w-0 cursor-pointer rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all duration-200">
+                                <span class="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center bg-navy-900 text-gold-400 transition-transform duration-200 group-hover:scale-105">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
                                 </span>
                                 <div class="min-w-0 flex-1">
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Data escursione</span>
+                                    <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 leading-none mb-2">Data</span>
                                     <input id="hero_date" type="date" name="date" min="{{ $minBookingDate }}" required
-                                           class="block w-full text-sm font-semibold text-gray-800 bg-transparent border-none outline-none p-0 focus:ring-0 cursor-pointer" />
+                                           class="block w-full text-base font-semibold text-navy-900 bg-transparent border-none outline-none p-0 focus:ring-0 cursor-pointer" />
                                 </div>
                             </label>
 
                             {{-- Adulti --}}
-                            <label class="group flex items-center gap-3 px-5 py-4 flex-none cursor-pointer sm:border-r border-b sm:border-b-0 border-gray-100 hover:bg-gray-50/70 transition-colors duration-200">
-                                <span class="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-colors duration-200"
-                                      style="background: linear-gradient(135deg, #d1fae5, #a7f3d0);">
-                                    <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <label class="hs-field group flex items-center gap-4 px-5 py-3.5 flex-none sm:w-44 cursor-pointer rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all duration-200">
+                                <span class="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center bg-navy-900 text-gold-400 transition-transform duration-200 group-hover:scale-105">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                     </svg>
                                 </span>
-                                <div>
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Adulti</span>
+                                <div class="min-w-0 flex-1">
+                                    <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 leading-none mb-2">Adulti</span>
                                     <input id="hero_adults" type="number" name="adults" min="1" max="20" value="2" required
-                                           class="block w-14 text-sm font-semibold text-gray-800 bg-transparent border-none outline-none p-0 focus:ring-0" />
+                                           class="block w-full text-base font-semibold text-navy-900 bg-transparent border-none outline-none p-0 focus:ring-0" />
                                 </div>
                             </label>
 
                             {{-- Bambini --}}
-                            <label class="group flex items-center gap-3 px-5 py-4 flex-none cursor-pointer border-b sm:border-b-0 border-gray-100 hover:bg-gray-50/70 transition-colors duration-200">
-                                <span class="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-colors duration-200"
-                                      style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
-                                    <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <label class="hs-field group flex items-center gap-4 px-5 py-3.5 flex-none sm:w-44 cursor-pointer rounded-2xl bg-slate-50 hover:bg-slate-100 transition-all duration-200">
+                                <span class="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center bg-navy-900 text-gold-400 transition-transform duration-200 group-hover:scale-105">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     </svg>
                                 </span>
-                                <div>
-                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">Bambini</span>
+                                <div class="min-w-0 flex-1">
+                                    <span class="block text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 leading-none mb-2">Bambini</span>
                                     <input id="hero_children" type="number" name="children" min="0" max="20" value="0" required
-                                           class="block w-14 text-sm font-semibold text-gray-800 bg-transparent border-none outline-none p-0 focus:ring-0" />
+                                           class="block w-full text-base font-semibold text-navy-900 bg-transparent border-none outline-none p-0 focus:ring-0" />
                                 </div>
                             </label>
 
                             {{-- CTA Button --}}
-                            <div class="p-3 flex-shrink-0 flex items-center justify-center">
-                                <button type="submit"
-                                        class="group relative flex items-center justify-center gap-2 w-full sm:w-auto px-7 py-4 rounded-2xl font-bold text-white text-sm overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
-                                        style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%); box-shadow: 0 6px 24px rgba(217,119,6,0.5);">
-                                    <span class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                          style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);"></span>
-                                    <svg class="relative w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                    </svg>
-                                    <span class="relative">Cerca ora</span>
-                                </button>
-                            </div>
+                            <button type="submit"
+                                    class="group/cta relative inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 rounded-full font-semibold text-white text-base bg-gold-500 hover:bg-gold-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 overflow-hidden">
+                                <span aria-hidden="true" class="absolute -inset-y-2 -left-12 w-12 rotate-12 opacity-0 group-hover/cta:opacity-100 group-hover/cta:translate-x-[260%] transition-all duration-700 ease-out"
+                                      style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);"></span>
+                                <svg class="relative w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <span class="relative">Cerca</span>
+                            </button>
                         </div>
 
                         {{-- Bottom hint --}}
-                        <div class="px-6 py-2.5 bg-gray-50 border-t border-gray-100 flex items-center gap-2">
-                            <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            <span class="text-[11px] text-gray-400">Tutti i catamarani disponibili per la data selezionata &mdash; <strong class="text-gray-500">cancellazione gratuita fino a 24h prima</strong></span>
+                        <div class="px-7 sm:px-8 py-3 flex items-center gap-2.5 bg-slate-50 border-t border-gray-100">
+                            <svg class="w-4 h-4 text-primary-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-xs text-gray-600 leading-relaxed">Tutti i catamarani disponibili &mdash; <strong class="text-navy-900 font-semibold">cancellazione gratuita fino a 24h prima</strong></span>
                         </div>
                     </div>
                 </div>
