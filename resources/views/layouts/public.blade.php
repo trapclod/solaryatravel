@@ -57,7 +57,37 @@
             font-weight: normal !important;
             font-style: normal !important;
             font-variant: normal !important;
-            text-transform: none !important;
+            text-transform: uppercase !important;
+        }
+
+        /* Header solido (pagine interne): voci di menu scure */
+        .tg-header__area:not(.tg-transparent) .tgmenu__navbar-wrap > ul > li > a,
+        .header-sticky .tgmenu__navbar-wrap > ul > li > a {
+            color: var(--tg-common-black, #0E1B33);
+        }
+        .tg-header__area:not(.tg-transparent) .tgmenu__navbar-wrap > ul > li.active > a,
+        .tg-header__area:not(.tg-transparent) .tgmenu__navbar-wrap > ul > li:hover > a {
+            color: var(--tg-theme-primary, #7C37FF);
+        }
+        .tg-header__area:not(.tg-transparent) .tg-header-contact-number span,
+        .tg-header__area:not(.tg-transparent) .tg-header-contact-number a {
+            color: var(--tg-common-black, #0E1B33);
+        }
+        .tg-header__area:not(.tg-transparent) .tg-btn-header {
+            background: var(--tg-theme-primary, #7C37FF);
+            color: #fff;
+        }
+
+        /* Bottoni arrotondati a pillola in tutto il sito */
+        .tg-btn,
+        .tg-btn-2,
+        .tg-btn-header,
+        .bk-search-button,
+        .tg-footer-form-btn,
+        button.tg-btn,
+        a.tg-btn,
+        .btn {
+            border-radius: 50px !important;
         }
     </style>
 

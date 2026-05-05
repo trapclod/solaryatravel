@@ -1,8 +1,8 @@
-{{-- Footer One (template su) --}}
+{{-- Footer Five (template) --}}
 <footer>
-    <div class="tg-footer-area tg-footer-su-wrapper tg-footer-space include-bg" style="background-image: url('{{ asset('assets/template/img/footer/footer.jpg') }}')">
+    <div class="tg-footer-area pt-130 include-bg" style="background-image: url('{{ asset('assets/template/img/footer/footer.jpg') }}')">
         <div class="container">
-            <div class="tg-footer-top mb-45">
+            <div class="tg-footer-top pb-40">
                 <div class="row">
                     {{-- Brand & newsletter --}}
                     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-6">
@@ -21,7 +21,7 @@
                                     <input type="email" name="email" placeholder="Inserisci la tua email" required>
                                     <button class="tg-footer-form-btn" type="submit" aria-label="Iscriviti alla newsletter">
                                         <svg width="22" height="17" viewBox="0 0 22 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M1.52514 8.47486H20.4749M20.4749 8.47486L13.5 1.5M20.4749 8.47486L13.5 15.4497" stroke="white" strokeWidth="1.77778" strokeLinecap="round" strokeLinejoin="round" />
+                                            <path d="M1.52514 8.47486H20.4749M20.4749 8.47486L13.5 1.5M20.4749 8.47486L13.5 15.4497" stroke="white" stroke-width="1.77778" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                     </button>
                                 </form>
@@ -77,8 +77,8 @@
                                     <a class="d-flex" href="https://maps.google.com" target="_blank" rel="noopener">
                                         <span class="mr-15">
                                             <svg width="20" height="24" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M19.0013 10.0608C19.0013 16.8486 10.3346 22.6668 10.3346 22.6668C10.3346 22.6668 1.66797 16.8486 1.66797 10.0608C1.66797 7.74615 2.58106 5.52634 4.20638 3.88965C5.83169 2.25297 8.03609 1.3335 10.3346 1.3335C12.6332 1.3335 14.8376 2.25297 16.4629 3.88965C18.0882 5.52634 19.0013 7.74615 19.0013 10.0608Z" stroke="white" strokeWidth="1.73333" strokeLinecap="round" strokeLinejoin="round"/>
-                                                <path d="M10.3346 12.9699C11.9301 12.9699 13.2235 11.6674 13.2235 10.0608C13.2235 8.45412 11.9301 7.15168 10.3346 7.15168C8.73915 7.15168 7.44575 8.45412 7.44575 10.0608C7.44575 11.6674 8.73915 12.9699 10.3346 12.9699Z" stroke="white" strokeWidth="1.73333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <path d="M19.0013 10.0608C19.0013 16.8486 10.3346 22.6668 10.3346 22.6668C10.3346 22.6668 1.66797 16.8486 1.66797 10.0608C1.66797 7.74615 2.58106 5.52634 4.20638 3.88965C5.83169 2.25297 8.03609 1.3335 10.3346 1.3335C12.6332 1.3335 14.8376 2.25297 16.4629 3.88965C18.0882 5.52634 19.0013 7.74615 19.0013 10.0608Z" stroke="white" stroke-width="1.73333" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M10.3346 12.9699C11.9301 12.9699 13.2235 11.6674 13.2235 10.0608C13.2235 8.45412 11.9301 7.15168 10.3346 7.15168C8.73915 7.15168 7.44575 8.45412 7.44575 10.0608C7.44575 11.6674 8.73915 12.9699 10.3346 12.9699Z" stroke="white" stroke-width="1.73333" stroke-linecap="round" stroke-linejoin="round"/>
                                             </svg>
                                         </span>
                                         Porto Turistico di Salerno<br>Molo Manfredi, 84121 SA
@@ -99,7 +99,7 @@
                                 <li class="d-flex">
                                     <span class="mr-15">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M11.9987 5.60006V12.0001L16.2654 14.1334M22.6654 12.0002C22.6654 17.8912 17.8897 22.6668 11.9987 22.6668C6.10766 22.6668 1.33203 17.8912 1.33203 12.0002C1.33203 6.10912 6.10766 1.3335 11.9987 1.3335C17.8897 1.3335 22.6654 6.10912 22.6654 12.0002Z" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <path d="M11.9987 5.60006V12.0001L16.2654 14.1334M22.6654 12.0002C22.6654 17.8912 17.8897 22.6668 11.9987 22.6668C6.10766 22.6668 1.33203 17.8912 1.33203 12.0002C1.33203 6.10912 6.10766 1.3335 11.9987 1.3335C17.8897 1.3335 22.6654 6.10912 22.6654 12.0002Z" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </span>
                                     <p class="mb-0">

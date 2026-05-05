@@ -1,15 +1,16 @@
 {{-- Header One (template tu/su) --}}
+@php $isHome = request()->routeIs('home'); @endphp
 <header class="tg-header-height">
-    <div class="tg-header__area tg-header-tu-menu tg-header-lg-space z-index-999 tg-transparent" id="header-sticky">
+    <div class="tg-header__area tg-header-tu-menu tg-header-lg-space z-index-999 {{ $isHome ? 'tg-transparent' : '' }}" id="header-sticky">
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col-xxl-9 col-xl-8 col-lg-8 col-5">
                     <div class="tgmenu__wrap d-flex align-items-center">
                         <div class="logo mr-25">
-                            <a class="logo-1" href="{{ route('home') }}">
+                            <a class="logo-1 {{ $isHome ? '' : 'd-none' }}" href="{{ route('home') }}">
                                 <img src="{{ asset('images/logo_white.svg') }}" alt="Solarya Travel" style="height:27px;width:auto">
                             </a>
-                            <a class="logo-2 d-none" href="{{ route('home') }}">
+                            <a class="logo-2 {{ $isHome ? 'd-none' : '' }}" href="{{ route('home') }}">
                                 <img src="{{ asset('images/logo_black.svg') }}" alt="Solarya Travel" style="height:27px;width:auto">
                             </a>
                         </div>
@@ -41,8 +42,8 @@
                         <div class="tg-header-contact-info d-flex align-items-center">
                             <span class="tg-header-contact-icon mr-10 d-none d-xl-block">
                                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect width="40" height="40" rx="20" fill="white" fillOpacity="0.15" />
-                                    <path d="M27.5 23.5l-3.06-1.31a1 1 0 00-1.16.29l-1.36 1.66a15.07 15.07 0 01-6.1-6.1l1.66-1.36a1 1 0 00.29-1.16L16.5 12.5a1 1 0 00-1.16-.58l-2.84.65A1 1 0 0011.75 13.6 16 16 0 0026.4 28.25a1 1 0 001.04-.75l.65-2.84a1 1 0 00-.59-1.16z" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                    <rect width="40" height="40" rx="20" fill="{{ $isHome ? 'white' : '#7C37FF' }}" fill-opacity="{{ $isHome ? '0.15' : '0.12' }}" />
+                                    <path d="M27.5 23.5l-3.06-1.31a1 1 0 00-1.16.29l-1.36 1.66a15.07 15.07 0 01-6.1-6.1l1.66-1.36a1 1 0 00.29-1.16L16.5 12.5a1 1 0 00-1.16-.58l-2.84.65A1 1 0 0011.75 13.6 16 16 0 0026.4 28.25a1 1 0 001.04-.75l.65-2.84a1 1 0 00-.59-1.16z" stroke="{{ $isHome ? '#fff' : '#7C37FF' }}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                                 </svg>
                             </span>
                             <div class="tg-header-contact-number d-none d-xl-block">

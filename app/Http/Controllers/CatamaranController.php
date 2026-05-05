@@ -20,12 +20,19 @@ class CatamaranController extends Controller
             'adults' => 'nullable|integer|min:1|max:20',
             'children' => 'nullable|integer|min:0|max:20',
             'slot_type' => 'nullable|in:half_day,full_day',
+            'capacity_filter' => 'nullable|in:all,small,medium,large',
+            'features' => 'nullable|array',
+            'features.*' => 'string|max:100',
+            'sort' => 'nullable|in:default,price_asc,price_desc,capacity_desc,capacity_asc',
         ]);
 
         $date = $validated['date'] ?? null;
         $adults = (int) ($validated['adults'] ?? 2);
         $children = (int) ($validated['children'] ?? 0);
         $slotType = $validated['slot_type'] ?? null;
+        $capacityFilter = $validated['capacity_filter'] ?? 'all';
+        $featuresFilter = array_values(array_filter($validated['features'] ?? [], fn ($f) => is_string($f) && $f !== ''));
+        $sort = $validated['sort'] ?? 'default';
         $guests = max(1, $adults + $children);
 
         $isAvailabilitySearch = $request->filled('date');
@@ -33,6 +40,15 @@ class CatamaranController extends Controller
         $query = Catamaran::where('is_active', true)
             ->orderBy('sort_order')
             ->with(['images']);
+
+        // Capacity filter
+        if ($capacityFilter === 'small') {
+            $query->where('capacity', '<=', 8);
+        } elseif ($capacityFilter === 'medium') {
+            $query->whereBetween('capacity', [9, 14]);
+        } elseif ($capacityFilter === 'large') {
+            $query->where('capacity', '>=', 15);
+        }
 
         $availabilitySummary = [];
 
@@ -63,6 +79,39 @@ class CatamaranController extends Controller
 
         $catamarans = $query->get();
 
+        // Helper: features may be double-encoded in DB; normalize to array of strings.
+        $normalizeFeatures = function ($value): array {
+            if (is_array($value)) {
+                $arr = $value;
+            } elseif (is_string($value)) {
+                $decoded = json_decode($value, true);
+                if (is_string($decoded)) {
+                    $decoded = json_decode($decoded, true);
+                }
+                $arr = is_array($decoded) ? $decoded : [];
+            } else {
+                $arr = [];
+            }
+            return collect($arr)
+                ->map(fn ($f) => is_string($f) ? $f : ($f['name'] ?? null))
+                ->filter()
+                ->values()
+                ->all();
+        };
+
+        // Features filter
+        if (!empty($featuresFilter)) {
+            $catamarans = $catamarans->filter(function ($catamaran) use ($featuresFilter, $normalizeFeatures) {
+                $catFeatures = $normalizeFeatures($catamaran->features);
+                foreach ($featuresFilter as $required) {
+                    if (!in_array($required, $catFeatures, true)) {
+                        return false;
+                    }
+                }
+                return true;
+            })->values();
+        }
+
         if ($isAvailabilitySearch && $date) {
             foreach ($catamarans as $catamaran) {
                 $catamaran->matched_seats_available = $availabilitySummary[$catamaran->id] ?? 0;
@@ -77,17 +126,41 @@ class CatamaranController extends Controller
                 ->values();
         }
 
+        // Sorting (overrides default if specified)
+        if ($sort !== 'default') {
+            $catamarans = match ($sort) {
+                'price_asc' => $catamarans->sortBy(fn ($c) => (float) ($c->price_per_person_half_day ?? $c->base_price_half_day ?? 0))->values(),
+                'price_desc' => $catamarans->sortByDesc(fn ($c) => (float) ($c->price_per_person_half_day ?? $c->base_price_half_day ?? 0))->values(),
+                'capacity_desc' => $catamarans->sortByDesc('capacity')->values(),
+                'capacity_asc' => $catamarans->sortBy('capacity')->values(),
+                default => $catamarans,
+            };
+        }
+
+        // Aggregate available features for sidebar
+        $availableFeatures = Catamaran::where('is_active', true)
+            ->get(['features'])
+            ->flatMap(fn ($c) => $normalizeFeatures($c->features))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
         $search = [
             'isAvailabilitySearch' => $isAvailabilitySearch,
             'date' => $date,
             'adults' => $adults,
             'children' => $children,
             'slot_type' => $slotType,
+            'capacity_filter' => $capacityFilter,
+            'features' => $featuresFilter,
+            'sort' => $sort,
             'guests' => $guests,
             'results' => $catamarans->count(),
         ];
 
-        return view('catamarans.index', compact('catamarans', 'search'));
+        return view('catamarans.index', compact('catamarans', 'search', 'availableFeatures'));
     }
 
     /**

@@ -1,26 +1,72 @@
-@extends('layouts.guest')
+@extends('layouts.public')
 
 @section('title', 'Password Dimenticata')
 
 @section('content')
-    <div class="text-center mb-4">
-        <h1 class="font-serif fw-bold text-navy h3 mb-2">Password Dimenticata?</h1>
-        <p class="text-muted">Nessun problema! Inserisci la tua email e ti invieremo un link per reimpostare la password.</p>
-    </div>
+    <section class="breadcrumb__area breadcrumb__bg" style="background-image: url('{{ asset('assets/template/img/breadcrumb/breadcrumb.jpg') }}');">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="breadcrumb__content text-center">
+                        <h3 class="breadcrumb__title">Password Dimenticata</h3>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb justify-content-center">
+                                <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Password Dimenticata</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    @if (session('status'))
-        <x-alert type="success" class="mb-4">{{ session('status') }}</x-alert>
-    @endif
+    <div class="tg-login-area pt-130 pb-130">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-6 col-lg-8 col-md-10">
+                    <div class="tg-login-wrapper">
+                        <div class="tg-login-top text-center mb-30">
+                            <h2>Password dimenticata?</h2>
+                            <p>Inserisci la tua email e ti invieremo un link per reimpostarla.</p>
+                        </div>
 
-    <form method="POST" action="{{ route('password.email') }}">
-        @csrf
-        <x-input type="email" name="email" label="Email" :value="old('email')" required autofocus placeholder="mario.rossi@email.com" />
-        <x-button type="primary" class="w-100">Invia Link di Reset</x-button>
-    </form>
+                        @if (session('status'))
+                            <div class="alert alert-success">{{ session('status') }}</div>
+                        @endif
 
-    <div class="mt-4 text-center">
-        <a href="{{ route('login') }}" class="text-primary fw-medium text-decoration-none">
-            <i class="bi bi-arrow-left me-1"></i>Torna al login
-        </a>
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0 ps-3">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="tg-login-form">
+                            <div class="tg-tour-about-review-form">
+                                <form method="POST" action="{{ route('password.email') }}">
+                                    @csrf
+                                    <div class="row">
+                                        <div class="col-lg-12 mb-25">
+                                            <input class="input" type="email" name="email" placeholder="E-mail" value="{{ old('email') }}" required autofocus>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <button type="submit" class="tg-btn w-100">Invia Link di Reset</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-center">
+                            <a href="{{ route('login') }}">&larr; Torna al login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
