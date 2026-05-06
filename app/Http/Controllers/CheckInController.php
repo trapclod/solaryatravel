@@ -44,7 +44,7 @@ class CheckInController extends Controller
         $verificationCode = $parts[2];
 
         $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['catamaran', 'timeSlot'])
+            ->with(['tour', 'departure'])
             ->first();
 
         if (!$booking) {
@@ -110,7 +110,7 @@ class CheckInController extends Controller
                 'number' => $booking->booking_number,
                 'customer_name' => $booking->customer_first_name . ' ' . $booking->customer_last_name,
                 'catamaran' => $booking->catamaran->name,
-                'time_slot' => $booking->timeSlot->name,
+                'time_slot' => optional($booking->departure)->start_time,
                 'seats' => $booking->seats,
                 'is_exclusive' => $booking->isExclusive(),
             ],
@@ -127,7 +127,7 @@ class CheckInController extends Controller
     public function verify(string $bookingNumber): View|RedirectResponse
     {
         $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['catamaran', 'timeSlot', 'addons', 'checkIns'])
+            ->with(['tour', 'departure', 'addons', 'checkIns'])
             ->firstOrFail();
 
         if (!auth()->check() || auth()->user()->role !== 'admin') {

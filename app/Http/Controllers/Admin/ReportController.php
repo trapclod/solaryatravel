@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Catamaran;
 use App\Models\Payment;
-use App\Models\TimeSlot;
+
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use Illuminate\Http\Request;
@@ -196,14 +196,14 @@ class ReportController extends Controller
             });
 
         // Bookings by time slot
-        $bookingsByTimeSlot = Booking::with('timeSlot')
+        $bookingsByTimeSlot = Booking::with('departure')
             ->whereBetween('booking_date', [$startDate, $endDate])
             ->whereNotNull('time_slot_id')
             ->selectRaw('time_slot_id, COUNT(*) as count')
             ->groupBy('time_slot_id')
             ->get()
             ->map(function ($item) {
-                $item->time_slot = $item->timeSlot->name ?? 'N/A';
+                $item->time_slot = $item->departure?->start_time ?? 'N/A';
                 return $item;
             });
 
@@ -289,7 +289,7 @@ class ReportController extends Controller
             ->get();
 
         // Time slot popularity
-        $timeSlotPopularity = Booking::with('timeSlot')
+        $timeSlotPopularity = Booking::with('departure')
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::COMPLETED])
             ->whereBetween('booking_date', [$startDate, $endDate])
             ->whereNotNull('time_slot_id')
@@ -297,7 +297,7 @@ class ReportController extends Controller
             ->groupBy('time_slot_id')
             ->get()
             ->map(function ($item) {
-                $item->time_slot = $item->timeSlot->name ?? 'N/A';
+                $item->time_slot = $item->departure?->start_time ?? 'N/A';
                 return $item;
             });
 
@@ -449,7 +449,7 @@ class ReportController extends Controller
      */
     private function getPassengersExportData(Carbon $startDate, Carbon $endDate): array
     {
-        $bookings = Booking::with(['catamaran', 'user', 'timeSlot'])
+        $bookings = Booking::with(['tour', 'user', 'departure'])
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::COMPLETED])
             ->whereBetween('booking_date', [$startDate, $endDate])
             ->orderBy('booking_date', 'desc')
@@ -460,7 +460,7 @@ class ReportController extends Controller
         foreach ($bookings as $booking) {
             $data[] = [
                 $booking->booking_date->format('d/m/Y'),
-                $booking->timeSlot->name ?? '-',
+                $booking->departure?->start_time ?? '-',
                 $booking->catamaran->name ?? '-',
                 $booking->booking_number,
                 $booking->user->name ?? ($booking->customer_first_name . ' ' . $booking->customer_last_name),

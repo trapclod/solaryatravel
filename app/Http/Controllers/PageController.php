@@ -91,7 +91,7 @@ class PageController extends Controller
     {
         $user = auth()->user();
         $bookings = $user->bookings()
-            ->with(['catamaran', 'timeSlot'])
+            ->with(['tour', 'departure'])
             ->orderByDesc('booking_date')
             ->take(10)
             ->get();

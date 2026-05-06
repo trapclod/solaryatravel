@@ -56,7 +56,7 @@
                                                 @if($booking->timeSlot)
                                                     <span><i class="bi bi-clock text-muted me-1"></i>{{ $booking->timeSlot->start_time }} - {{ $booking->timeSlot->end_time }}</span>
                                                 @endif
-                                                <span><i class="bi bi-people text-muted me-1"></i>{{ $booking->adults_count }} adulti@if($booking->children_count > 0), {{ $booking->children_count }} bambini @endif</span>
+                                                <span><i class="bi bi-people text-muted me-1"></i>{{ $booking->adults_count }} adulti @if($booking->children_count > 0) , {{ $booking->children_count }} bambini @endif</span>
                                             </div>
                                         </div>
                                         <div class="text-md-end">

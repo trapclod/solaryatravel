@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Catamaran;
+use App\Models\Tour;
 use App\Models\Booking;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -11,11 +12,17 @@ class HomeController extends Controller
 {
     public function __invoke(): View
     {
-        $catamarans = Catamaran::where('is_active', true)
-            ->orderBy('sort_order')
-            ->with(['images' => fn($q) => $q->where('is_primary', true)])
-            ->take(3)
+        $tours = Tour::active()->ordered()
+            ->with(['images' => fn($q) => $q->where('is_primary', true), 'ageBrackets'])
+            ->take(6)
             ->get();
+
+        $minPrice = Tour::active()
+            ->with('ageBrackets')
+            ->get()
+            ->map(fn ($t) => $t->ageBrackets->where('counts_as_seat', true)->min('price'))
+            ->filter()
+            ->min();
 
         $testimonials = [
             [
@@ -52,6 +59,7 @@ class HomeController extends Controller
             ->addHours(config('booking.advance_hours', 24))
             ->toDateString();
 
-        return view('home', compact('catamarans', 'testimonials', 'stats', 'minBookingDate'));
+        return view('home', compact('tours', 'minPrice', 'testimonials', 'stats', 'minBookingDate'));
     }
 }
+

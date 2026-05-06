@@ -28,7 +28,7 @@ class PaymentController extends Controller
     public function show(string $bookingNumber): View|RedirectResponse
     {
         $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['catamaran', 'timeSlot', 'addons'])
+            ->with(['tour', 'departure', 'addons'])
             ->firstOrFail();
 
         // Check if booking is still payable
@@ -55,7 +55,7 @@ class PaymentController extends Controller
     public function createCheckoutSession(string $bookingNumber): RedirectResponse
     {
         $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['catamaran', 'timeSlot', 'addons'])
+            ->with(['tour', 'departure', 'addons'])
             ->firstOrFail();
 
         if (!$booking->isPending()) {
@@ -75,7 +75,7 @@ class PaymentController extends Controller
                             'description' => sprintf(
                                 '%s - %s (%s)',
                                 $booking->booking_date->format('d/m/Y'),
-                                $booking->timeSlot->name,
+                                $booking->departure?->start_time,
                                 $booking->isExclusive() ? 'Esclusiva' : $booking->seats . ' posti'
                             ),
                         ],

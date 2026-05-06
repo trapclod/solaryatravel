@@ -13,7 +13,7 @@
             'no_show'    => ['label' => 'No show',    'icon' => 'bi-eye-slash',      'color' => 'secondary'],
         ];
         $currentStatus = request('status');
-        $hasFilters = request()->hasAny(['search', 'status', 'catamaran', 'date_from', 'date_to']);
+        $hasFilters = request()->hasAny(['search', 'status', 'tour', 'date_from', 'date_to']);
     @endphp
 
     {{-- Page header --}}
@@ -83,12 +83,12 @@
                 </select>
             </div>
             <div class="col-md-6 col-xl-2">
-                <label for="catamaran" class="form-label">Catamarano</label>
-                <select name="catamaran" id="catamaran" class="form-select">
+                <label for="tour" class="form-label">Tour</label>
+                <select name="tour" id="tour" class="form-select">
                     <option value="">Tutti</option>
-                    @foreach($catamarans as $catamaran)
-                        <option value="{{ $catamaran->id }}" {{ request('catamaran') == $catamaran->id ? 'selected' : '' }}>
-                            {{ $catamaran->name }}
+                    @foreach($tours as $tour)
+                        <option value="{{ $tour->id }}" {{ request('tour') == $tour->id ? 'selected' : '' }}>
+                            {{ $tour->name }}
                         </option>
                     @endforeach
                 </select>
@@ -132,7 +132,7 @@
                     <tr>
                         <th>Prenotazione</th>
                         <th>Cliente</th>
-                        <th>Catamarano</th>
+                        <th>Tour</th>
                         <th>Data</th>
                         <th class="text-center">Ospiti</th>
                         <th class="text-end">Totale</th>
@@ -172,15 +172,15 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-water text-primary"></i>
-                                    <span>{{ $booking->catamaran->name ?? 'N/A' }}</span>
+                                    <i class="bi bi-compass text-primary"></i>
+                                    <span class="text-truncate d-inline-block" style="max-width:180px" title="{{ $booking->tour->name ?? '' }}">{{ $booking->tour->name ?? 'N/A' }}</span>
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-semibold">{{ $booking->booking_date->format('d/m/Y') }}</div>
-                                @if($booking->timeSlot)
+                                <div class="fw-semibold">{{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') }}</div>
+                                @if($booking->departure)
                                     <div class="small text-muted">
-                                        <i class="bi bi-clock me-1"></i>{{ $booking->timeSlot->start_time }} – {{ $booking->timeSlot->end_time }}
+                                        <i class="bi bi-clock me-1"></i>{{ \Carbon\Carbon::parse($booking->departure->start_time)->format('H:i') }}@if($booking->departure->end_time) – {{ \Carbon\Carbon::parse($booking->departure->end_time)->format('H:i') }}@endif
                                     </div>
                                 @endif
                             </td>

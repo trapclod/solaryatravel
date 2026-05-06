@@ -10,10 +10,6 @@
             <p><i class="bi bi-gear me-1"></i>Configurazione generale del sistema</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('admin.settings.timeslots') }}"
-               class="btn btn-light border rounded-pill px-3 fw-semibold">
-                <i class="bi bi-clock-history me-1"></i>Gestisci fasce orarie
-            </a>
             <button type="submit" form="settingsForm"
                     class="btn btn-primary rounded-pill px-3 fw-semibold">
                 <i class="bi bi-check2-circle me-1"></i>Salva impostazioni

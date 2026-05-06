@@ -45,7 +45,7 @@
                             <a class="nav-link fw-medium {{ request()->routeIs('home') ? 'active text-primary' : '' }}" href="{{ route('home') }}">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fw-medium {{ request()->routeIs('catamarans.*') ? 'active text-primary' : '' }}" href="{{ route('catamarans.index') }}">I Nostri Catamarani</a>
+                            <a class="nav-link fw-medium {{ request()->routeIs('catamarans.*') ? 'active text-primary' : '' }}" href="{{ route('tours.index') }}">I Nostri Catamarani</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link fw-medium {{ request()->routeIs('experiences') ? 'active text-primary' : '' }}" href="{{ route('experiences') }}">Esperienze</a>
@@ -127,7 +127,7 @@
                 <div class="col-6 col-lg-2">
                     <h6 class="text-warning fw-semibold mb-3">Link Rapidi</h6>
                     <ul class="list-unstyled d-flex flex-column gap-2">
-                        <li><a href="{{ route('catamarans.index') }}" class="text-white-50 text-decoration-none">I Nostri Catamarani</a></li>
+                        <li><a href="{{ route('tours.index') }}" class="text-white-50 text-decoration-none">I Nostri Catamarani</a></li>
                         <li><a href="{{ route('experiences') }}" class="text-white-50 text-decoration-none">Esperienze</a></li>
                         <li><a href="{{ route('booking.start') }}" class="text-white-50 text-decoration-none">Prenota Online</a></li>
                         <li><a href="{{ route('about') }}" class="text-white-50 text-decoration-none">Chi Siamo</a></li>

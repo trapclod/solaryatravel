@@ -13,10 +13,11 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->string('booking_number', 20)->unique();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('catamaran_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('time_slot_id')->constrained()->cascadeOnDelete();
+            // La prenotazione è sul TOUR; i catamarani vengono assegnati ai
+            // singoli posti (booking_seats.catamaran_id) tramite auto-distribuzione.
+            $table->foreignId('tour_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tour_departure_id')->constrained()->cascadeOnDelete();
             $table->date('booking_date');
-            $table->enum('booking_type', ['seats', 'exclusive']);
             $table->unsignedInteger('seats')->default(1);
             $table->decimal('base_price', 10, 2);
             $table->decimal('addons_total', 10, 2)->default(0);
@@ -53,7 +54,8 @@ return new class extends Migration
 
             $table->index('booking_date');
             $table->index('status');
-            $table->index(['catamaran_id', 'booking_date']);
+            $table->index(['tour_id', 'booking_date']);
+            $table->index('tour_departure_id');
             $table->index('customer_email');
         });
     }

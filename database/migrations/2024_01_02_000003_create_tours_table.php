@@ -6,23 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('catamarans', function (Blueprint $table) {
+        Schema::create('tours', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->string('description_short', 500)->nullable();
-            $table->unsignedInteger('capacity')->default(12);
-            $table->decimal('length_meters', 5, 2)->nullable();
-            $table->json('features')->nullable();
-            // Nota: i prezzi sono gestiti a livello di Tour (tour_age_brackets),
-            // i catamarani sono "vehicle inventory" senza listino proprio.
+            $table->decimal('duration_hours', 4, 1)->nullable();
+            $table->string('departure_point')->nullable();
+            $table->text('itinerary')->nullable();
+            $table->json('included')->nullable();
+            $table->json('excluded')->nullable();
+            $table->date('season_start')->nullable();
+            $table->date('season_end')->nullable();
+            $table->unsignedInteger('min_capacity')->default(1);
+            $table->unsignedInteger('max_capacity')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->string('meta_title')->nullable();
@@ -31,14 +32,12 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index('is_active');
+            $table->index('sort_order');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('catamarans');
+        Schema::dropIfExists('tours');
     }
 };

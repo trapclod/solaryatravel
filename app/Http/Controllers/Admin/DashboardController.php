@@ -43,14 +43,14 @@ class DashboardController extends Controller
 
         // Pending bookings
         $pendingBookings = Booking::where('status', BookingStatus::PENDING)
-            ->with(['catamaran', 'timeSlot'])
+            ->with(['tour', 'departure'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
         // Today's bookings
         $todayBookings = Booking::whereDate('booking_date', today())
-            ->with(['catamaran', 'timeSlot'])
+            ->with(['tour', 'departure'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -144,7 +144,7 @@ class DashboardController extends Controller
      */
     public function schedule(): View
     {
-        $bookings = Booking::with(['catamaran', 'timeSlot'])
+        $bookings = Booking::with(['tour', 'departure'])
             ->whereBetween('booking_date', [now()->startOfMonth(), now()->endOfMonth()->addMonth()])
             ->where('status', '!=', BookingStatus::CANCELLED)
             ->get()
@@ -152,8 +152,8 @@ class DashboardController extends Controller
                 return [
                     'id' => $booking->id,
                     'title' => "{$booking->customer_first_name} {$booking->customer_last_name}",
-                    'start' => $booking->booking_date->format('Y-m-d') . 'T' . ($booking->timeSlot->start_time ?? '09:00'),
-                    'end' => $booking->booking_date->format('Y-m-d') . 'T' . ($booking->timeSlot->end_time ?? '17:00'),
+                    'start' => $booking->booking_date->format('Y-m-d') . 'T' . ($booking->departure?->start_time ?? '09:00'),
+                    'end' => $booking->booking_date->format('Y-m-d') . 'T' . ($booking->departure?->end_time ?? '17:00'),
                     'color' => $this->getBookingColor($booking->status),
                     'extendedProps' => [
                         'booking_number' => $booking->booking_number,

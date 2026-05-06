@@ -5,243 +5,161 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Catamaran;
 use App\Models\CatamaranImage;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class CatamaranController extends Controller
 {
-    /**
-     * Display a listing of catamarans.
-     */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $catamarans = Catamaran::withCount('bookings')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate(20);
-
+        $query = Catamaran::with(['images' => fn ($q) => $q->where('is_primary', true)]);
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        $catamarans = $query->ordered()->paginate(20)->withQueryString();
         return view('admin.catamarans.index', compact('catamarans'));
     }
 
-    /**
-     * Show the form for creating a new catamaran.
-     */
     public function create(): View
     {
-        return view('admin.catamarans.create');
+        $catamaran = new Catamaran(['is_active' => true, 'capacity' => 12]);
+        return view('admin.catamarans.create', compact('catamaran'));
     }
 
-    /**
-     * Store a newly created catamaran.
-     */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:catamarans,slug',
-            'description' => 'nullable|string',
-            'description_short' => 'nullable|string|max:500',
-            'capacity' => 'required|integer|min:1|max:100',
-            'length_meters' => 'nullable|numeric|min:0',
-            'features' => 'nullable|array',
-            'base_price_half_day' => 'required|numeric|min:0',
-            'base_price_full_day' => 'required|numeric|min:0',
-            'exclusive_price_half_day' => 'nullable|numeric|min:0',
-            'exclusive_price_full_day' => 'nullable|numeric|min:0',
-            'price_per_person_half_day' => 'nullable|numeric|min:0',
-            'price_per_person_full_day' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
-            'sort_order' => 'integer|min:0',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-        ]);
-
-        // Generate slug if not provided
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['name']);
-        }
-
-        // Ensure unique slug
-        $baseSlug = $validated['slug'];
-        $counter = 1;
-        while (Catamaran::where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $baseSlug . '-' . $counter++;
-        }
-
-        $catamaran = Catamaran::create($validated);
-
-        return redirect()
-            ->route('admin.catamarans.show', $catamaran)
-            ->with('success', 'Catamarano creato con successo.');
+        $data = $this->validateData($request);
+        $data['slug'] = !empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
+        $data['is_active'] = !empty($data['is_active']);
+        $catamaran = Catamaran::create($data);
+        $this->handleImages($catamaran, $request);
+        return redirect()->route('admin.catamarans.edit', $catamaran)
+            ->with('success', 'Catamarano creato.');
     }
 
-    /**
-     * Display the specified catamaran.
-     */
     public function show(Catamaran $catamaran): View
     {
-        $catamaran->load(['images', 'bookings' => function ($query) {
-            $query->latest()->limit(10);
-        }]);
+        $catamaran->load(['images', 'tours']);
+
+        $bookingIds = \App\Models\BookingSeat::where('catamaran_id', $catamaran->id)
+            ->pluck('booking_id')->unique();
+
+        $bookingsQuery = \App\Models\Booking::whereIn('id', $bookingIds);
 
         $stats = [
-            'total_bookings' => $catamaran->bookings()->count(),
-            'upcoming_bookings' => $catamaran->bookings()
-                ->where('booking_date', '>=', now())
-                ->where('status', '!=', 'cancelled')
+            'total_bookings' => (clone $bookingsQuery)->count(),
+            'upcoming_bookings' => (clone $bookingsQuery)
+                ->where('booking_date', '>=', now()->toDateString())
+                ->whereNotIn('status', ['cancelled', 'refunded', 'no_show'])
                 ->count(),
-            'total_revenue' => $catamaran->bookings()
-                ->whereHas('payments', function ($q) {
-                    $q->where('status', 'succeeded');
-                })
+            'total_revenue' => (clone $bookingsQuery)
+                ->whereIn('status', ['confirmed', 'completed'])
                 ->sum('total_amount'),
         ];
 
         return view('admin.catamarans.show', compact('catamaran', 'stats'));
     }
 
-    /**
-     * Show the form for editing the specified catamaran.
-     */
     public function edit(Catamaran $catamaran): View
     {
-        $catamaran->load('images');
+        $catamaran->load(['images']);
         return view('admin.catamarans.edit', compact('catamaran'));
     }
 
-    /**
-     * Update the specified catamaran.
-     */
     public function update(Request $request, Catamaran $catamaran): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:catamarans,slug,' . $catamaran->id,
-            'description' => 'nullable|string',
-            'description_short' => 'nullable|string|max:500',
-            'capacity' => 'required|integer|min:1|max:100',
-            'length_meters' => 'nullable|numeric|min:0',
-            'features' => 'nullable|array',
-            'base_price_half_day' => 'required|numeric|min:0',
-            'base_price_full_day' => 'required|numeric|min:0',
-            'exclusive_price_half_day' => 'nullable|numeric|min:0',
-            'exclusive_price_full_day' => 'nullable|numeric|min:0',
-            'price_per_person_half_day' => 'nullable|numeric|min:0',
-            'price_per_person_full_day' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
-            'sort_order' => 'integer|min:0',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-        ]);
-
-        // Generate slug if not provided
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['name']);
-        }
-
-        $catamaran->update($validated);
-
-        return redirect()
-            ->route('admin.catamarans.show', $catamaran)
-            ->with('success', 'Catamarano aggiornato con successo.');
+        $data = $this->validateData($request, $catamaran);
+        $data['slug'] = !empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
+        $data['is_active'] = !empty($data['is_active']);
+        $catamaran->update($data);
+        $this->handleImages($catamaran, $request);
+        return redirect()->route('admin.catamarans.edit', $catamaran)
+            ->with('success', 'Catamarano aggiornato.');
     }
 
-    /**
-     * Remove the specified catamaran.
-     */
     public function destroy(Catamaran $catamaran): RedirectResponse
     {
-        // Check for active bookings
-        $activeBookings = $catamaran->bookings()
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->where('booking_date', '>=', now())
-            ->count();
-
-        if ($activeBookings > 0) {
-            return back()->with('error', "Impossibile eliminare: ci sono {$activeBookings} prenotazioni attive.");
-        }
-
         $catamaran->delete();
-
-        return redirect()
-            ->route('admin.catamarans.index')
-            ->with('success', 'Catamarano eliminato con successo.');
+        return redirect()->route('admin.catamarans.index')->with('success', 'Catamarano eliminato.');
     }
 
-    /**
-     * Toggle catamaran active status.
-     */
     public function toggle(Catamaran $catamaran): RedirectResponse
     {
         $catamaran->update(['is_active' => !$catamaran->is_active]);
-
-        $status = $catamaran->is_active ? 'attivato' : 'disattivato';
-
-        return back()->with('success', "Catamarano {$status} con successo.");
+        return back()->with('success', 'Stato aggiornato.');
     }
 
-    /**
-     * Upload images for the catamaran.
-     */
     public function uploadImages(Request $request, Catamaran $catamaran): RedirectResponse
     {
-        $request->validate([
-            'images' => 'required|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
-
-        $maxOrder = $catamaran->images()->max('sort_order') ?? 0;
-
-        foreach ($request->file('images') as $image) {
-            $path = $image->store('catamarans/' . $catamaran->id, 'public');
-            
-            $catamaran->images()->create([
-                'path' => $path,
-                'filename' => $image->getClientOriginalName(),
-                'sort_order' => ++$maxOrder,
-            ]);
-        }
-
-        return back()->with('success', 'Immagini caricate con successo.');
+        $request->validate(['images.*' => 'image|max:5120']);
+        $this->handleImages($catamaran, $request);
+        return back()->with('success', 'Immagini caricate.');
     }
 
-    /**
-     * Delete an image.
-     */
     public function deleteImage(Catamaran $catamaran, CatamaranImage $image): RedirectResponse
     {
-        // Verify the image belongs to this catamaran
         if ($image->catamaran_id !== $catamaran->id) {
             abort(404);
         }
-
-        // Delete file from storage
-        Storage::disk('public')->delete($image->path);
-        
+        if ($image->image_path && Storage::disk('public')->exists($image->image_path)) {
+            Storage::disk('public')->delete($image->image_path);
+        }
         $image->delete();
-
-        return back()->with('success', 'Immagine eliminata con successo.');
+        return back()->with('success', 'Immagine eliminata.');
     }
 
-    /**
-     * Reorder images.
-     */
     public function reorderImages(Request $request, Catamaran $catamaran): RedirectResponse
     {
-        $request->validate([
-            'order' => 'required|array',
-            'order.*' => 'integer|exists:catamaran_images,id',
-        ]);
-
-        foreach ($request->order as $position => $imageId) {
-            CatamaranImage::where('id', $imageId)
-                ->where('catamaran_id', $catamaran->id)
-                ->update(['sort_order' => $position]);
+        $order = $request->input('order', []);
+        foreach ($order as $idx => $imageId) {
+            $catamaran->images()->where('id', $imageId)->update(['sort_order' => $idx]);
         }
+        return back();
+    }
 
-        return back()->with('success', 'Ordine immagini aggiornato.');
+    protected function validateData(Request $request, ?Catamaran $catamaran = null): array
+    {
+        $slugRule = 'nullable|string|max:255';
+        $slugRule .= $catamaran ? '|unique:catamarans,slug,' . $catamaran->id : '|unique:catamarans,slug';
+
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => $slugRule,
+            'description' => 'nullable|string',
+            'description_short' => 'nullable|string|max:500',
+            'capacity' => 'required|integer|min:1|max:200',
+            'length_meters' => 'nullable|numeric|min:0|max:99',
+            'features' => 'nullable|array',
+            'features.*' => 'string|max:100',
+            'is_active' => 'sometimes|boolean',
+            'sort_order' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'images' => 'nullable|array',
+            'images.*' => 'image|max:5120',
+        ]);
+    }
+
+    protected function handleImages(Catamaran $catamaran, Request $request): void
+    {
+        if (!$request->hasFile('images')) {
+            return;
+        }
+        $hasPrimary = $catamaran->images()->where('is_primary', true)->exists();
+        $sort = (int) $catamaran->images()->max('sort_order') + 1;
+        foreach ($request->file('images') as $file) {
+            $path = $file->store('catamarans/' . $catamaran->id, 'public');
+            CatamaranImage::create([
+                'catamaran_id' => $catamaran->id,
+                'image_path' => $path,
+                'image_alt' => $catamaran->name,
+                'is_primary' => !$hasPrimary,
+                'sort_order' => $sort++,
+            ]);
+            $hasPrimary = true;
+        }
     }
 }

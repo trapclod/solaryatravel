@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Catamaran extends Model
@@ -21,12 +23,6 @@ class Catamaran extends Model
         'capacity',
         'length_meters',
         'features',
-        'base_price_half_day',
-        'base_price_full_day',
-        'exclusive_price_half_day',
-        'exclusive_price_full_day',
-        'price_per_person_half_day',
-        'price_per_person_full_day',
         'is_active',
         'sort_order',
         'meta_title',
@@ -36,12 +32,6 @@ class Catamaran extends Model
     protected $casts = [
         'features' => 'array',
         'is_active' => 'boolean',
-        'base_price_half_day' => 'decimal:2',
-        'base_price_full_day' => 'decimal:2',
-        'exclusive_price_half_day' => 'decimal:2',
-        'exclusive_price_full_day' => 'decimal:2',
-        'price_per_person_half_day' => 'decimal:2',
-        'price_per_person_full_day' => 'decimal:2',
         'length_meters' => 'decimal:2',
     ];
 
@@ -61,14 +51,38 @@ class Catamaran extends Model
         return $this->hasMany(CatamaranImage::class)->orderBy('sort_order');
     }
 
-    public function bookings(): HasMany
+    public function tours(): BelongsToMany
     {
-        return $this->hasMany(Booking::class);
+        return $this->belongsToMany(Tour::class, 'tour_catamaran')
+            ->withPivot('priority');
     }
 
-    public function availability(): HasMany
+    public function bookingSeats(): HasMany
     {
-        return $this->hasMany(Availability::class);
+        return $this->hasMany(BookingSeat::class);
+    }
+
+    /**
+     * Prenotazioni con almeno un posto su questo catamarano.
+     * Usabile sia come $catamaran->bookings sia come $catamaran->bookings()->count().
+     * Nota: può contenere duplicati se la prenotazione ha più posti sullo stesso catamarano:
+     * usare ->distinct() o groupBy('bookings.id') quando serve un conteggio univoco.
+     */
+    public function bookings(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Booking::class,
+            BookingSeat::class,
+            'catamaran_id', // FK su booking_seats verso catamarans
+            'id',           // PK di bookings
+            'id',           // PK di catamarans
+            'booking_id'    // FK su booking_seats verso bookings
+        )->distinct();
+    }
+
+    public function unavailability(): HasMany
+    {
+        return $this->hasMany(CatamaranUnavailability::class);
     }
 
     // Scopes
@@ -88,29 +102,29 @@ class Catamaran extends Model
         return $this->images->firstWhere('is_primary', true) ?? $this->images->first();
     }
 
-    public function getPrimaryImageUrlAttribute(): ?string
+    /**
+     * Verifica se il catamarano è disponibile in una data specifica
+     * (nessun blocco di unavailability copre la data).
+     */
+    public function isAvailableOn(string|\DateTimeInterface $date): bool
     {
-        return $this->primaryImage?->image_path;
+        $d = is_string($date) ? $date : $date->format('Y-m-d');
+        return !$this->unavailability()
+            ->where('date_start', '<=', $d)
+            ->where('date_end', '>=', $d)
+            ->exists();
     }
 
-    // Helpers
-    public function getPriceForDuration(string $durationType, bool $isExclusive = false): float
+    /**
+     * Posti già occupati da prenotazioni attive su una specifica partenza.
+     */
+    public function seatsBookedOnDeparture(int $tourDepartureId): int
     {
-        if ($isExclusive) {
-            return $durationType === 'half_day' 
-                ? $this->exclusive_price_half_day 
-                : $this->exclusive_price_full_day;
-        }
-
-        return $durationType === 'half_day' 
-            ? $this->base_price_half_day 
-            : $this->base_price_full_day;
-    }
-
-    public function getPricePerPerson(string $durationType): float
-    {
-        return $durationType === 'half_day' 
-            ? $this->price_per_person_half_day 
-            : $this->price_per_person_full_day;
+        return (int) $this->bookingSeats()
+            ->whereHas('booking', function ($q) use ($tourDepartureId) {
+                $q->where('tour_departure_id', $tourDepartureId)
+                  ->whereNotIn('status', ['cancelled', 'refunded', 'no_show']);
+            })
+            ->count();
     }
 }

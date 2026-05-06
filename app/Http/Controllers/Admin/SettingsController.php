@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\TimeSlot;
+
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -66,64 +66,8 @@ class SettingsController extends Controller
         return back()->with('success', 'Impostazioni aggiornate con successo.');
     }
 
-    /**
-     * Display time slots management.
-     */
-    public function timeSlots(): View
-    {
-        $timeSlots = TimeSlot::orderBy('sort_order')->get();
-
-        return view('admin.settings.timeslots', compact('timeSlots'));
-    }
-
-    /**
-     * Update time slots.
-     */
-    public function updateTimeSlots(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'slots' => 'required|array',
-            'slots.*.id' => 'nullable|exists:time_slots,id',
-            'slots.*.name' => 'required|string|max:100',
-            'slots.*.start_time' => 'required|date_format:H:i',
-            'slots.*.end_time' => 'required|date_format:H:i|after:slots.*.start_time',
-            'slots.*.slot_type' => 'required|in:half_day,full_day',
-            'slots.*.price_modifier' => 'required|numeric|min:0|max:10',
-            'slots.*.is_active' => 'boolean',
-            'slots.*.sort_order' => 'required|integer|min:0',
-        ]);
-
-        foreach ($validated['slots'] as $slotData) {
-            $isActive = isset($slotData['is_active']) ? (bool) $slotData['is_active'] : false;
-            
-            if (!empty($slotData['id'])) {
-                // Update existing
-                TimeSlot::where('id', $slotData['id'])->update([
-                    'name' => $slotData['name'],
-                    'start_time' => $slotData['start_time'],
-                    'end_time' => $slotData['end_time'],
-                    'slot_type' => $slotData['slot_type'],
-                    'price_modifier' => $slotData['price_modifier'],
-                    'is_active' => $isActive,
-                    'sort_order' => $slotData['sort_order'],
-                ]);
-            } else {
-                // Create new
-                TimeSlot::create([
-                    'name' => $slotData['name'],
-                    'slug' => Str::slug($slotData['name']),
-                    'start_time' => $slotData['start_time'],
-                    'end_time' => $slotData['end_time'],
-                    'slot_type' => $slotData['slot_type'],
-                    'price_modifier' => $slotData['price_modifier'],
-                    'is_active' => $isActive,
-                    'sort_order' => $slotData['sort_order'],
-                ]);
-            }
-        }
-
-        return back()->with('success', 'Fasce orarie aggiornate con successo.');
-    }
+    // Le fasce orarie sono ora gestite per-tour (tour_departures).
+    // Vedi admin.tours.departures.
 
     /**
      * Get settings from storage.

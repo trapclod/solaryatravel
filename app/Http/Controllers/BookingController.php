@@ -16,54 +16,90 @@ class BookingController extends Controller
     ) {}
 
     /**
-     * Show the booking wizard for a specific catamaran.
+     * Entry point del flusso di prenotazione: l'utente arriva qui
+     * con tour_id (e opzionalmente departure_id) in query string.
      */
-    public function create(?string $slug = null): View
+    public function start(Request $request): View|RedirectResponse
     {
-        if ($slug) {
-            $catamaran = Catamaran::where('slug', $slug)
-                ->where('is_active', true)
-                ->firstOrFail();
-
-            return view('bookings.create', compact('catamaran'));
+        // Senza tour selezionato, rimanda al listing tour
+        if (!$request->filled('tour')) {
+            return redirect()->route('tours.index');
         }
+        $tour = \App\Models\Tour::active()
+            ->where(function ($q) use ($request) {
+                $q->where('id', $request->tour)
+                  ->orWhere('slug', $request->tour);
+            })
+            ->with(['ageBrackets', 'images'])
+            ->firstOrFail();
 
-        return view('bookings.create');
+        $departureId = $request->input('departure');
+        $departure = $departureId ? $tour->departures()->find($departureId) : null;
+
+        return view('bookings.create', compact('tour', 'departure'));
+    }
+
+    /**
+     * Crea una nuova prenotazione (chiamato dal form pubblico).
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'tour_id' => 'required|exists:tours,id',
+            'tour_departure_id' => 'required|exists:tour_departures,id',
+            'brackets' => 'required|array',
+            'brackets.*' => 'integer|min:0',
+            'addons' => 'nullable|array',
+            'addons.*' => 'integer|exists:addons,id',
+            'discount_code' => 'nullable|string|max:50',
+            'customer_first_name' => 'required|string|max:100',
+            'customer_last_name' => 'required|string|max:100',
+            'customer_email' => 'required|email|max:255',
+            'customer_phone' => 'nullable|string|max:30',
+            'special_requests' => 'nullable|string|max:1000',
+            'terms' => 'accepted',
+        ]);
+
+        try {
+            $booking = $this->bookingService->create($validated, 'website');
+            return redirect()->route('payment.show', $booking->uuid);
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Genera/serve il QR code della prenotazione.
+     */
+    public function qrCode(Booking $booking)
+    {
+        $code = $booking->qr_code ?? $booking->uuid;
+        // Genera al volo - SimpleSoftwareIO QR Code è già in vendor/
+        $qr = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(300)->generate($code);
+        return response($qr)->header('Content-Type', 'image/png');
     }
 
     /**
      * Show the booking confirmation page.
      */
-    public function confirmation(string $bookingNumber): View
+    public function confirmation(Booking $booking): View
     {
-        $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['catamaran', 'timeSlot', 'addons'])
-            ->firstOrFail();
-
+        $booking->load(['tour', 'departure', 'addons.addon']);
         return view('bookings.confirmation', compact('booking'));
     }
 
     /**
      * Show booking details for authenticated users.
      */
-    public function show(string $bookingNumber): View
+    public function show(Booking $booking): View
     {
-        $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['catamaran', 'timeSlot', 'addons', 'payments', 'checkIns'])
-            ->firstOrFail();
+        $booking->load(['tour', 'departure', 'addons.addon', 'payments', 'checkIns', 'seatRecords.catamaran', 'seatRecords.ageBracket']);
 
-        // Check if user is authorized to view this booking
         if (auth()->check()) {
-            if (auth()->user()->role !== 'admin' && 
+            if (auth()->user()->role !== 'admin' &&
                 $booking->user_id !== auth()->id() &&
                 $booking->customer_email !== auth()->user()->email) {
                 abort(403);
-            }
-        } else {
-            // If not logged in, check session
-            $accessToken = session('booking_access_' . $bookingNumber);
-            if (!$accessToken || $accessToken !== $booking->access_token) {
-                return redirect()->route('bookings.verify', $bookingNumber);
             }
         }
 
@@ -108,7 +144,7 @@ class BookingController extends Controller
     {
         $bookings = Booking::where('user_id', auth()->id())
             ->orWhere('customer_email', auth()->user()->email)
-            ->with(['catamaran', 'timeSlot'])
+            ->with(['tour', 'departure'])
             ->orderBy('booking_date', 'desc')
             ->paginate(10);
 
@@ -118,13 +154,10 @@ class BookingController extends Controller
     /**
      * Cancel a booking.
      */
-    public function cancel(string $bookingNumber): RedirectResponse
+    public function cancel(Booking $booking): RedirectResponse
     {
-        $booking = Booking::where('booking_number', $bookingNumber)->firstOrFail();
-
-        // Check authorization
         if (auth()->check() && auth()->user()->role !== 'admin') {
-            if ($booking->user_id !== auth()->id() && 
+            if ($booking->user_id !== auth()->id() &&
                 $booking->customer_email !== auth()->user()->email) {
                 abort(403);
             }
@@ -132,14 +165,11 @@ class BookingController extends Controller
 
         try {
             $this->bookingService->cancel($booking, 'Annullata dal cliente');
-            
             return redirect()
-                ->route('bookings.show', $bookingNumber)
+                ->route('booking.show', $booking->uuid)
                 ->with('success', 'La prenotazione è stata annullata con successo.');
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
 

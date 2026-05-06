@@ -149,7 +149,7 @@
             <h2 class="display-6 fw-bold mb-3 font-serif">Pronto a Vivere un'Esperienza Unica?</h2>
             <p class="lead text-white-50 mb-4 mx-auto" style="max-width:560px">Scegli il catamarano e l'esperienza perfetta per te</p>
             <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-                <a href="{{ route('catamarans.index') }}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold">Scopri i Catamarani</a>
+                <a href="{{ route('tours.index') }}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold">Scopri i Catamarani</a>
                 <a href="{{ route('booking.start') }}" class="btn btn-light btn-lg rounded-pill shadow fw-semibold">
                     Prenota Subito <i class="bi bi-arrow-right ms-2"></i>
                 </a>

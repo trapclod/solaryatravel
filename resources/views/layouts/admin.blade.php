@@ -74,13 +74,13 @@
                     <li class="px-2 pt-3 pb-1"><div class="section-title text-uppercase fw-bold">Gestione</div></li>
 
                     <li class="nav-item">
-                        <a href="{{ route('admin.catamarans.index') }}" class="nav-link {{ request()->routeIs('admin.catamarans.*') ? 'active' : '' }}">
-                            <i class="bi bi-water me-2"></i>Catamarani
+                        <a href="{{ route('admin.tours.index') }}" class="nav-link {{ request()->routeIs('admin.tours.*') ? 'active' : '' }}">
+                            <i class="bi bi-compass me-2"></i>Tour
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.availability.index') }}" class="nav-link {{ request()->routeIs('admin.availability.*') ? 'active' : '' }}">
-                            <i class="bi bi-calendar3 me-2"></i>Disponibilità
+                        <a href="{{ route('admin.catamarans.index') }}" class="nav-link {{ request()->routeIs('admin.catamarans.*') ? 'active' : '' }}">
+                            <i class="bi bi-water me-2"></i>Flotta
                         </a>
                     </li>
                     <li class="nav-item">

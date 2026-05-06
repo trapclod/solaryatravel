@@ -50,13 +50,13 @@
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ route('admin.availability.calendar', $catamaran) }}"
+                    <a href="{{ '#' }}"
                        class="btn btn-light rounded-pill px-3 fw-semibold border-0">
                         <i class="bi bi-calendar3 me-2"></i>Disponibilità
                     </a>
-                    <a href="{{ route('catamarans.show', $catamaran) }}" target="_blank" rel="noopener"
+                    <a href="{{ route('tours.index') }}" target="_blank" rel="noopener"
                        class="btn btn-light rounded-pill px-3 fw-semibold border-0">
-                        <i class="bi bi-box-arrow-up-right me-2"></i>Vedi sul sito
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Vedi tour pubblici
                     </a>
                     <a href="{{ route('admin.catamarans.edit', $catamaran) }}"
                        class="btn btn-warning rounded-pill px-3 fw-semibold text-dark">
@@ -207,55 +207,27 @@
 
         {{-- RIGHT --}}
         <div class="col-lg-4">
-            {{-- Pricing --}}
+            {{-- Tours associati --}}
             <div class="dash-card mb-3">
                 <div class="dash-card-header">
-                    <h3><i class="bi bi-tag me-2 text-warning"></i>Prezzi</h3>
+                    <h3><i class="bi bi-compass me-2 text-primary"></i>Tour assegnati</h3>
+                    <span class="small text-muted">{{ $catamaran->tours->count() }}</span>
                 </div>
                 <div class="dash-card-body">
-                    <div class="cat-price-block">
-                        <div class="cat-price-label">
-                            <i class="bi bi-sun me-1"></i>Mezza giornata
+                    @forelse($catamaran->tours as $tour)
+                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                            <a href="{{ route('admin.tours.show', $tour) }}" class="text-decoration-none text-dark fw-medium small">
+                                {{ $tour->name }}
+                            </a>
+                            @if($tour->is_active)
+                                <span class="badge bg-success-subtle text-success">Attivo</span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary">Inattivo</span>
+                            @endif
                         </div>
-                        <div class="cat-price-value">
-                            €{{ number_format($catamaran->base_price_half_day, 0, ',', '.') }}
-                        </div>
-                        @if($catamaran->exclusive_price_half_day)
-                            <div class="cat-price-extra">
-                                <i class="bi bi-gem text-primary"></i>
-                                Esclusivo: <strong>€{{ number_format($catamaran->exclusive_price_half_day, 0, ',', '.') }}</strong>
-                            </div>
-                        @endif
-                        @if($catamaran->price_per_person_half_day)
-                            <div class="cat-price-extra">
-                                <i class="bi bi-person text-muted"></i>
-                                Per persona: <strong>€{{ number_format($catamaran->price_per_person_half_day, 0, ',', '.') }}</strong>
-                            </div>
-                        @endif
-                    </div>
-
-                    <hr class="my-3">
-
-                    <div class="cat-price-block">
-                        <div class="cat-price-label">
-                            <i class="bi bi-brightness-high me-1"></i>Giornata intera
-                        </div>
-                        <div class="cat-price-value">
-                            €{{ number_format($catamaran->base_price_full_day, 0, ',', '.') }}
-                        </div>
-                        @if($catamaran->exclusive_price_full_day)
-                            <div class="cat-price-extra">
-                                <i class="bi bi-gem text-primary"></i>
-                                Esclusivo: <strong>€{{ number_format($catamaran->exclusive_price_full_day, 0, ',', '.') }}</strong>
-                            </div>
-                        @endif
-                        @if($catamaran->price_per_person_full_day)
-                            <div class="cat-price-extra">
-                                <i class="bi bi-person text-muted"></i>
-                                Per persona: <strong>€{{ number_format($catamaran->price_per_person_full_day, 0, ',', '.') }}</strong>
-                            </div>
-                        @endif
-                    </div>
+                    @empty
+                        <p class="small text-muted mb-0">Questo catamarano è disponibile per tutti i tour senza restrizioni.</p>
+                    @endforelse
                 </div>
             </div>
 
@@ -297,7 +269,7 @@
                             @endif
                         </button>
                     </form>
-                    <a href="{{ route('admin.availability.calendar', $catamaran) }}"
+                    <a href="{{ '#' }}"
                        class="btn btn-light border rounded-pill fw-semibold">
                         <i class="bi bi-calendar3 me-2"></i>Gestisci disponibilità
                     </a>
@@ -315,8 +287,9 @@
                 </div>
                 <div class="dash-card-body">
                     <div class="bg-light rounded-3 p-2 small font-monospace text-muted text-truncate">
-                        /catamarani/{{ $catamaran->slug }}
+                        /catamarani/{{ $catamaran->slug }} <span class="text-warning">→ /tour</span>
                     </div>
+                    <small class="text-muted">Le pagine pubbliche dei singoli catamarani sono state sostituite dalla selezione dei <strong>Tour</strong>.</small>
                 </div>
             </div>
         </div>

@@ -61,12 +61,12 @@
                                     <p class="mr-15">A partire da</p>
                                     <div class="tg-hero-price d-flex">
                                         <span class="hero-dolar">€</span>
-                                        <span class="hero-price">{{ $catamarans->min('price_per_person_half_day') ? number_format($catamarans->min('price_per_person_half_day'), 0, ',', '.') : '89' }}</span>
+                                        <span class="hero-price">{{ $minPrice ? number_format($minPrice, 0, ',', '.') : '40' }}</span>
                                         <span class="night">/persona</span>
                                     </div>
                                 </div>
                                 <div class="tg-hero-btn-box wow fadeInUp" data-wow-delay=".8s" data-wow-duration="1.5s">
-                                    <a href="{{ route('catamarans.index') }}" class="tg-btn tg-btn-switch-animation">
+                                    <a href="{{ route('tours.index') }}" class="tg-btn tg-btn-switch-animation">
                                         <span class="tg-btn-text">Scopri i Tour</span>
                                     </a>
                                 </div>
@@ -111,7 +111,7 @@
                 <div class="col-lg-12">
                     <div class="tg-booking-form-wrap">
                         <div class="tg-booking-form-item">
-                            <form action="{{ route('catamarans.index') }}" method="GET">
+                            <form action="{{ route('tours.index') }}" method="GET">
                                 <div class="tg-booking-form-input-group d-flex align-items-end justify-content-between flex-wrap">
 
                                     {{-- Destinazione --}}
@@ -282,7 +282,7 @@
         </div>
     </div>
 
-    {{-- ============= LISTING (catamarani) ============= --}}
+    {{-- ============= LISTING (tours) ============= --}}
     <div class="tg-listing-area tg-grey-bg pt-140 pb-110 p-relative z-index-9">
         <img class="tg-listing-shape d-none d-lg-block" src="{{ asset('assets/template/img/listing/about-shape.png') }}" alt="">
         <img class="tg-listing-shape-2 d-none d-xl-block" src="{{ asset('assets/template/img/listing/about-shape-2.png') }}" alt="">
@@ -291,21 +291,21 @@
             <div class="row">
                 <div class="col-12">
                     <div class="tg-listing-section-title text-center mb-35">
-                        <h5 class="tg-section-subtitle wow fadeInUp">La nostra flotta</h5>
+                        <h5 class="tg-section-subtitle wow fadeInUp">I nostri tour</h5>
                         <h2 class="mb-15 wow fadeInUp">Esperienze indimenticabili ti aspettano</h2>
                     </div>
                 </div>
             </div>
             <div class="row">
-                @forelse($catamarans as $i => $catamaran)
+                @forelse($tours as $i => $tour)
                     <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6">
                         <div class="tg-listing-card-item mb-30">
                             <div class="tg-listing-card-thumb fix mb-15 p-relative">
-                                <a href="{{ route('catamarans.show', $catamaran->slug) }}">
-                                    @if($catamaran->primaryImage)
-                                        <img class="tg-card-border w-100" src="{{ $catamaran->primaryImage->url }}" alt="{{ $catamaran->name }}">
+                                <a href="{{ route('tours.show', $tour->slug) }}">
+                                    @if($tour->primaryImage)
+                                        <img class="tg-card-border w-100" src="{{ \Illuminate\Support\Facades\Storage::url($tour->primaryImage->path) }}" alt="{{ $tour->name }}">
                                     @else
-                                        <img class="tg-card-border w-100" src="{{ asset('assets/template/img/hero/hero-'.(($i % 5) + 1).'.jpg') }}" alt="{{ $catamaran->name }}">
+                                        <img class="tg-card-border w-100" src="{{ asset('assets/template/img/hero/hero-'.(($i % 5) + 1).'.jpg') }}" alt="{{ $tour->name }}">
                                     @endif
                                     @if($i === 0)
                                         <span class="tg-listing-item-price-discount shape">Top</span>
@@ -320,20 +320,22 @@
                                 </div>
                             </div>
                             <div class="tg-listing-card-content">
-                                <h4 class="tg-listing-card-title"><a href="{{ route('catamarans.show', $catamaran->slug) }}">{{ $catamaran->name }}</a></h4>
+                                <h4 class="tg-listing-card-title"><a href="{{ route('tours.show', $tour->slug) }}">{{ $tour->name }}</a></h4>
                                 <div class="tg-listing-card-duration-tour">
                                     <span class="tg-listing-card-duration-map mb-5">
-                                        <i class="fa-solid fa-location-dot me-1"></i> Costiera Amalfitana
+                                        <i class="fa-solid fa-location-dot me-1"></i> {{ $tour->departure_point ?? 'Costiera Amalfitana' }}
                                     </span>
-                                    <span class="tg-listing-card-duration-time">
-                                        <i class="fa-regular fa-user me-1"></i> {{ $catamaran->capacity }} ospiti
-                                    </span>
+                                    @if($tour->duration_hours)
+                                        <span class="tg-listing-card-duration-time">
+                                            <i class="fa-regular fa-clock me-1"></i> {{ $tour->duration_hours }}h
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                             <div class="tg-listing-card-price d-flex align-items-end justify-content-between">
                                 <div class="tg-listing-card-price-wrap price-bg d-flex align-items-center">
                                     <span class="tg-listing-card-currency-amount mr-5">
-                                        <span class="currency-symbol">€</span>{{ number_format($catamaran->price_per_person_half_day ?? 0, 0, ',', '.') }}
+                                        <span class="currency-symbol">€</span>{{ number_format($tour->price_from ?? 0, 0, ',', '.') }}
                                     </span>
                                     <span class="tg-listing-card-activity-person">/Persona</span>
                                 </div>
@@ -346,12 +348,12 @@
                     </div>
                 @empty
                     <div class="col-12 text-center py-5">
-                        <p class="text-muted">Nessun catamarano disponibile al momento.</p>
+                        <p class="text-muted">Nessun tour disponibile al momento.</p>
                     </div>
                 @endforelse
                 <div class="col-12 text-center mt-15">
-                    <a href="{{ route('catamarans.index') }}" class="tg-btn tg-btn-transparent tg-btn-switch-animation">
-                        <span class="tg-btn-text">Vedi tutti i catamarani</span>
+                    <a href="{{ route('tours.index') }}" class="tg-btn tg-btn-transparent tg-btn-switch-animation">
+                        <span class="tg-btn-text">Vedi tutti i tour</span>
                     </a>
                 </div>
             </div>
@@ -454,7 +456,7 @@
                         <h4 class="tg-banner-subtitle mb-10">Promo estate</h4>
                         <h2 class="tg-banner-title mb-25">Fino al 40% di sconto!</h2>
                         <div class="tg-banner-btn">
-                            <a href="{{ route('catamarans.index') }}" class="tg-btn tg-btn-switch-animation">
+                            <a href="{{ route('tours.index') }}" class="tg-btn tg-btn-switch-animation">
                                 <span class="tg-btn-text">Scopri le offerte</span>
                             </a>
                         </div>
@@ -497,7 +499,7 @@
                                 </div>
                                 <div class="tg-location-content text-center">
                                     <span class="tg-location-time">{{ $loc['tours'] }} Tour</span>
-                                    <h3 class="tg-location-title mb-0"><a href="{{ route('catamarans.index') }}">{{ $loc['title'] }}</a></h3>
+                                    <h3 class="tg-location-title mb-0"><a href="{{ route('tours.index') }}">{{ $loc['title'] }}</a></h3>
                                 </div>
                                 <div class="tg-location-border one"></div>
                                 <div class="tg-location-border two"></div>

@@ -72,7 +72,7 @@ class PaymentController extends Controller
      */
     public function show(Payment $payment): View
     {
-        $payment->load(['booking.catamaran', 'booking.user', 'booking.timeSlot']);
+        $payment->load(['booking.tour', 'booking.user', 'booking.departure']);
 
         return view('admin.payments.show', compact('payment'));
     }

@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
-use App\Enums\BookingType;
-use App\Enums\DurationType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,52 +19,54 @@ class Booking extends Model
         'uuid',
         'booking_number',
         'user_id',
-        'catamaran_id',
-        'booking_type',
-        'duration_type',
-        'start_date',
-        'end_date',
-        'time_slot_id',
-        'seats_booked',
-        'status',
-        'base_amount',
-        'addons_amount',
+        'tour_id',
+        'tour_departure_id',
+        'booking_date',
+        'seats',
+        'base_price',
+        'addons_total',
         'discount_amount',
+        'discount_code_id',
         'tax_amount',
         'total_amount',
         'currency',
-        'discount_code_id',
+        'status',
+        'customer_first_name',
+        'customer_last_name',
+        'customer_email',
+        'customer_phone',
+        'customer_country',
+        'special_requests',
         'qr_code',
-        'qr_code_url',
+        'payment_deadline',
+        'confirmed_at',
         'checked_in_at',
-        'checked_in_by',
-        'customer_notes',
-        'admin_notes',
+        'completed_at',
+        'cancelled_at',
+        'cancellation_reason',
+        'cancelled_by',
+        'source',
+        'external_reference',
+        'metadata',
+        'locale',
         'ip_address',
         'user_agent',
-        'source',
-        'confirmed_at',
-        'cancelled_at',
-        'completed_at',
-        'expires_at',
     ];
 
     protected $casts = [
-        'booking_type' => BookingType::class,
-        'duration_type' => DurationType::class,
         'status' => BookingStatus::class,
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'base_amount' => 'decimal:2',
-        'addons_amount' => 'decimal:2',
+        'booking_date' => 'date',
+        'base_price' => 'decimal:2',
+        'addons_total' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'checked_in_at' => 'datetime',
+        'metadata' => 'array',
+        'payment_deadline' => 'datetime',
         'confirmed_at' => 'datetime',
-        'cancelled_at' => 'datetime',
+        'checked_in_at' => 'datetime',
         'completed_at' => 'datetime',
-        'expires_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
     public function uniqueIds(): array
@@ -80,17 +80,17 @@ class Booking extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function catamaran(): BelongsTo
+    public function tour(): BelongsTo
     {
-        return $this->belongsTo(Catamaran::class);
+        return $this->belongsTo(Tour::class);
     }
 
-    public function timeSlot(): BelongsTo
+    public function departure(): BelongsTo
     {
-        return $this->belongsTo(TimeSlot::class);
+        return $this->belongsTo(TourDeparture::class, 'tour_departure_id');
     }
 
-    public function seats(): HasMany
+    public function seatRecords(): HasMany
     {
         return $this->hasMany(BookingSeat::class);
     }
@@ -107,9 +107,7 @@ class Booking extends Model
 
     public function successfulPayment(): HasOne
     {
-        return $this->hasOne(Payment::class)
-            ->where('status', 'succeeded')
-            ->latest();
+        return $this->hasOne(Payment::class)->where('status', 'succeeded')->latest();
     }
 
     public function discountCode(): BelongsTo
@@ -122,9 +120,9 @@ class Booking extends Model
         return $this->hasMany(CheckIn::class);
     }
 
-    public function checkedInByUser(): BelongsTo
+    public function cancelledByUser(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'checked_in_by');
+        return $this->belongsTo(User::class, 'cancelled_by');
     }
 
     // Scopes
@@ -138,24 +136,23 @@ class Booking extends Model
         return $query->where('status', BookingStatus::CONFIRMED);
     }
 
+    public function scopeActive($query)
+    {
+        return $query->whereNotIn('status', ['cancelled', 'refunded', 'no_show']);
+    }
+
     public function scopeForDate($query, $date)
     {
-        return $query->whereDate('start_date', '<=', $date)
-            ->whereDate('end_date', '>=', $date);
+        return $query->whereDate('booking_date', $date);
     }
 
     public function scopeUpcoming($query)
     {
-        return $query->where('start_date', '>=', now()->toDateString())
+        return $query->where('booking_date', '>=', now()->toDateString())
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING]);
     }
 
     // Helpers
-    public function isExclusive(): bool
-    {
-        return $this->booking_type === BookingType::EXCLUSIVE;
-    }
-
     public function isPending(): bool
     {
         return $this->status === BookingStatus::PENDING;
@@ -173,7 +170,7 @@ class Booking extends Model
 
     public function canBeCheckedIn(): bool
     {
-        return $this->isConfirmed() && $this->start_date->isToday();
+        return $this->isConfirmed() && $this->booking_date->isToday();
     }
 
     public function canBeCancelled(): bool
@@ -181,18 +178,23 @@ class Booking extends Model
         return in_array($this->status, [BookingStatus::PENDING, BookingStatus::CONFIRMED]);
     }
 
-    public function getDurationInDays(): int
+    public function getCustomerFullNameAttribute(): string
     {
-        return $this->start_date->diffInDays($this->end_date) + 1;
+        return trim($this->customer_first_name . ' ' . $this->customer_last_name);
     }
 
-    public function getFormattedDatesAttribute(): string
+    /**
+     * Catamarani assegnati ai posti di questa prenotazione (distinct).
+     */
+    public function getAssignedCatamaransAttribute()
     {
-        if ($this->start_date->equalTo($this->end_date)) {
-            return $this->start_date->format('d/m/Y');
-        }
-
-        return $this->start_date->format('d/m/Y') . ' - ' . $this->end_date->format('d/m/Y');
+        return $this->seatRecords()
+            ->whereNotNull('catamaran_id')
+            ->with('catamaran')
+            ->get()
+            ->pluck('catamaran')
+            ->unique('id')
+            ->values();
     }
 
     // Boot
@@ -213,14 +215,10 @@ class Booking extends Model
     public static function generateBookingNumber(): string
     {
         $year = now()->format('Y');
-        $lastBooking = static::whereYear('created_at', $year)
-            ->orderBy('id', 'desc')
-            ->first();
-
-        $sequence = $lastBooking 
-            ? (int) substr($lastBooking->booking_number, -5) + 1 
+        $lastBooking = static::whereYear('created_at', $year)->orderBy('id', 'desc')->first();
+        $sequence = $lastBooking
+            ? (int) substr($lastBooking->booking_number, -5) + 1
             : 1;
-
         return sprintf('SLY-%s-%05d', $year, $sequence);
     }
 
@@ -229,7 +227,6 @@ class Booking extends Model
         do {
             $code = strtoupper(\Illuminate\Support\Str::random(12));
         } while (static::where('qr_code', $code)->exists());
-
         return $code;
     }
 }
