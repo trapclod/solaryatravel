@@ -9,6 +9,7 @@ use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\BoardingController as AdminBoardingController;
 use App\Http\Controllers\Admin\CatamaranController as AdminCatamaranController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Admin\TourDepartureController as AdminTourDepartureController;
@@ -43,6 +44,8 @@ Route::post('/prenota', [BookingController::class, 'store'])->name('booking.stor
 Route::get('/prenotazione/{booking:uuid}', [BookingController::class, 'show'])->name('booking.show');
 Route::get('/prenotazione/{booking:uuid}/conferma', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/prenotazione/{booking:uuid}/qr', [BookingController::class, 'qrCode'])->name('booking.qr');
+Route::get('/prenotazione/{booking:uuid}/biglietti', [BookingController::class, 'tickets'])->name('booking.tickets');
+Route::get('/biglietti/{seat:qr_code}/qr', [BookingController::class, 'seatQr'])->name('booking.seat.qr');
 
 // Payment
 Route::prefix('pagamento')->name('payment.')->group(function () {
@@ -91,7 +94,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::post('/checkin/verify', [CheckInController::class, 'verifyAndCheckIn'])->name('checkin.verify');
     Route::post('/checkin/manual', [CheckInController::class, 'manualCheckIn'])->name('checkin.manual');
 
-    Route::resource('bookings', AdminBookingController::class)->except(['create', 'store']);
+    // Imbarco passeggeri (QR scan per partenza)
+    Route::get('/imbarco', [AdminBoardingController::class, 'index'])->name('boarding.index');
+    Route::get('/imbarco/{departure}', [AdminBoardingController::class, 'show'])->name('boarding.show');
+    Route::get('/imbarco/{departure}/state', [AdminBoardingController::class, 'state'])->name('boarding.state');
+    Route::post('/imbarco/{departure}/scan', [AdminBoardingController::class, 'scan'])->name('boarding.scan');
+    Route::post('/imbarco/{departure}/seats/{seat}/toggle', [AdminBoardingController::class, 'toggle'])->name('boarding.toggle');
+
+    Route::resource('bookings', AdminBookingController::class);
+    Route::get('/bookings-api/tours/{tour}/departures', [AdminBookingController::class, 'departuresJson'])->name('bookings.departures.json');
     Route::post('/bookings/{booking}/confirm', [AdminBookingController::class, 'confirm'])->name('bookings.confirm');
     Route::post('/bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->name('bookings.cancel');
     Route::post('/bookings/{booking}/refund', [AdminBookingController::class, 'refund'])->name('bookings.refund');

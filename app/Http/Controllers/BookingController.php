@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\BookingSeat;
 use App\Models\Catamaran;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
@@ -86,6 +87,28 @@ class BookingController extends Controller
     {
         $booking->load(['tour', 'departure', 'addons.addon']);
         return view('bookings.confirmation', compact('booking'));
+    }
+
+    /**
+     * Pagina con i biglietti (1 QR per passeggero) stampabili.
+     */
+    public function tickets(Booking $booking): View
+    {
+        $booking->load(['tour', 'departure', 'seatRecords.ageBracket', 'seatRecords.catamaran']);
+        return view('bookings.tickets', compact('booking'));
+    }
+
+    /**
+     * Restituisce il PNG del QR di un singolo posto.
+     */
+    public function seatQr(BookingSeat $seat)
+    {
+        $png = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+            ->size(300)
+            ->margin(1)
+            ->errorCorrection('H')
+            ->generate($seat->qr_code);
+        return response($png)->header('Content-Type', 'image/png');
     }
 
     /**

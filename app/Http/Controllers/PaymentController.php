@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\BookingTickets;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Stripe\Stripe;
@@ -25,25 +28,15 @@ class PaymentController extends Controller
     /**
      * Show the payment page for a booking.
      */
-    public function show(string $bookingNumber): View|RedirectResponse
+    public function show(Booking $booking): View|RedirectResponse
     {
-        $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['tour', 'departure', 'addons'])
-            ->firstOrFail();
+        $booking->loadMissing(['tour', 'departure', 'addons']);
 
         // Check if booking is still payable
         if (!$booking->isPending()) {
             return redirect()
-                ->route('bookings.show', $bookingNumber)
+                ->route('booking.show', $booking->uuid)
                 ->with('info', 'Questa prenotazione è già stata pagata o non è più valida.');
-        }
-
-        // Check if payment deadline has passed
-        if ($booking->payment_deadline && now()->gt($booking->payment_deadline)) {
-            $booking->update(['status' => BookingStatus::EXPIRED]);
-            return redirect()
-                ->route('bookings.create')
-                ->with('error', 'Il tempo per completare il pagamento è scaduto. Effettua una nuova prenotazione.');
         }
 
         return view('payments.show', compact('booking'));
@@ -52,61 +45,18 @@ class PaymentController extends Controller
     /**
      * Create a Stripe Checkout session.
      */
-    public function createCheckoutSession(string $bookingNumber): RedirectResponse
+    public function createCheckoutSession(Booking $booking): RedirectResponse
     {
-        $booking = Booking::where('booking_number', $bookingNumber)
-            ->with(['tour', 'departure', 'addons'])
-            ->firstOrFail();
-
         if (!$booking->isPending()) {
             return redirect()
-                ->route('bookings.show', $bookingNumber)
+                ->route('booking.show', $booking->uuid)
                 ->with('error', 'Questa prenotazione non può essere pagata.');
         }
 
         try {
-            $session = Session::create([
-                'payment_method_types' => ['card'],
-                'line_items' => [[
-                    'price_data' => [
-                        'currency' => 'eur',
-                        'product_data' => [
-                            'name' => 'Escursione ' . $booking->catamaran->name,
-                            'description' => sprintf(
-                                '%s - %s (%s)',
-                                $booking->booking_date->format('d/m/Y'),
-                                $booking->departure?->start_time,
-                                $booking->isExclusive() ? 'Esclusiva' : $booking->seats . ' posti'
-                            ),
-                        ],
-                        'unit_amount' => (int) ($booking->total_amount * 100),
-                    ],
-                    'quantity' => 1,
-                ]],
-                'mode' => 'payment',
-                'success_url' => route('payment.success', $bookingNumber) . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => route('payment.cancel', $bookingNumber),
-                'customer_email' => $booking->customer_email,
-                'metadata' => [
-                    'booking_number' => $booking->booking_number,
-                    'booking_id' => $booking->id,
-                ],
-                'expires_at' => now()->addMinutes(30)->timestamp,
-            ]);
-
-            // Create payment record
-            Payment::create([
-                'booking_id' => $booking->id,
-                'amount' => $booking->total_amount,
-                'currency' => 'EUR',
-                'payment_method' => 'stripe',
-                'payment_gateway' => 'stripe',
-                'transaction_id' => $session->id,
-                'status' => PaymentStatus::PENDING,
-                'metadata' => ['session_id' => $session->id],
-            ]);
-
-            return redirect($session->url);
+            $session = $this->paymentService->createCheckoutSession($booking);
+            $booking->update(['checkout_url' => $session['url']]);
+            return redirect($session['url']);
         } catch (\Exception $e) {
             report($e);
             return redirect()
@@ -118,10 +68,8 @@ class PaymentController extends Controller
     /**
      * Handle successful payment return.
      */
-    public function success(Request $request, string $bookingNumber): View|RedirectResponse
+    public function success(Request $request, Booking $booking): View|RedirectResponse
     {
-        $booking = Booking::where('booking_number', $bookingNumber)->firstOrFail();
-
         $sessionId = $request->get('session_id');
 
         if ($sessionId) {
@@ -129,9 +77,8 @@ class PaymentController extends Controller
                 $session = Session::retrieve($sessionId);
 
                 if ($session->payment_status === 'paid') {
-                    // Update payment record
                     $payment = Payment::where('transaction_id', $sessionId)->first();
-                    if ($payment) {
+                    if ($payment && $payment->status !== PaymentStatus::COMPLETED) {
                         $payment->update([
                             'status' => PaymentStatus::COMPLETED,
                             'paid_at' => now(),
@@ -142,10 +89,14 @@ class PaymentController extends Controller
                         ]);
                     }
 
-                    // Update booking status
-                    $booking->update(['status' => BookingStatus::CONFIRMED]);
+                    if ($booking->status !== BookingStatus::CONFIRMED) {
+                        $booking->update([
+                            'status' => BookingStatus::CONFIRMED,
+                            'confirmed_at' => now(),
+                        ]);
+                    }
 
-                    // TODO: Send confirmation email
+                    $this->sendTicketsEmail($booking);
 
                     return view('payments.success', compact('booking'));
                 }
@@ -154,20 +105,37 @@ class PaymentController extends Controller
             }
         }
 
-        // If we can't verify payment, redirect to booking page
         return redirect()
-            ->route('bookings.show', $bookingNumber)
+            ->route('booking.show', $booking->uuid)
             ->with('info', 'Stiamo verificando il tuo pagamento. Riceverai una conferma via email.');
     }
 
     /**
      * Handle cancelled payment.
      */
-    public function cancel(string $bookingNumber): View
+    public function cancel(Booking $booking): View
     {
-        $booking = Booking::where('booking_number', $bookingNumber)->firstOrFail();
-
         return view('payments.cancel', compact('booking'));
+    }
+
+    /**
+     * Invia (idempotente) l'email con i biglietti QR al cliente.
+     */
+    protected function sendTicketsEmail(Booking $booking): void
+    {
+        $booking->refresh();
+        if ($booking->tickets_sent_at) {
+            return;
+        }
+        try {
+            Mail::to($booking->customer_email)->send(new BookingTickets($booking));
+            $booking->update(['tickets_sent_at' => now()]);
+        } catch (\Throwable $e) {
+            Log::error('Invio biglietti fallito', [
+                'booking' => $booking->booking_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -227,9 +195,14 @@ class PaymentController extends Controller
                 ),
             ]);
 
-            $payment->booking->update(['status' => BookingStatus::CONFIRMED]);
-
-            // TODO: Send confirmation email
+            $booking = $payment->booking;
+            if ($booking->status !== BookingStatus::CONFIRMED) {
+                $booking->update([
+                    'status' => BookingStatus::CONFIRMED,
+                    'confirmed_at' => now(),
+                ]);
+            }
+            $this->sendTicketsEmail($booking);
         }
     }
 
@@ -246,7 +219,14 @@ class PaymentController extends Controller
                 'paid_at' => now(),
             ]);
 
-            $payment->booking->update(['status' => BookingStatus::CONFIRMED]);
+            $booking = $payment->booking;
+            if ($booking->status !== BookingStatus::CONFIRMED) {
+                $booking->update([
+                    'status' => BookingStatus::CONFIRMED,
+                    'confirmed_at' => now(),
+                ]);
+            }
+            $this->sendTicketsEmail($booking);
         }
     }
 

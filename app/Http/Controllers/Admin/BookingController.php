@@ -4,19 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
+use App\Mail\BookingPaymentLink;
+use App\Mail\BookingTickets;
 use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\Catamaran;
 use App\Models\Tour;
 use App\Services\BookingService;
+use App\Services\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class BookingController extends Controller
 {
     public function __construct(
-        protected BookingService $bookingService
+        protected BookingService $bookingService,
+        protected PaymentService $paymentService
     ) {}
 
     public function index(Request $request): View
@@ -52,6 +58,169 @@ class BookingController extends Controller
             ->groupBy('status')->pluck('count', 'status')->toArray();
 
         return view('admin.bookings.index', compact('bookings', 'tours', 'statuses', 'stats'));
+    }
+
+    /**
+     * Form admin per creare una nuova prenotazione manualmente.
+     */
+    public function create(Request $request): View
+    {
+        $tours = Tour::with('ageBrackets')->orderBy('name')->get();
+
+        $selectedTour = null;
+        $departures = collect();
+
+        if ($request->filled('tour_id')) {
+            $selectedTour = $tours->firstWhere('id', (int) $request->tour_id);
+            if ($selectedTour) {
+                $departures = $selectedTour->departures()
+                    ->whereDate('departure_date', '>=', now()->startOfDay())
+                    ->where('status', 'scheduled')
+                    ->orderBy('departure_date')
+                    ->orderBy('start_time')
+                    ->get();
+            }
+        }
+
+        return view('admin.bookings.create', compact('tours', 'selectedTour', 'departures'));
+    }
+
+    /**
+     * JSON: partenze future di un tour (per popolamento dinamico del form).
+     */
+    public function departuresJson(Tour $tour)
+    {
+        $departures = $tour->departures()
+            ->whereDate('departure_date', '>=', now()->startOfDay())
+            ->where('status', 'scheduled')
+            ->orderBy('departure_date')
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn ($d) => [
+                'id' => $d->id,
+                'date' => \Carbon\Carbon::parse($d->departure_date)->format('d/m/Y'),
+                'time' => \Carbon\Carbon::parse($d->start_time)->format('H:i'),
+                'end_time' => $d->end_time ? \Carbon\Carbon::parse($d->end_time)->format('H:i') : null,
+                'available' => $d->seats_available,
+                'capacity' => $d->capacity,
+                'price_modifier' => (float) $d->price_modifier,
+            ]);
+
+        $brackets = $tour->ageBrackets()->orderBy('sort_order')->get()->map(fn ($b) => [
+            'id' => $b->id,
+            'label' => $b->label,
+            'price' => (float) $b->price,
+            'counts_as_seat' => (bool) $b->counts_as_seat,
+            'range_label' => $b->range_label,
+        ]);
+
+        return response()->json([
+            'tour' => ['id' => $tour->id, 'name' => $tour->name],
+            'departures' => $departures,
+            'brackets' => $brackets,
+        ]);
+    }
+
+    /**
+     * Salva la prenotazione creata da admin.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'tour_id' => 'required|exists:tours,id',
+            'tour_departure_id' => 'required|exists:tour_departures,id',
+            'bracket_counts' => 'required|array',
+            'bracket_counts.*' => 'nullable|integer|min:0',
+            'addons' => 'nullable|array',
+            'addons.*' => 'integer|exists:addons,id',
+            'discount_code' => 'nullable|string|max:50',
+            'customer_first_name' => 'required|string|max:100',
+            'customer_last_name' => 'required|string|max:100',
+            'customer_email' => 'required|email|max:255',
+            'customer_phone' => 'nullable|string|max:30',
+            'customer_country' => 'nullable|string|max:5',
+            'special_requests' => 'nullable|string|max:1000',
+            'auto_confirm' => 'nullable|boolean',
+        ]);
+
+        // Filtra bracket con quantità > 0
+        $validated['bracket_counts'] = array_filter(
+            array_map('intval', $validated['bracket_counts']),
+            fn ($n) => $n > 0
+        );
+
+        if (empty($validated['bracket_counts'])) {
+            return back()->withInput()->with('error', 'Devi indicare almeno un partecipante.');
+        }
+
+        try {
+            $booking = $this->bookingService->create($validated, 'admin');
+
+            if ($request->boolean('auto_confirm')) {
+                $booking->update([
+                    'status' => BookingStatus::CONFIRMED,
+                    'confirmed_at' => now(),
+                ]);
+                // Pagamento già incassato off-platform → invia direttamente i biglietti
+                $this->sendTicketsEmail($booking);
+                $message = 'Prenotazione creata e confermata. Biglietti inviati al cliente.';
+            } else {
+                // Genera link Stripe e invia email al cliente
+                $emailSent = $this->sendPaymentLinkEmail($booking);
+                $message = $emailSent
+                    ? 'Prenotazione creata. Email con link di pagamento inviata al cliente.'
+                    : 'Prenotazione creata, ma l\'invio dell\'email è fallito (controlla il log).';
+            }
+
+            return redirect()
+                ->route('admin.bookings.show', $booking)
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Genera la sessione Stripe e spedisce l'email con il link di pagamento.
+     */
+    protected function sendPaymentLinkEmail(Booking $booking): bool
+    {
+        try {
+            $session = $this->paymentService->createCheckoutSession($booking);
+            $booking->update([
+                'checkout_url' => $session['url'],
+                'payment_link_sent_at' => now(),
+            ]);
+            Mail::to($booking->customer_email)->send(new BookingPaymentLink($booking, $session['url']));
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Invio email link pagamento fallito', [
+                'booking' => $booking->booking_number,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Spedisce l'email con i biglietti / QR (idempotente).
+     */
+    protected function sendTicketsEmail(Booking $booking): bool
+    {
+        if ($booking->tickets_sent_at) {
+            return true;
+        }
+        try {
+            Mail::to($booking->customer_email)->send(new BookingTickets($booking));
+            $booking->update(['tickets_sent_at' => now()]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Invio email biglietti fallito', [
+                'booking' => $booking->booking_number,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 
     public function show(Booking $booking): View

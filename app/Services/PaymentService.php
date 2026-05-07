@@ -27,8 +27,8 @@ class PaymentService
             'payment_method_types' => ['card'],
             'line_items' => $this->buildLineItems($booking),
             'mode' => 'payment',
-            'success_url' => route('payment.success', $booking->booking_number) . '?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('payment.cancel', $booking->booking_number),
+            'success_url' => route('payment.success', $booking->uuid) . '?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('payment.cancel', $booking->uuid),
             'customer_email' => $booking->customer_email,
             'metadata' => [
                 'booking_number' => $booking->booking_number,
@@ -61,37 +61,47 @@ class PaymentService
      */
     protected function buildLineItems(Booking $booking): array
     {
+        $booking->loadMissing(['tour', 'departure', 'addons.addon']);
         $items = [];
 
-        // Main booking item
-        $description = sprintf(
-            '%s - %s (%s)',
-            $booking->booking_date->format('d/m/Y'),
-            $booking->timeSlot->name,
-            $booking->isExclusive() ? 'Esclusiva' : $booking->seats . ' posti'
-        );
+        $tourName = $booking->tour?->name ?? 'Tour';
+        $date = $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') : '';
+        $time = $booking->departure?->start_time
+            ? \Carbon\Carbon::parse($booking->departure->start_time)->format('H:i')
+            : '';
+        $description = trim(sprintf('%s · %s · %d posti', $date, $time, (int) $booking->seats), ' ·');
+
+        $totalForMain = (float) $booking->total_amount;
+        // Sottrai eventuali addons riportati come line item separato
+        $addonsTotal = 0;
+        foreach ($booking->addons as $bookingAddon) {
+            $addonsTotal += (float) ($bookingAddon->pivot->total_price ?? 0);
+        }
+        $mainAmount = max(0, $totalForMain - $addonsTotal);
 
         $items[] = [
             'price_data' => [
                 'currency' => 'eur',
                 'product_data' => [
-                    'name' => 'Escursione ' . $booking->catamaran->name,
-                    'description' => $description,
+                    'name' => $tourName,
+                    'description' => $description ?: null,
                 ],
-                'unit_amount' => (int) ($booking->base_price * 100),
+                'unit_amount' => (int) round($mainAmount * 100),
             ],
             'quantity' => 1,
         ];
 
-        // Add addons
-        foreach ($booking->addons as $addon) {
+        foreach ($booking->addons as $bookingAddon) {
+            $name = $bookingAddon->addon->name ?? ($bookingAddon->name ?? 'Servizio aggiuntivo');
+            $unit = (float) ($bookingAddon->pivot->total_price ?? 0);
+            if ($unit <= 0) {
+                continue;
+            }
             $items[] = [
                 'price_data' => [
                     'currency' => 'eur',
-                    'product_data' => [
-                        'name' => $addon->name,
-                    ],
-                    'unit_amount' => (int) ($addon->pivot->total_price * 100),
+                    'product_data' => ['name' => $name],
+                    'unit_amount' => (int) round($unit * 100),
                 ],
                 'quantity' => 1,
             ];

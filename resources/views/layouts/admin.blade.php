@@ -66,8 +66,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.checkin') }}" class="nav-link {{ request()->routeIs('admin.checkin') ? 'active' : '' }}">
-                            <i class="bi bi-qr-code-scan me-2"></i>Check-in QR
+                        <a href="{{ route('admin.boarding.index') }}" class="nav-link {{ request()->routeIs('admin.boarding.*') ? 'active' : '' }}">
+                            <i class="bi bi-qr-code-scan me-2"></i>Imbarco
                         </a>
                     </li>
 

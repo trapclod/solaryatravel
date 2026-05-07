@@ -48,6 +48,9 @@ class Booking extends Model
         'source',
         'external_reference',
         'metadata',
+        'payment_link_sent_at',
+        'tickets_sent_at',
+        'checkout_url',
         'locale',
         'ip_address',
         'user_agent',
@@ -67,6 +70,8 @@ class Booking extends Model
         'checked_in_at' => 'datetime',
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'payment_link_sent_at' => 'datetime',
+        'tickets_sent_at' => 'datetime',
     ];
 
     public function uniqueIds(): array

@@ -28,7 +28,7 @@
                     <i class="bi bi-x-lg me-2"></i>Reset filtri
                 </a>
             @endif
-            <a href="{{ route('booking.start') }}" class="btn btn-primary rounded-pill px-3 fw-semibold" target="_blank">
+            <a href="{{ route('admin.bookings.create') }}" class="btn btn-primary rounded-pill px-3 fw-semibold">
                 <i class="bi bi-plus-lg me-2"></i>Nuova prenotazione
             </a>
         </div>
