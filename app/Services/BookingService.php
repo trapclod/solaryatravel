@@ -9,6 +9,7 @@ use App\Models\Catamaran;
 use App\Models\DiscountCode;
 use App\Models\Tour;
 use App\Models\TourAgeBracket;
+use App\Models\TourCatamaranBlock;
 use App\Models\TourDeparture;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -209,8 +210,22 @@ class BookingService
     {
         $catamarans = $tour->operatingCatamarans();
 
+        // Catamarani bloccati per questo tour nella data della partenza
+        $departureDate = is_string($departure->departure_date)
+            ? $departure->departure_date
+            : $departure->departure_date->format('Y-m-d');
+        $blockedIds = TourCatamaranBlock::where('tour_id', $tour->id)
+            ->whereDate('start_date', '<=', $departureDate)
+            ->whereDate('end_date', '>=', $departureDate)
+            ->pluck('catamaran_id')
+            ->all();
+
         $candidates = [];
         foreach ($catamarans as $cat) {
+            // Salta catamarani bloccati per questo tour nella data
+            if (in_array((int) $cat->id, array_map('intval', $blockedIds), true)) {
+                continue;
+            }
             // Salta catamarani non disponibili nella data (manutenzione, blocchi)
             if (!$cat->isAvailableOn($departure->departure_date)) {
                 continue;
@@ -301,9 +316,9 @@ class BookingService
 
         // Espandi i bracket in una lista di bracket_id (uno per partecipante totale)
         // Mantieni l'ordine: bracket "counts_as_seat=true" prima per matchare la queue
-        $brackets = TourAgeBracket::where('tour_id', $booking->tour_id)
+        $brackets = $this->pricingService
+            ->resolveBrackets($booking->tour, $booking->departure->departure_date)
             ->whereIn('id', array_keys($bracketCounts))
-            ->get()
             ->keyBy('id');
 
         $countingList = [];

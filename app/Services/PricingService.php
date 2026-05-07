@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Tour;
 use App\Models\TourDeparture;
 use App\Models\TourAgeBracket;
+use App\Models\TourPeriod;
 use App\Models\Addon;
 use App\Models\DiscountCode;
+use Illuminate\Support\Collection;
 
 class PricingService
 {
@@ -23,9 +25,8 @@ class PricingService
         array $addonIds = [],
         ?string $discountCode = null
     ): array {
-        $brackets = TourAgeBracket::where('tour_id', $tour->id)
+        $brackets = $this->resolveBrackets($tour, $departure->departure_date)
             ->whereIn('id', array_keys($bracketCounts))
-            ->get()
             ->keyBy('id');
 
         // Calcolo posti totali e dettaglio fasce
@@ -123,5 +124,38 @@ class PricingService
             'id' => $discount->id,
             'amount' => min($discountAmount, $amount),
         ];
+    }
+
+    /**
+     * Periodo applicabile a una data (start_date <= data <= end_date).
+     */
+    public function resolvePeriod(Tour $tour, string|\DateTimeInterface|null $date): ?TourPeriod
+    {
+        if (!$date) {
+            return null;
+        }
+        $d = is_string($date) ? $date : $date->format('Y-m-d');
+        return TourPeriod::where('tour_id', $tour->id)
+            ->whereDate('start_date', '<=', $d)
+            ->whereDate('end_date', '>=', $d)
+            ->orderBy('sort_order')
+            ->orderBy('start_date')
+            ->first();
+    }
+
+    /**
+     * Brackets applicabili a una data: quelle del periodo che la copre;
+     * fallback alle brackets "orfane" del tour (vecchio sistema senza periodi).
+     */
+    public function resolveBrackets(Tour $tour, string|\DateTimeInterface|null $date): Collection
+    {
+        $period = $this->resolvePeriod($tour, $date);
+        if ($period) {
+            return $period->ageBrackets()->orderBy('sort_order')->get();
+        }
+        return TourAgeBracket::where('tour_id', $tour->id)
+            ->whereNull('tour_period_id')
+            ->orderBy('sort_order')
+            ->get();
     }
 }

@@ -64,6 +64,16 @@ class Tour extends Model
         return $this->hasMany(TourAgeBracket::class)->orderBy('sort_order');
     }
 
+    public function periods(): HasMany
+    {
+        return $this->hasMany(TourPeriod::class)->orderBy('sort_order')->orderBy('start_date');
+    }
+
+    public function catamaranBlocks(): HasMany
+    {
+        return $this->hasMany(TourCatamaranBlock::class)->orderBy('start_date');
+    }
+
     public function departures(): HasMany
     {
         return $this->hasMany(TourDeparture::class);
@@ -127,6 +137,8 @@ class Tour extends Model
 
     /**
      * Prezzo "from" (più basso tra le fasce d'età, escludendo le gratuite).
+     * Considera tutte le fasce associate al tour (sia legate a un periodo
+     * sia "orfane" — vecchio sistema).
      */
     public function getPriceFromAttribute(): ?float
     {

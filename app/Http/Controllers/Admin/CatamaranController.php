@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CatamaranController extends Controller
@@ -31,6 +32,7 @@ class CatamaranController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->cleanFeatures($request);
         $data = $this->validateData($request);
         $data['slug'] = !empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
         $data['is_active'] = !empty($data['is_active']);
@@ -71,6 +73,7 @@ class CatamaranController extends Controller
 
     public function update(Request $request, Catamaran $catamaran): RedirectResponse
     {
+        $this->cleanFeatures($request);
         $data = $this->validateData($request, $catamaran);
         $data['slug'] = !empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
         $data['is_active'] = !empty($data['is_active']);
@@ -120,14 +123,33 @@ class CatamaranController extends Controller
         return back();
     }
 
+    /**
+     * Rimuove dal request le righe "features" vuote (input multipli con campi non compilati).
+     */
+    protected function cleanFeatures(Request $request): void
+    {
+        $features = $request->input('features', []);
+        if (!is_array($features)) {
+            $features = [];
+        }
+        $features = array_values(array_filter(array_map(
+            fn ($v) => is_string($v) ? trim($v) : '',
+            $features
+        ), fn ($v) => $v !== ''));
+        $request->merge(['features' => $features]);
+    }
+
     protected function validateData(Request $request, ?Catamaran $catamaran = null): array
     {
-        $slugRule = 'nullable|string|max:255';
-        $slugRule .= $catamaran ? '|unique:catamarans,slug,' . $catamaran->id : '|unique:catamarans,slug';
+        $slugUnique = Rule::unique('catamarans', 'slug')
+            ->whereNull('deleted_at');
+        if ($catamaran) {
+            $slugUnique->ignore($catamaran->id);
+        }
 
         return $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => $slugRule,
+            'slug' => ['nullable', 'string', 'max:255', $slugUnique],
             'description' => 'nullable|string',
             'description_short' => 'nullable|string|max:500',
             'capacity' => 'required|integer|min:1|max:200',

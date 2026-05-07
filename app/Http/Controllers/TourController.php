@@ -73,17 +73,12 @@ class TourController extends Controller
     public function show(string $slug, Request $request): View
     {
         $tour = Tour::active()->where('slug', $slug)
-            ->with(['images', 'ageBrackets'])
+            ->with(['images', 'ageBrackets', 'periods', 'catamarans'])
             ->firstOrFail();
 
-        // Prossime partenze (60 giorni)
-        $departures = $tour->departures()
-            ->where('departure_date', '>=', now()->toDateString())
-            ->where('departure_date', '<=', now()->addDays(60)->toDateString())
-            ->where('status', 'scheduled')
-            ->orderBy('departure_date')
-            ->orderBy('start_time')
-            ->get();
+        // Prossime partenze (60 giorni) generate dai periodi
+        $departures = app(\App\Services\DepartureGeneratorService::class)
+            ->upcoming($tour, 60);
 
         // Tour simili
         $similar = Tour::active()

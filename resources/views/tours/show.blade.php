@@ -160,14 +160,14 @@
                             @if($departures->count())
                                 <div class="d-flex flex-column gap-2" style="max-height:400px;overflow-y:auto">
                                     @foreach($departures->take(15) as $dep)
-                                        <a href="{{ route('booking.start', ['tour' => $tour->slug, 'departure' => $dep->id]) }}"
+                                        <a href="{{ route('booking.start', ['tour' => $tour->slug, 'date' => $dep['date'], 'time' => $dep['time']]) }}"
                                            class="d-flex justify-content-between align-items-center p-2 border rounded-3 text-decoration-none text-dark hover-bg-light">
                                             <div>
                                                 <div class="fw-semibold small">
-                                                    {{ \Carbon\Carbon::parse($dep->departure_date)->locale('it')->isoFormat('ddd D MMM') }}
+                                                    {{ $dep['departure_at']->locale('it')->isoFormat('ddd D MMM') }}
                                                 </div>
                                                 <div class="text-muted small">
-                                                    {{ \Carbon\Carbon::parse($dep->start_time)->format('H:i') }}@if($dep->end_time) - {{ \Carbon\Carbon::parse($dep->end_time)->format('H:i') }}@endif
+                                                    {{ $dep['time'] }}
                                                 </div>
                                             </div>
                                             <i class="fa-solid fa-chevron-right text-muted small"></i>

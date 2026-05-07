@@ -50,10 +50,6 @@
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ '#' }}"
-                       class="btn btn-light rounded-pill px-3 fw-semibold border-0">
-                        <i class="bi bi-calendar3 me-2"></i>Disponibilità
-                    </a>
                     <a href="{{ route('tours.index') }}" target="_blank" rel="noopener"
                        class="btn btn-light rounded-pill px-3 fw-semibold border-0">
                         <i class="bi bi-box-arrow-up-right me-2"></i>Vedi tour pubblici
@@ -269,10 +265,6 @@
                             @endif
                         </button>
                     </form>
-                    <a href="{{ '#' }}"
-                       class="btn btn-light border rounded-pill fw-semibold">
-                        <i class="bi bi-calendar3 me-2"></i>Gestisci disponibilità
-                    </a>
                     <a href="{{ route('admin.catamarans.edit', $catamaran) }}"
                        class="btn btn-primary rounded-pill fw-semibold">
                         <i class="bi bi-pencil-square me-2"></i>Modifica dettagli

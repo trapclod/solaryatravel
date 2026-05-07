@@ -50,22 +50,21 @@
 
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <strong>Prossime partenze</strong>
-                    <a href="{{ route('admin.tours.departures.index', $tour) }}" class="btn btn-sm btn-outline-primary">Gestisci</a>
+                    <strong>Prossime partenze (generate dai periodi)</strong>
+                    <small class="text-muted">prossimi 60 giorni</small>
                 </div>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
-                        <thead class="table-light"><tr><th>Data</th><th>Orario</th><th>Stato</th><th>Posti</th></tr></thead>
+                        <thead class="table-light"><tr><th>Data</th><th>Orario</th><th>Posti</th></tr></thead>
                         <tbody>
-                            @forelse ($tour->departures->take(20) as $d)
+                            @forelse ($upcomingDepartures->take(20) as $d)
                                 <tr>
-                                    <td>{{ $d->departure_date->format('d/m/Y') }}</td>
-                                    <td>{{ \Illuminate\Support\Str::of($d->start_time)->limit(5, '') }} – {{ \Illuminate\Support\Str::of($d->end_time)->limit(5, '') }}</td>
-                                    <td><span class="badge text-bg-info">{{ $d->status }}</span></td>
-                                    <td>{{ $d->seats_booked }} / {{ $d->capacity }}</td>
+                                    <td>{{ $d['departure_at']->locale('it')->isoFormat('ddd D MMM YYYY') }}</td>
+                                    <td>{{ $d['time'] }}</td>
+                                    <td>{{ $d['capacity'] }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-muted text-center">Nessuna partenza programmata.</td></tr>
+                                <tr><td colspan="3" class="text-muted text-center">Nessuna partenza nei prossimi 60 giorni. Configura periodi e orari nella tab "Prezzi".</td></tr>
                             @endforelse
                         </tbody>
                     </table>

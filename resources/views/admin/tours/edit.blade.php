@@ -4,15 +4,16 @@
 
 @section('content')
     <div class="dash-page-header">
-        <div>
-            <h1>{{ $tour->name }}</h1>
-            <p>Modifica i dettagli del tour.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('admin.tours.departures.index', $tour) }}" class="btn btn-outline-primary">
-                <i class="bi bi-calendar-event me-1"></i>Gestisci partenze
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.tours.index') }}" class="dash-icon-btn" title="Torna ai tour">
+                <i class="bi bi-arrow-left"></i>
             </a>
-            <a href="{{ route('admin.tours.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Indietro</a>
+            <div>
+                <h1>Modifica <span class="text-primary">{{ $tour->name }}</span></h1>
+                <p>Aggiorna dettagli, fasce di prezzo, immagini e catamarani assegnati al tour.</p>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
         </div>
     </div>
 

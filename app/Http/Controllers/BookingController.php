@@ -35,7 +35,44 @@ class BookingController extends Controller
             ->firstOrFail();
 
         $departureId = $request->input('departure');
-        $departure = $departureId ? $tour->departures()->find($departureId) : null;
+        $departure = null;
+
+        if ($departureId) {
+            $departure = $tour->departures()->find($departureId);
+        } elseif ($request->filled('date') && $request->filled('time')) {
+            // Date+time virtuali generate dai periodi: risolvi (o crea) la riga tour_departures
+            $date = $request->input('date');
+            $time = $request->input('time');
+            // Verifica che la combinazione esista in un periodo del tour
+            $period = $tour->periods()
+                ->whereDate('start_date', '<=', $date)
+                ->whereDate('end_date', '>=', $date)
+                ->get()
+                ->first(function ($p) use ($date, $time) {
+                    $weekdays = is_array($p->weekdays) && !empty($p->weekdays) ? $p->weekdays : [1,2,3,4,5,6,7];
+                    $times = is_array($p->times) && !empty($p->times) ? $p->times : ['10:00'];
+                    $iso = \Carbon\Carbon::parse($date)->isoWeekday();
+                    return in_array($iso, array_map('intval', $weekdays), true)
+                        && in_array(substr($time, 0, 5), array_map(fn ($t) => substr($t, 0, 5), $times), true);
+                });
+
+            if (!$period) {
+                return redirect()->route('tours.show', $tour->slug)
+                    ->with('error', 'La data o l\'orario selezionato non è disponibile.');
+            }
+
+            $departure = \App\Models\TourDeparture::firstOrCreate(
+                [
+                    'tour_id' => $tour->id,
+                    'departure_date' => $date,
+                    'start_time' => strlen($time) === 5 ? $time . ':00' : $time,
+                ],
+                [
+                    'status' => 'scheduled',
+                    'price_modifier' => 1.0,
+                ]
+            );
+        }
 
         return view('bookings.create', compact('tour', 'departure'));
     }

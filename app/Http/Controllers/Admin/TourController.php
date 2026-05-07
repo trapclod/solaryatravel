@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Catamaran;
 use App\Models\Tour;
 use App\Models\TourAgeBracket;
+use App\Models\TourCatamaranBlock;
 use App\Models\TourImage;
+use App\Models\TourPeriod;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -50,8 +52,9 @@ class TourController extends Controller
         $data = $this->validateData($request);
         return DB::transaction(function () use ($data, $request) {
             $tour = Tour::create($this->extractTourFields($data));
-            $this->syncAgeBrackets($tour, $data['age_brackets'] ?? []);
+            $this->syncPeriods($tour, $data['periods'] ?? []);
             $this->syncCatamarans($tour, $data['catamarans'] ?? []);
+            $this->syncCatamaranBlocks($tour, $data['catamaran_blocks'] ?? []);
             $this->handleImages($tour, $request);
             return redirect()->route('admin.tours.edit', $tour)
                 ->with('success', 'Tour creato con successo.');
@@ -60,13 +63,15 @@ class TourController extends Controller
 
     public function show(Tour $tour): View
     {
-        $tour->load(['ageBrackets', 'images', 'catamarans', 'departures' => fn ($q) => $q->orderBy('departure_date')->orderBy('start_time')]);
-        return view('admin.tours.show', compact('tour'));
+        $tour->load(['ageBrackets', 'images', 'catamarans', 'periods', 'catamaranBlocks']);
+        $upcomingDepartures = app(\App\Services\DepartureGeneratorService::class)
+            ->upcoming($tour, 60);
+        return view('admin.tours.show', compact('tour', 'upcomingDepartures'));
     }
 
     public function edit(Tour $tour): View
     {
-        $tour->load(['ageBrackets', 'images', 'catamarans']);
+        $tour->load(['ageBrackets', 'periods.ageBrackets', 'catamaranBlocks', 'images', 'catamarans']);
         $catamarans = Catamaran::active()->ordered()->get();
         $selectedCatamarans = $tour->catamarans->pluck('id')->all();
         return view('admin.tours.edit', compact('tour', 'catamarans', 'selectedCatamarans'));
@@ -77,8 +82,9 @@ class TourController extends Controller
         $data = $this->validateData($request, $tour);
         return DB::transaction(function () use ($data, $tour, $request) {
             $tour->update($this->extractTourFields($data));
-            $this->syncAgeBrackets($tour, $data['age_brackets'] ?? []);
+            $this->syncPeriods($tour, $data['periods'] ?? []);
             $this->syncCatamarans($tour, $data['catamarans'] ?? []);
+            $this->syncCatamaranBlocks($tour, $data['catamaran_blocks'] ?? []);
             $this->handleImages($tour, $request);
             return redirect()->route('admin.tours.edit', $tour)
                 ->with('success', 'Tour aggiornato.');
@@ -163,8 +169,34 @@ class TourController extends Controller
             'age_brackets.*.counts_as_seat' => 'sometimes|boolean',
             'age_brackets.*.sort_order' => 'nullable|integer',
 
+            'periods' => 'nullable|array',
+            'periods.*.id' => 'nullable|integer|exists:tour_periods,id',
+            'periods.*.label' => 'nullable|string|max:100',
+            'periods.*.start_date' => 'required_with:periods|date',
+            'periods.*.end_date' => 'required_with:periods|date|after_or_equal:periods.*.start_date',
+            'periods.*.base_price' => 'required_with:periods|numeric|min:0|max:99999',
+            'periods.*.sort_order' => 'nullable|integer',
+            'periods.*.weekdays' => 'nullable|array',
+            'periods.*.weekdays.*' => 'integer|min:1|max:7',
+            'periods.*.times' => 'nullable|array',
+            'periods.*.times.*' => ['string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'periods.*.brackets' => 'nullable|array',
+            'periods.*.brackets.*.id' => 'nullable|integer|exists:tour_age_brackets,id',
+            'periods.*.brackets.*.label' => 'required_with:periods.*.brackets|string|max:100',
+            'periods.*.brackets.*.min_age' => 'nullable|integer|min:0|max:120',
+            'periods.*.brackets.*.max_age' => 'nullable|integer|min:0|max:120',
+            'periods.*.brackets.*.price' => 'required_with:periods.*.brackets|numeric|min:0|max:99999',
+            'periods.*.brackets.*.counts_as_seat' => 'sometimes|boolean',
+
             'catamarans' => 'nullable|array',
             'catamarans.*' => 'integer|exists:catamarans,id',
+
+            'catamaran_blocks' => 'nullable|array',
+            'catamaran_blocks.*.id' => 'nullable|integer|exists:tour_catamaran_blocks,id',
+            'catamaran_blocks.*.catamaran_id' => 'required_with:catamaran_blocks|integer|exists:catamarans,id',
+            'catamaran_blocks.*.start_date' => 'required_with:catamaran_blocks|date',
+            'catamaran_blocks.*.end_date' => 'required_with:catamaran_blocks|date|after_or_equal:catamaran_blocks.*.start_date',
+            'catamaran_blocks.*.reason' => 'nullable|string|max:255',
 
             'images' => 'nullable|array',
             'images.*' => 'image|max:5120',
@@ -216,6 +248,93 @@ class TourController extends Controller
         }
         // Elimina quelli rimossi
         $tour->ageBrackets()->whereNotIn('id', $keepIds)->delete();
+    }
+
+    protected function syncPeriods(Tour $tour, array $periods): void
+    {
+        $keepPeriodIds = [];
+        $keepBracketIds = [];
+
+        foreach (array_values($periods) as $idx => $p) {
+            $periodPayload = [
+                'tour_id' => $tour->id,
+                'label' => $p['label'] ?? null,
+                'start_date' => $p['start_date'],
+                'end_date' => $p['end_date'],
+                'base_price' => $p['base_price'],
+                'sort_order' => $p['sort_order'] ?? $idx,
+                'weekdays' => array_values(array_unique(array_map('intval', $p['weekdays'] ?? [1,2,3,4,5,6,7]))),
+                'times' => array_values(array_filter($p['times'] ?? ['10:00'])),
+            ];
+
+            $period = null;
+            if (!empty($p['id'])) {
+                $period = TourPeriod::where('id', $p['id'])->where('tour_id', $tour->id)->first();
+            }
+            if ($period) {
+                $period->update($periodPayload);
+            } else {
+                $period = TourPeriod::create($periodPayload);
+            }
+            $keepPeriodIds[] = $period->id;
+
+            foreach (array_values($p['brackets'] ?? []) as $bidx => $b) {
+                $bracketPayload = [
+                    'tour_id' => $tour->id,
+                    'tour_period_id' => $period->id,
+                    'label' => $b['label'],
+                    'min_age' => $b['min_age'] ?? 0,
+                    'max_age' => $b['max_age'] ?? null,
+                    'price' => $b['price'],
+                    'counts_as_seat' => !empty($b['counts_as_seat']),
+                    'sort_order' => $bidx,
+                ];
+                $bracket = null;
+                if (!empty($b['id'])) {
+                    $bracket = TourAgeBracket::where('id', $b['id'])->where('tour_id', $tour->id)->first();
+                }
+                if ($bracket) {
+                    $bracket->update($bracketPayload);
+                } else {
+                    $bracket = TourAgeBracket::create($bracketPayload);
+                }
+                $keepBracketIds[] = $bracket->id;
+            }
+        }
+
+        // Elimina periodi rimossi (cascade nullOnDelete sulle brackets, poi le ripuliamo sotto)
+        $tour->periods()->whereNotIn('id', $keepPeriodIds)->delete();
+        // Elimina fasce rimosse appartenenti a periodi ancora esistenti
+        $tour->ageBrackets()
+            ->whereNotNull('tour_period_id')
+            ->whereNotIn('id', $keepBracketIds)
+            ->delete();
+    }
+
+    protected function syncCatamaranBlocks(Tour $tour, array $blocks): void
+    {
+        $keepIds = [];
+        foreach (array_values($blocks) as $b) {
+            $payload = [
+                'tour_id' => $tour->id,
+                'catamaran_id' => (int) $b['catamaran_id'],
+                'start_date' => $b['start_date'],
+                'end_date' => $b['end_date'],
+                'reason' => $b['reason'] ?? null,
+            ];
+            $existing = null;
+            if (!empty($b['id'])) {
+                $existing = TourCatamaranBlock::where('id', $b['id'])->where('tour_id', $tour->id)->first();
+            }
+            if ($existing) {
+                $existing->update($payload);
+                $keepIds[] = $existing->id;
+            } else {
+                $created = TourCatamaranBlock::create($payload);
+                $keepIds[] = $created->id;
+            }
+        }
+        $tour->catamaranBlocks()->whereNotIn('id', $keepIds)->delete();
     }
 
     protected function syncCatamarans(Tour $tour, array $ids): void

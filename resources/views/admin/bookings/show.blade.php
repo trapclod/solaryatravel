@@ -1,0 +1,397 @@
+@extends('layouts.admin')
+
+@section('title', 'Prenotazione ' . $booking->booking_number)
+
+@section('content')
+    @php
+        $statusMeta = [
+            'pending'    => ['label' => 'In attesa',  'icon' => 'bi-hourglass-split', 'color' => 'warning'],
+            'confirmed'  => ['label' => 'Confermata', 'icon' => 'bi-check-circle',   'color' => 'success'],
+            'checked_in' => ['label' => 'Check-in',   'icon' => 'bi-qr-code-scan',   'color' => 'info'],
+            'completed'  => ['label' => 'Completata', 'icon' => 'bi-flag-fill',      'color' => 'secondary'],
+            'cancelled'  => ['label' => 'Annullata',  'icon' => 'bi-x-circle',       'color' => 'danger'],
+            'no_show'    => ['label' => 'No show',    'icon' => 'bi-eye-slash',      'color' => 'secondary'],
+            'refunded'   => ['label' => 'Rimborsata', 'icon' => 'bi-arrow-counterclockwise', 'color' => 'dark'],
+        ];
+        $statusValue = $booking->status?->value ?? (string) $booking->status;
+        $sm = $statusMeta[$statusValue] ?? ['label' => ucfirst($statusValue), 'icon' => 'bi-circle', 'color' => 'secondary'];
+        $currency = $booking->currency ?: 'EUR';
+        $fmtMoney = fn ($v) => number_format((float) $v, 2, ',', '.') . ' ' . $currency;
+    @endphp
+
+    {{-- Header --}}
+    <div class="dash-page-header">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{{ route('admin.bookings.index') }}" class="text-decoration-none small text-muted">
+                    <i class="bi bi-arrow-left"></i> Prenotazioni
+                </a>
+            </div>
+            <h1 class="mb-1">#{{ $booking->booking_number }}</h1>
+            <p class="mb-0">
+                <span class="badge bg-{{ $sm['color'] }}-subtle text-{{ $sm['color'] }} fw-semibold">
+                    <i class="bi {{ $sm['icon'] }} me-1"></i>{{ $sm['label'] }}
+                </span>
+                <span class="text-muted ms-2">creata il {{ $booking->created_at?->format('d/m/Y H:i') }}</span>
+            </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.bookings.export', $booking) }}" class="btn btn-light rounded-pill border px-3 fw-semibold">
+                <i class="bi bi-download me-2"></i>Export
+            </a>
+            <a href="{{ route('admin.bookings.edit', $booking) }}" class="btn btn-light rounded-pill border px-3 fw-semibold">
+                <i class="bi bi-pencil me-2"></i>Modifica
+            </a>
+            @if ($statusValue === 'pending')
+                <form action="{{ route('admin.bookings.confirm', $booking) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button class="btn btn-success rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-check-lg me-2"></i>Conferma
+                    </button>
+                </form>
+            @endif
+            @if (!in_array($statusValue, ['cancelled', 'refunded', 'completed']))
+                <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-semibold"
+                        data-bs-toggle="modal" data-bs-target="#cancelBookingModal">
+                    <i class="bi bi-x-lg me-2"></i>Annulla
+                </button>
+            @endif
+        </div>
+    </div>
+
+    @if (session('success'))
+        <div class="alert alert-success rounded-3">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger rounded-3">{{ session('error') }}</div>
+    @endif
+
+    <div class="row g-3">
+        {{-- Colonna principale --}}
+        <div class="col-lg-8">
+            {{-- Tour & partenza --}}
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2 text-primary"></i>Tour & partenza</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small">Tour</div>
+                            <div class="fw-semibold">{{ $booking->tour?->name ?? '—' }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Data</div>
+                            <div class="fw-semibold">
+                                {{ $booking->departure?->departure_date
+                                    ? \Carbon\Carbon::parse($booking->departure->departure_date)->format('d/m/Y')
+                                    : '—' }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Orario</div>
+                            <div class="fw-semibold">
+                                {{ $booking->departure?->start_time
+                                    ? \Carbon\Carbon::parse($booking->departure->start_time)->format('H:i')
+                                    : '—' }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Posti</div>
+                            <div class="fw-semibold">{{ $booking->seats }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Prenotata il</div>
+                            <div class="fw-semibold">{{ optional($booking->booking_date)->format('d/m/Y') }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Sorgente</div>
+                            <div class="fw-semibold text-capitalize">{{ $booking->source ?? '—' }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Lingua</div>
+                            <div class="fw-semibold text-uppercase">{{ $booking->locale ?? '—' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Cliente --}}
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-person me-2 text-primary"></i>Cliente</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="text-muted small">Nome</div>
+                            <div class="fw-semibold">{{ $booking->customer_first_name }} {{ $booking->customer_last_name }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Email</div>
+                            <div class="fw-semibold">
+                                <a href="mailto:{{ $booking->customer_email }}">{{ $booking->customer_email }}</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Telefono</div>
+                            <div class="fw-semibold">
+                                @if ($booking->customer_phone)
+                                    <a href="tel:{{ $booking->customer_phone }}">{{ $booking->customer_phone }}</a>
+                                @else — @endif
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Paese</div>
+                            <div class="fw-semibold">{{ $booking->customer_country ?? '—' }}</div>
+                        </div>
+                        @if ($booking->special_requests)
+                            <div class="col-12">
+                                <div class="text-muted small">Note / richieste</div>
+                                <div class="bg-light rounded-3 p-3">{{ $booking->special_requests }}</div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Partecipanti / posti --}}
+            @if ($booking->seatRecords->isNotEmpty())
+                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-people me-2 text-primary"></i>Partecipanti</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Ospite</th>
+                                        <th>Fascia</th>
+                                        <th>Catamarano</th>
+                                        <th class="text-end">Prezzo</th>
+                                        <th>Imbarco</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($booking->seatRecords as $i => $seat)
+                                        <tr>
+                                            <td>{{ $i + 1 }}{{ $seat->is_primary ? ' ★' : '' }}</td>
+                                            <td>
+                                                @if ($seat->guest_first_name || $seat->guest_last_name)
+                                                    {{ trim($seat->guest_first_name . ' ' . $seat->guest_last_name) }}
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                                <div class="small text-muted">{{ $seat->qr_code }}</div>
+                                            </td>
+                                            <td>{{ $seat->ageBracket?->label ?? '—' }}</td>
+                                            <td>{{ $seat->catamaran?->name ?? '—' }}</td>
+                                            <td class="text-end">{{ $fmtMoney($seat->price_paid) }}</td>
+                                            <td>
+                                                @if ($seat->boarded_at)
+                                                    <span class="badge bg-success-subtle text-success">
+                                                        <i class="bi bi-check2 me-1"></i>{{ $seat->boarded_at->format('d/m H:i') }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted small">—</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Addons --}}
+            @if ($booking->addons->isNotEmpty())
+                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-bag-plus me-2 text-primary"></i>Servizi extra</h5>
+                        <ul class="list-group list-group-flush">
+                            @foreach ($booking->addons as $a)
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <div>
+                                        <div class="fw-semibold">{{ $a->addon?->name ?? 'Addon' }}</div>
+                                        <div class="small text-muted">Q.tà {{ $a->quantity }} × {{ $fmtMoney($a->unit_price ?? 0) }}</div>
+                                    </div>
+                                    <div class="fw-semibold">{{ $fmtMoney($a->total_price ?? (($a->unit_price ?? 0) * ($a->quantity ?? 1))) }}</div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Pagamenti --}}
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-credit-card me-2 text-primary"></i>Pagamenti</h5>
+                    @if ($booking->payments->isEmpty())
+                        <div class="text-muted">Nessun pagamento registrato.</div>
+                        @if ($booking->checkout_url)
+                            <a href="{{ $booking->checkout_url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Apri link Stripe
+                            </a>
+                        @endif
+                    @else
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Gateway</th>
+                                        <th>Riferimento</th>
+                                        <th>Stato</th>
+                                        <th class="text-end">Importo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($booking->payments as $p)
+                                        @php
+                                            $pStatus = $p->status?->value ?? (string) $p->status;
+                                            $pColor = match ($pStatus) {
+                                                'succeeded' => 'success',
+                                                'pending', 'processing' => 'warning',
+                                                'failed' => 'danger',
+                                                'refunded', 'partially_refunded' => 'dark',
+                                                default => 'secondary',
+                                            };
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $p->paid_at?->format('d/m/Y H:i') ?? $p->created_at?->format('d/m/Y H:i') }}</td>
+                                            <td class="text-capitalize">{{ $p->gateway }}</td>
+                                            <td><code class="small">{{ $p->gateway_payment_id ?? '—' }}</code></td>
+                                            <td><span class="badge bg-{{ $pColor }}-subtle text-{{ $pColor }}">{{ $pStatus }}</span></td>
+                                            <td class="text-end fw-semibold">{{ $fmtMoney($p->amount) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- Sidebar riepilogo --}}
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-3 sticky-lg-top" style="top: 1rem;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Riepilogo</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotale tour</span>
+                        <span class="fw-semibold">{{ $fmtMoney($booking->base_price) }}</span>
+                    </div>
+                    @if ((float) $booking->addons_total > 0)
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Servizi extra</span>
+                            <span class="fw-semibold">{{ $fmtMoney($booking->addons_total) }}</span>
+                        </div>
+                    @endif
+                    @if ((float) $booking->discount_amount > 0)
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span>
+                                Sconto
+                                @if ($booking->discountCode)
+                                    <span class="small text-muted">({{ $booking->discountCode->code }})</span>
+                                @endif
+                            </span>
+                            <span class="fw-semibold">-{{ $fmtMoney($booking->discount_amount) }}</span>
+                        </div>
+                    @endif
+                    @if ((float) $booking->tax_amount > 0)
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tasse</span>
+                            <span class="fw-semibold">{{ $fmtMoney($booking->tax_amount) }}</span>
+                        </div>
+                    @endif
+                    <hr>
+                    <div class="d-flex justify-content-between mb-0">
+                        <span class="fw-bold">Totale</span>
+                        <span class="fw-bold fs-5 text-primary">{{ $fmtMoney($booking->total_amount) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-primary"></i>Timeline</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-circle-fill text-muted me-2" style="font-size:.5rem;"></i>
+                            Creata: <strong>{{ $booking->created_at?->format('d/m/Y H:i') }}</strong>
+                        </li>
+                        @if ($booking->payment_link_sent_at)
+                            <li class="mb-2">
+                                <i class="bi bi-circle-fill text-info me-2" style="font-size:.5rem;"></i>
+                                Link pagamento inviato: <strong>{{ $booking->payment_link_sent_at->format('d/m/Y H:i') }}</strong>
+                            </li>
+                        @endif
+                        @if ($booking->confirmed_at)
+                            <li class="mb-2">
+                                <i class="bi bi-circle-fill text-success me-2" style="font-size:.5rem;"></i>
+                                Confermata: <strong>{{ $booking->confirmed_at->format('d/m/Y H:i') }}</strong>
+                            </li>
+                        @endif
+                        @if ($booking->tickets_sent_at)
+                            <li class="mb-2">
+                                <i class="bi bi-circle-fill text-success me-2" style="font-size:.5rem;"></i>
+                                Biglietti inviati: <strong>{{ $booking->tickets_sent_at->format('d/m/Y H:i') }}</strong>
+                            </li>
+                        @endif
+                        @if ($booking->checked_in_at)
+                            <li class="mb-2">
+                                <i class="bi bi-circle-fill text-info me-2" style="font-size:.5rem;"></i>
+                                Check-in: <strong>{{ $booking->checked_in_at->format('d/m/Y H:i') }}</strong>
+                            </li>
+                        @endif
+                        @if ($booking->cancelled_at)
+                            <li class="mb-2">
+                                <i class="bi bi-circle-fill text-danger me-2" style="font-size:.5rem;"></i>
+                                Annullata: <strong>{{ $booking->cancelled_at->format('d/m/Y H:i') }}</strong>
+                                @if ($booking->cancellation_reason)
+                                    <div class="text-muted ms-3">{{ $booking->cancellation_reason }}</div>
+                                @endif
+                            </li>
+                        @endif
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-envelope me-2 text-primary"></i>Comunicazioni</h6>
+                    <form action="{{ route('admin.bookings.resend', $booking) }}" method="POST" class="d-grid gap-2">
+                        @csrf
+                        <button class="btn btn-outline-primary rounded-pill fw-semibold">
+                            <i class="bi bi-send me-2"></i>Reinvia conferma
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal annulla --}}
+    <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{{ route('admin.bookings.cancel', $booking) }}" method="POST" class="modal-content rounded-4 border-0">
+                @csrf
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">Annulla prenotazione</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Indica il motivo dell'annullamento. Verrà registrato nello storico.</p>
+                    <textarea name="reason" rows="3" class="form-control rounded-3" required maxlength="500"
+                              placeholder="Es. richiesta del cliente, maltempo…"></textarea>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Indietro</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-x-lg me-2"></i>Annulla prenotazione
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

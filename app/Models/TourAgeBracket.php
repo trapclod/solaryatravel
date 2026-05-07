@@ -12,6 +12,7 @@ class TourAgeBracket extends Model
 
     protected $fillable = [
         'tour_id',
+        'tour_period_id',
         'label',
         'min_age',
         'max_age',
@@ -28,6 +29,11 @@ class TourAgeBracket extends Model
     public function tour(): BelongsTo
     {
         return $this->belongsTo(Tour::class);
+    }
+
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(TourPeriod::class, 'tour_period_id');
     }
 
     public function getRangeLabelAttribute(): string

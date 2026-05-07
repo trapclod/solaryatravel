@@ -150,10 +150,6 @@
                         </div>
 
                         <div class="cat-card-actions">
-                            <a href="{{ route('admin.tours.departures.index', $tour) }}"
-                               class="btn btn-sm btn-light rounded-pill border fw-medium">
-                                <i class="bi bi-calendar-event me-1"></i>Partenze
-                            </a>
                             <div class="d-inline-flex align-items-center gap-1">
                                 <form action="{{ route('admin.tours.toggle', $tour) }}" method="POST" class="d-inline">
                                     @csrf

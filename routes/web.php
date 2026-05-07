@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BoardingController as AdminBoardingController;
 use App\Http\Controllers\Admin\CatamaranController as AdminCatamaranController;
 use App\Http\Controllers\Admin\TourController as AdminTourController;
-use App\Http\Controllers\Admin\TourDepartureController as AdminTourDepartureController;
 use App\Http\Controllers\Admin\AddonController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\ReportController;
@@ -115,12 +114,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::post('/tours/{tour}/toggle', [AdminTourController::class, 'toggle'])->name('tours.toggle');
     Route::delete('/tours/{tour}/images/{image}', [AdminTourController::class, 'deleteImage'])->name('tours.images.delete');
     Route::post('/tours/{tour}/images/{image}/primary', [AdminTourController::class, 'setPrimaryImage'])->name('tours.images.primary');
-
-    // Tour departures
-    Route::get('/tours/{tour}/departures', [AdminTourDepartureController::class, 'index'])->name('tours.departures.index');
-    Route::post('/tours/{tour}/departures', [AdminTourDepartureController::class, 'store'])->name('tours.departures.store');
-    Route::put('/tours/{tour}/departures/{departure}', [AdminTourDepartureController::class, 'update'])->name('tours.departures.update');
-    Route::delete('/tours/{tour}/departures/{departure}', [AdminTourDepartureController::class, 'destroy'])->name('tours.departures.destroy');
 
     // Catamarans (flotta)
     Route::resource('catamarans', AdminCatamaranController::class);

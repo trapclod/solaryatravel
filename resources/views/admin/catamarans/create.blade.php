@@ -16,8 +16,19 @@
         </div>
     </div>
 
-    <form action="{{ route('admin.catamarans.store') }}" method="POST" id="catamaran-form">
+    <form action="{{ route('admin.catamarans.store') }}" method="POST" id="catamaran-form" enctype="multipart/form-data">
         @csrf
+
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <strong><i class="bi bi-exclamation-triangle me-2"></i>Correggi i seguenti errori:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         @include('admin.catamarans._form', ['catamaran' => null])
 
