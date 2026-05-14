@@ -136,6 +136,21 @@ class BookingController extends Controller
     }
 
     /**
+     * Form pubblico per compilare i dati dei partecipanti.
+     * Accesso via token nel link mandato in mail dopo il pagamento.
+     */
+    public function participants(Request $request, Booking $booking): View|RedirectResponse
+    {
+        $token = $request->query('token');
+        if (!$booking->participants_token || $token !== $booking->participants_token) {
+            abort(403, 'Link non valido o scaduto.');
+        }
+
+        $booking->load(['tour', 'departure', 'seatRecords.ageBracket']);
+        return view('bookings.participants', compact('booking'));
+    }
+
+    /**
      * Restituisce il PNG del QR di un singolo posto.
      */
     public function seatQr(BookingSeat $seat)

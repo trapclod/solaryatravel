@@ -272,7 +272,7 @@
                         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                             <div>
                                 <h5 class="form-section-title mb-1"><i class="bi bi-calendar-range me-2 text-primary"></i>Periodi e prezzi</h5>
-                                <p class="text-muted small mb-0">Definisci uno o più periodi (es. bassa/media/alta stagione). Ogni periodo ha il suo prezzo adulto base e le proprie fasce d'età.</p>
+                                <p class="text-muted small mb-0">Definisci uno o più periodi (es. bassa/media/alta stagione). Ogni periodo ha il suo <strong>prezzo adulto</strong> e le eventuali <strong>riduzioni</strong> per fascia d'età dei bambini.</p>
                             </div>
                             <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-medium" onclick="addPeriod()">
                                 <i class="bi bi-plus-lg me-1"></i>Aggiungi periodo
@@ -530,7 +530,7 @@ function buildBracketRow(periodIdx, bracketIdx) {
     tr.innerHTML = `
         <td>
             <input type="hidden" name="periods[${periodIdx}][brackets][${bracketIdx}][id]" value="">
-            <input type="text" name="periods[${periodIdx}][brackets][${bracketIdx}][label]" class="form-control form-control-sm" placeholder="es. Adulto" required>
+            <input type="text" name="periods[${periodIdx}][brackets][${bracketIdx}][label]" class="form-control form-control-sm" placeholder="es. Bambini 3–11" required>
         </td>
         <td><input type="number" min="0" max="120" name="periods[${periodIdx}][brackets][${bracketIdx}][min_age]" class="form-control form-control-sm" value="0"></td>
         <td><input type="number" min="0" max="120" name="periods[${periodIdx}][brackets][${bracketIdx}][max_age]" class="form-control form-control-sm" placeholder="∞"></td>

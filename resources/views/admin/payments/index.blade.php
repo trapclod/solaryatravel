@@ -171,8 +171,8 @@
                                     <i class="bi {{ $gw['icon'] }} fs-5 {{ $gw['class'] }}"></i>
                                     <div>
                                         <div class="small fw-semibold text-dark">{{ $gw['label'] }}</div>
-                                        @if($payment->card_last_four)
-                                            <div class="small text-muted font-monospace">•••• {{ $payment->card_last_four }}</div>
+                                        @if($payment->last_four)
+                                            <div class="small text-muted font-monospace">•••• {{ $payment->last_four }}</div>
                                         @endif
                                     </div>
                                 </div>

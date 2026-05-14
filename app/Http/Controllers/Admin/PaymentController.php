@@ -16,7 +16,7 @@ class PaymentController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Payment::with(['booking.catamaran', 'booking.user']);
+        $query = Payment::with(['booking.tour', 'booking.user']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -41,7 +41,7 @@ class PaymentController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('gateway_payment_id', 'like', "%{$search}%")
-                  ->orWhere('gateway_transaction_id', 'like', "%{$search}%")
+                  ->orWhere('gateway_payment_intent', 'like', "%{$search}%")
                   ->orWhereHas('booking', function ($q) use ($search) {
                       $q->where('booking_number', 'like', "%{$search}%")
                         ->orWhere('customer_email', 'like', "%{$search}%");

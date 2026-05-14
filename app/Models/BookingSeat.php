@@ -22,11 +22,17 @@ class BookingSeat extends Model
         'guest_first_name',
         'guest_last_name',
         'guest_date_of_birth',
+        'tax_code',
         'is_primary',
         'qr_code',
         'boarded_at',
         'boarded_by',
     ];
+
+    public function hasGuestDetails(): bool
+    {
+        return !empty($this->guest_first_name) && !empty($this->guest_last_name);
+    }
 
     protected $casts = [
         'is_primary' => 'boolean',

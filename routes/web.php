@@ -44,6 +44,7 @@ Route::get('/prenotazione/{booking:uuid}', [BookingController::class, 'show'])->
 Route::get('/prenotazione/{booking:uuid}/conferma', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/prenotazione/{booking:uuid}/qr', [BookingController::class, 'qrCode'])->name('booking.qr');
 Route::get('/prenotazione/{booking:uuid}/biglietti', [BookingController::class, 'tickets'])->name('booking.tickets');
+Route::get('/prenotazione/{booking:uuid}/partecipanti', [BookingController::class, 'participants'])->name('booking.participants');
 Route::get('/biglietti/{seat:qr_code}/qr', [BookingController::class, 'seatQr'])->name('booking.seat.qr');
 
 // Payment
@@ -146,6 +147,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     // Settings
     Route::get('/impostazioni', [SettingsController::class, 'index'])->name('settings');
     Route::post('/impostazioni', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/impostazioni/test-mail', [SettingsController::class, 'sendTestMail'])->name('settings.mail-test');
 
     // Users
     Route::resource('users', AdminUserController::class)->except(['show']);

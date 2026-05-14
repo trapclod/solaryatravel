@@ -1,260 +1,377 @@
 <div>
-    <style>
-        .bk-card { background: #fff; border-radius: 1rem; box-shadow: 0 4px 16px rgba(14,27,51,.06); padding: 1.5rem; }
-        .bk-card + .bk-card { margin-top: 1rem; }
-        .bk-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; color: #0E1B33; }
-        .bk-card h3 i { color: #7C37FF; margin-right: .5rem; }
+    <div class="tg-tour-about-sidebar booking-widget mb-30">
+        <h4 class="tg-tour-about-title title-2 mb-15">Prenota questo tour</h4>
 
-        .bk-bracket-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #f1f3f5; }
-        .bk-bracket-row:last-child { border-bottom: 0; }
-        .bk-bracket-info strong { display: block; color: #0E1B33; font-size: .98rem; }
-        .bk-bracket-info small { color: #6c757d; font-size: .8rem; }
-        .bk-bracket-price { color: #7C37FF; font-weight: 600; font-size: .9rem; }
+        @php
+            $availableDateKeys = array_keys($availableDates ?? []);
+            $hasPicker = !empty($availableDateKeys);
+            $timesForSelected = $selectedDate ? ($availableDates[$selectedDate] ?? []) : [];
+            $needsTimePicker = $selectedDate && count($timesForSelected) > 1;
+        @endphp
 
-        .bk-stepper { display: inline-flex; align-items: center; background: #f8f9fc; border-radius: 50px; padding: 4px; }
-        .bk-stepper button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: #fff; color: #0E1B33; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-        .bk-stepper button:disabled { opacity: .35; cursor: not-allowed; }
-        .bk-stepper button.plus { background: #7C37FF; color: #fff; }
-        .bk-stepper .qty { min-width: 32px; text-align: center; font-weight: 700; font-size: 1rem; }
+        {{-- Date picker --}}
+        @if($hasPicker)
+            <span class="tg-tour-about-sidebar-title d-inline-block mb-5">Data</span>
+            <div class="tg-booking-form-parent-inner mb-15" wire:ignore>
+                <div class="tg-tour-about-date p-relative">
+                    <input id="booking-date-input"
+                           class="input"
+                           type="text"
+                           placeholder="Seleziona una data"
+                           value="{{ $selectedDate }}"
+                           data-available-dates='@json($availableDateKeys)'
+                           data-current="{{ $selectedDate }}"
+                           autocomplete="off"
+                           readonly>
+                    <span class="calender">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.1111 1V3.80003M4.88888 1V3.80003M1 6.59992H15M2.55556 2.39988H13.4444C14.3036 2.39988 15 3.02668 15 3.79989V13.6C15 14.3732 14.3036 15 13.4444 15H2.55556C1.69645 15 1 14.3732 1 13.6V3.79989C1 3.02668 1.69645 2.39988 2.55556 2.39988Z" stroke="#560CE3" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <span class="angle"><i class="fa-sharp fa-solid fa-angle-down"></i></span>
+                </div>
+            </div>
 
-        .bk-addon { display: flex; align-items: flex-start; gap: .85rem; padding: .85rem; border: 1.5px solid #eef0f3; border-radius: .75rem; cursor: pointer; transition: all .15s; }
-        .bk-addon:hover { border-color: #d0c2f7; }
-        .bk-addon.active { border-color: #7C37FF; background: #f7f3ff; }
-        .bk-addon input { margin-top: .25rem; }
-        .bk-addon-info strong { display: block; color: #0E1B33; }
-        .bk-addon-info small { color: #6c757d; font-size: .82rem; }
-        .bk-addon-price { margin-left: auto; color: #7C37FF; font-weight: 700; white-space: nowrap; }
-
-        .bk-summary { position: sticky; top: 90px; }
-        .bk-summary-line { display: flex; justify-content: space-between; padding: .35rem 0; font-size: .92rem; }
-        .bk-summary-line.total { border-top: 1.5px solid #eef0f3; margin-top: .5rem; padding-top: .85rem; font-size: 1.1rem; font-weight: 700; color: #0E1B33; }
-        .bk-summary-line.discount { color: #198754; }
-
-        .bk-input { border-radius: 50px; padding: .65rem 1.1rem; border: 1.5px solid #eef0f3; width: 100%; }
-        .bk-input:focus { outline: none; border-color: #7C37FF; box-shadow: 0 0 0 3px rgba(124,55,255,.12); }
-        .bk-textarea { border-radius: 1rem; padding: .85rem 1.1rem; border: 1.5px solid #eef0f3; width: 100%; min-height: 100px; resize: vertical; }
-        .bk-label { font-size: .85rem; font-weight: 600; color: #0E1B33; margin-bottom: .35rem; display: block; }
-
-        .bk-submit { width: 100%; background: #7C37FF; color: #fff; border: 0; border-radius: 50px; padding: 1rem; font-weight: 700; font-size: 1rem; }
-        .bk-submit:disabled { background: #c7b8e8; cursor: not-allowed; }
-
-        .bk-departure-info { background: linear-gradient(135deg,#7C37FF,#5b1fd8); color: #fff; border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; }
-        .bk-departure-info .date { font-size: 1.15rem; font-weight: 700; }
-        .bk-departure-info .time { font-size: .95rem; opacity: .9; }
-        .bk-departure-info .seats { font-size: .85rem; opacity: .85; margin-top: .35rem; }
-    </style>
-
-    <div class="container py-5" style="margin-top: 90px;">
-        <div class="row g-4">
-            {{-- LEFT --}}
-            <div class="col-lg-8">
-                {{-- Tour header --}}
-                <div class="bk-card">
-                    <div class="d-flex align-items-center gap-3">
-                        @if ($tour->primary_image)
-                            <img src="{{ Storage::url($tour->primary_image->image_path) }}" alt="" style="width:80px;height:80px;border-radius:.75rem;object-fit:cover;">
-                        @endif
-                        <div>
-                            <small class="text-muted text-uppercase">Stai prenotando</small>
-                            <h2 class="mb-0" style="font-size:1.4rem;font-weight:700;color:#0E1B33;">{{ $tour->name }}</h2>
-                            @if ($tour->duration_hours)
-                                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ $tour->duration_hours }}h</small>
-                            @endif
+            {{-- Time picker (solo se >1 orario disponibile per la data scelta) --}}
+            @if($needsTimePicker)
+                <div class="tg-tour-about-time d-flex align-items-center flex-wrap mb-15">
+                    <span class="time me-2">Orario:</span>
+                    @foreach($timesForSelected as $t)
+                        <div class="form-check me-3 m-0">
+                            <input class="form-check-input" type="radio" id="time-{{ $t }}" wire:click="pickTime('{{ $t }}')" @checked($selectedTime === $t)>
+                            <label class="form-check-label" for="time-{{ $t }}">{{ $t }}</label>
                         </div>
+                    @endforeach
+                </div>
+            @endif
+
+            {{-- Hint per quando manca data --}}
+            @if(!$selectedDate)
+                <div class="tg-tour-about-border-doted mb-15"></div>
+                <p class="text-muted small text-center py-2 mb-0">
+                    <i class="fa-regular fa-hand-pointer me-1"></i>
+                    Clicca sul campo data per scegliere il giorno.
+                </p>
+            @endif
+        @endif
+
+        @if(!$hasPicker && !$departure)
+            <div class="alert alert-warning small">Nessuna partenza disponibile al momento.</div>
+        @endif
+
+        {{-- Form principale (solo quando partenza risolta) --}}
+        @if($departure)
+            <div class="tg-tour-about-border-doted mb-15"></div>
+
+            {{-- Partecipanti: Adulti + Bambini --}}
+            <div class="tg-tour-about-tickets-wrap mb-15">
+                <span class="tg-tour-about-sidebar-title d-inline-block mb-10">Partecipanti:</span>
+
+                {{-- Adulti --}}
+                <div class="tg-tour-about-tickets mb-15">
+                    <div class="tg-tour-about-tickets-adult">
+                        <span>Adulti</span>
+                        <p class="mb-0">(da 18 anni) <span>€{{ number_format($this->adultUnitPrice, 0, ',', '.') }}</span></p>
+                    </div>
+                    <div class="bk-stepper">
+                        <button type="button" wire:click="decrementAdults" @disabled($adultsCount <= 1) aria-label="Diminuisci">−</button>
+                        <span class="qty">{{ $adultsCount }}</span>
+                        <button type="button" class="plus" wire:click="incrementAdults" aria-label="Aumenta">+</button>
                     </div>
                 </div>
 
-                {{-- Departure info --}}
-                @if ($departure)
-                    <div class="bk-departure-info mt-3">
-                        <div class="date"><i class="bi bi-calendar-event me-2"></i>{{ \Carbon\Carbon::parse($departure->departure_date)->translatedFormat('l d F Y') }}</div>
-                        <div class="time"><i class="bi bi-clock me-2"></i>{{ \Carbon\Carbon::parse($departure->start_time)->format('H:i') }}@if ($departure->end_time) – {{ \Carbon\Carbon::parse($departure->end_time)->format('H:i') }}@endif</div>
-                        <div class="seats">{{ $departure->seats_available }} posti disponibili</div>
+                @if($this->childBrackets->isNotEmpty())
+                    {{-- Bambini --}}
+                    <div class="tg-tour-about-tickets mb-10">
+                        <div class="tg-tour-about-tickets-adult">
+                            <span>Bambini</span>
+                            <p class="mb-0"><span class="text-muted small fw-normal">prezzo in base all'età</span></p>
+                        </div>
+                        <div class="bk-stepper">
+                            <button type="button" wire:click="removeChild" @disabled(count($children) <= 0) aria-label="Diminuisci">−</button>
+                            <span class="qty">{{ count($children) }}</span>
+                            <button type="button" class="plus" wire:click="addChild" aria-label="Aumenta">+</button>
+                        </div>
                     </div>
-                @else
-                    <div class="alert alert-warning mt-3">
-                        Nessuna partenza selezionata. Torna alla pagina del tour e scegli una data.
-                    </div>
-                @endif
 
-                {{-- Partecipanti --}}
-                @if ($departure && $this->brackets->isNotEmpty())
-                    <div class="bk-card">
-                        <h3><i class="bi bi-people-fill"></i>Partecipanti</h3>
-                        @foreach ($this->brackets as $b)
-                            <div class="bk-bracket-row">
-                                <div class="bk-bracket-info">
-                                    <strong>{{ $b->label }}</strong>
-                                    <small>
-                                        @if ($b->min_age && $b->max_age)
-                                            {{ $b->min_age }}–{{ $b->max_age }} anni
-                                        @elseif ($b->max_age)
-                                            fino a {{ $b->max_age }} anni
-                                        @elseif ($b->min_age)
-                                            da {{ $b->min_age }} anni
-                                        @endif
-                                        @if (!$b->counts_as_seat) · in braccio @endif
-                                    </small>
-                                    <div class="bk-bracket-price mt-1">€ {{ number_format((float) $b->price * (float) $departure->price_modifier, 2, ',', '.') }}</div>
-                                </div>
-                                <div class="bk-stepper">
-                                    <button type="button" wire:click="decrement({{ $b->id }})" @disabled(($bracketCounts[$b->id] ?? 0) <= 0)>−</button>
-                                    <span class="qty">{{ $bracketCounts[$b->id] ?? 0 }}</span>
-                                    <button type="button" class="plus" wire:click="increment({{ $b->id }})">+</button>
-                                </div>
-                            </div>
+                    <div class="bk-reductions-info small text-muted mb-10">
+                        <i class="fa-regular fa-circle-info me-1"></i>
+                        Riduzioni:
+                        @foreach($this->childBrackets as $b)
+                            <span class="bk-reduction-chip">
+                                {{ $b->label }}
+                                <em class="text-nowrap">
+                                    @if($b->max_age !== null && $b->min_age)
+                                        ({{ $b->min_age }}–{{ $b->max_age }})
+                                    @elseif($b->max_age !== null)
+                                        (≤ {{ $b->max_age }})
+                                    @else
+                                        (≥ {{ $b->min_age }})
+                                    @endif
+                                </em>
+                                · €{{ number_format((float) $b->price * (float) $departure->price_modifier, 0, ',', '.') }}
+                            </span>
                         @endforeach
                     </div>
-                @endif
 
-                {{-- Addon --}}
-                @if ($departure && $this->addons->isNotEmpty())
-                    <div class="bk-card">
-                        <h3><i class="bi bi-stars"></i>Servizi extra</h3>
-                        <div class="d-flex flex-column gap-2">
-                            @foreach ($this->addons as $addon)
-                                @php $isActive = in_array($addon->id, $selectedAddons, true); @endphp
-                                <label class="bk-addon {{ $isActive ? 'active' : '' }}" wire:key="addon-{{ $addon->id }}">
-                                    <input type="checkbox" wire:click="toggleAddon({{ $addon->id }})" @checked($isActive)>
-                                    <div class="bk-addon-info">
-                                        <strong>{{ $addon->name }}</strong>
-                                        @if ($addon->description)
-                                            <small>{{ $addon->description }}</small>
-                                        @endif
+                    @if(count($children) > 0)
+                        <div class="bk-children-wrap mb-15">
+                            @foreach($this->resolvedChildren as $c)
+                                @php $idx = $c['index']; @endphp
+                                <div class="bk-child-row" wire:key="child-{{ $idx }}">
+                                    <div class="bk-child-row-head">
+                                        <span class="bk-child-num">Bambino {{ $idx + 1 }}</span>
+                                        <button type="button" wire:click="removeChild({{ $idx }})" class="bk-child-remove" title="Rimuovi"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
-                                    <div class="bk-addon-price">
-                                        € {{ number_format((float) $addon->price, 2, ',', '.') }}
-                                        <small class="d-block text-muted fw-normal" style="font-size:.75rem">{{ $addon->getPriceTypeLabel() }}</small>
-                                    </div>
-                                </label>
+                                    <label class="bk-label">Data di nascita <span class="text-danger">*</span></label>
+                                    <input type="date" wire:model.live="children.{{ $idx }}.dob" class="bk-input" max="{{ now()->toDateString() }}">
+                                    @if($c['error'])
+                                        <small class="text-danger d-block mt-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>{{ $c['error'] }}</small>
+                                    @elseif($c['ready'])
+                                        <div class="bk-child-resolved">
+                                            <i class="fa-solid fa-check-circle me-1"></i>
+                                            <strong>{{ $c['bracket']->label }}</strong> ({{ $c['age'] }} anni)
+                                            <span class="text-primary fw-bold">€{{ number_format($c['unit_price'], 0, ',', '.') }}</span>
+                                        </div>
+                                    @elseif($c['dob'] === '')
+                                        <small class="text-muted d-block mt-1"><i class="fa-regular fa-circle-info me-1"></i>Inserisci la data di nascita per vedere la riduzione.</small>
+                                    @endif
+                                </div>
                             @endforeach
                         </div>
-                    </div>
-                @endif
-
-                {{-- Dati cliente --}}
-                @if ($departure)
-                    <div class="bk-card">
-                        <h3><i class="bi bi-person-circle"></i>I tuoi dati</h3>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="bk-label">Nome <span class="text-danger">*</span></label>
-                                <input type="text" wire:model="customer_first_name" class="bk-input">
-                                @error('customer_first_name') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label class="bk-label">Cognome <span class="text-danger">*</span></label>
-                                <input type="text" wire:model="customer_last_name" class="bk-input">
-                                @error('customer_last_name') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label class="bk-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" wire:model="customer_email" class="bk-input">
-                                @error('customer_email') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label class="bk-label">Telefono</label>
-                                <input type="tel" wire:model="customer_phone" class="bk-input">
-                                @error('customer_phone') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-                            <div class="col-12">
-                                <label class="bk-label">Richieste speciali</label>
-                                <textarea wire:model="special_requests" class="bk-textarea" placeholder="Allergie, esigenze particolari, ecc."></textarea>
-                            </div>
-                        </div>
-                    </div>
+                    @endif
                 @endif
             </div>
 
-            {{-- RIGHT: summary --}}
-            <div class="col-lg-4">
-                <div class="bk-summary">
-                    <div class="bk-card">
-                        <h3><i class="bi bi-receipt"></i>Riepilogo</h3>
-
-                        @if ($this->totalSelected === 0)
-                            <p class="text-muted small mb-0">Seleziona almeno un partecipante per vedere il prezzo.</p>
-                        @else
-                            @foreach ($this->pricing['brackets'] ?? [] as $line)
-                                <div class="bk-summary-line">
-                                    <span>{{ $line['label'] }} × {{ $line['count'] }}</span>
-                                    <span>€ {{ number_format($line['line_total'], 2, ',', '.') }}</span>
-                                </div>
+            {{-- Extras --}}
+            @if($this->addons->isNotEmpty())
+                <div class="tg-tour-about-border-doted mb-15"></div>
+                <div class="tg-tour-about-extra mb-15">
+                    <span class="tg-tour-about-sidebar-title mb-10 d-inline-block">Aggiungi extra:</span>
+                    <div class="tg-filter-list">
+                        <ul class="list-unstyled mb-0">
+                            @foreach($this->addons as $addon)
+                                @php $isActive = in_array($addon->id, $selectedAddons, true); @endphp
+                                <li wire:key="addon-{{ $addon->id }}">
+                                    <div class="checkbox d-flex align-items-center">
+                                        <input class="tg-checkbox" type="checkbox" id="addon-{{ $addon->id }}" wire:click="toggleAddon({{ $addon->id }})" @checked($isActive)>
+                                        <label for="addon-{{ $addon->id }}" class="tg-label ms-2 mb-0">{{ $addon->name }}</label>
+                                    </div>
+                                    <span class="quantity">€{{ number_format((float) $addon->price, 0, ',', '.') }}</span>
+                                </li>
                             @endforeach
-
-                            @if (($this->pricing['addons_total'] ?? 0) > 0)
-                                <div class="bk-summary-line">
-                                    <span>Servizi extra</span>
-                                    <span>€ {{ number_format($this->pricing['addons_total'], 2, ',', '.') }}</span>
-                                </div>
-                            @endif
-
-                            @if (($this->pricing['discount_amount'] ?? 0) > 0)
-                                <div class="bk-summary-line discount">
-                                    <span><i class="bi bi-tag-fill me-1"></i>Sconto</span>
-                                    <span>− € {{ number_format($this->pricing['discount_amount'], 2, ',', '.') }}</span>
-                                </div>
-                            @endif
-
-                            @if (($this->pricing['tax_amount'] ?? 0) > 0)
-                                <div class="bk-summary-line text-muted">
-                                    <span>IVA ({{ rtrim(rtrim(number_format($this->pricing['tax_rate'], 2), '0'), '.') }}%)</span>
-                                    <span>€ {{ number_format($this->pricing['tax_amount'], 2, ',', '.') }}</span>
-                                </div>
-                            @endif
-
-                            <div class="bk-summary-line total">
-                                <span>Totale</span>
-                                <span>€ {{ number_format($this->pricing['total_amount'], 2, ',', '.') }}</span>
-                            </div>
-                        @endif
-
-                        {{-- Discount code --}}
-                        <div class="mt-3 pt-3" style="border-top:1px solid #eef0f3;">
-                            <label class="bk-label">Codice sconto</label>
-                            <div class="d-flex gap-2">
-                                <input type="text" wire:model="discountCode" class="bk-input" placeholder="ES. ESTATE10" @disabled($discountValid)>
-                                @if ($discountValid)
-                                    <button type="button" wire:click="removeDiscount" class="btn btn-light border rounded-pill px-3" title="Rimuovi"><i class="bi bi-x-lg"></i></button>
-                                @else
-                                    <button type="button" wire:click="applyDiscount" class="btn btn-outline-primary rounded-pill px-3">Applica</button>
-                                @endif
-                            </div>
-                            @if ($discountFeedback)
-                                <small class="d-block mt-1 {{ $discountValid ? 'text-success' : 'text-danger' }}">{{ $discountFeedback }}</small>
-                            @endif
-                        </div>
-
-                        {{-- Terms --}}
-                        @if ($departure)
-                            <div class="form-check mt-3 pt-3" style="border-top:1px solid #eef0f3;">
-                                <input class="form-check-input" type="checkbox" wire:model="terms" id="bk-terms">
-                                <label class="form-check-label small" for="bk-terms">
-                                    Accetto i <a href="{{ route('terms') }}" target="_blank">termini e condizioni</a> e la <a href="{{ route('privacy') }}" target="_blank">privacy policy</a>.
-                                </label>
-                                @error('terms') <small class="d-block text-danger">{{ $message }}</small> @enderror
-                            </div>
-
-                            @if ($errorMessage)
-                                <div class="alert alert-danger mt-3 mb-0 small">{{ $errorMessage }}</div>
-                            @endif
-
-                            <button type="button" class="bk-submit mt-3" wire:click="submit" wire:loading.attr="disabled" @disabled($this->totalSelected === 0)>
-                                <span wire:loading.remove wire:target="submit">
-                                    <i class="bi bi-lock-fill me-2"></i>Procedi al pagamento
-                                </span>
-                                <span wire:loading wire:target="submit">
-                                    <i class="bi bi-hourglass-split me-2"></i>Attendere...
-                                </span>
-                            </button>
-
-                            <small class="d-block text-muted text-center mt-2" style="font-size:.78rem">
-                                <i class="bi bi-shield-check me-1"></i>Pagamento sicuro via Stripe
-                            </small>
-                        @endif
+                        </ul>
                     </div>
                 </div>
+            @endif
+
+            {{-- Riepilogo prezzi --}}
+            @if($this->totalSelected > 0)
+                <div class="tg-tour-about-border-doted mb-15"></div>
+                <div class="bk-summary-mini mb-15">
+                    @foreach($this->pricing['brackets'] ?? [] as $line)
+                        <div class="bk-summary-line">
+                            <span>{{ $line['label'] }} × {{ $line['count'] }}</span>
+                            <span>€{{ number_format($line['line_total'], 2, ',', '.') }}</span>
+                        </div>
+                    @endforeach
+                    @if(($this->pricing['addons_total'] ?? 0) > 0)
+                        <div class="bk-summary-line">
+                            <span>Extra</span>
+                            <span>€{{ number_format($this->pricing['addons_total'], 2, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    @if(($this->pricing['discount_amount'] ?? 0) > 0)
+                        <div class="bk-summary-line discount">
+                            <span><i class="fa-solid fa-tag me-1"></i>Sconto</span>
+                            <span>− €{{ number_format($this->pricing['discount_amount'], 2, ',', '.') }}</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Discount --}}
+            <div class="mb-15">
+                <label class="bk-label">Codice sconto</label>
+                <div class="d-flex gap-2">
+                    <input type="text" wire:model="discountCode" class="bk-input flex-grow-1" placeholder="ES. ESTATE10" @disabled($discountValid)>
+                    @if($discountValid)
+                        <button type="button" wire:click="removeDiscount" class="btn btn-light border rounded-pill px-3" title="Rimuovi"><i class="fa-solid fa-xmark"></i></button>
+                    @else
+                        <button type="button" wire:click="applyDiscount" class="btn btn-outline-primary rounded-pill px-3">Applica</button>
+                    @endif
+                </div>
+                @if($discountFeedback)
+                    <small class="d-block mt-1 {{ $discountValid ? 'text-success' : 'text-danger' }}">{{ $discountFeedback }}</small>
+                @endif
             </div>
-        </div>
+
+            <div class="tg-tour-about-border-doted mb-15"></div>
+
+            {{-- Customer fields --}}
+            <span class="tg-tour-about-sidebar-title d-inline-block mb-10"><i class="fa-regular fa-user text-primary me-1"></i>I tuoi dati</span>
+            <div class="row g-2 mb-10">
+                <div class="col-6">
+                    <input type="text" wire:model="customer_first_name" class="bk-input" placeholder="Nome *">
+                    @error('customer_first_name') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                </div>
+                <div class="col-6">
+                    <input type="text" wire:model="customer_last_name" class="bk-input" placeholder="Cognome *">
+                    @error('customer_last_name') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                </div>
+                <div class="col-12">
+                    <input type="email" wire:model="customer_email" class="bk-input" placeholder="Email *">
+                    @error('customer_email') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                </div>
+                <div class="col-12">
+                    <input type="tel" wire:model="customer_phone" class="bk-input" placeholder="Telefono">
+                    @error('customer_phone') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                </div>
+                <div class="col-12">
+                    <textarea wire:model="special_requests" class="bk-textarea" rows="2" placeholder="Richieste speciali (opzionale)"></textarea>
+                </div>
+            </div>
+
+            {{-- Total --}}
+            <div class="tg-tour-about-coast d-flex align-items-center flex-wrap justify-content-between mb-5">
+                <span class="tg-tour-about-sidebar-title d-inline-block">Costo totale:</span>
+                <h5 class="total-price mb-0">€{{ number_format($this->pricing['total_amount'] ?? 0, 2, ',', '.') }}</h5>
+            </div>
+            <div class="text-end text-muted small mb-15" style="font-size:.78rem">IVA inclusa</div>
+
+            {{-- Terms --}}
+            <div class="form-check mb-15">
+                <input class="form-check-input" type="checkbox" wire:model="terms" id="bk-terms">
+                <label class="form-check-label small" for="bk-terms">
+                    Accetto i <a href="{{ route('terms') }}" target="_blank">termini</a> e la <a href="{{ route('privacy') }}" target="_blank">privacy policy</a>.
+                </label>
+                @error('terms') <small class="d-block text-danger">{{ $message }}</small> @enderror
+            </div>
+
+            @if($errorMessage)
+                <div class="alert alert-danger small mb-15">{{ $errorMessage }}</div>
+            @endif
+
+            <button type="button" class="tg-btn tg-btn-switch-animation w-100" wire:click="submit" wire:loading.attr="disabled" @disabled($this->hasChildrenWithErrors || $adultsCount < 1)>
+                <span wire:loading.remove wire:target="submit">
+                    <i class="fa-solid fa-lock me-2"></i>Prenota ora
+                </span>
+                <span wire:loading wire:target="submit">
+                    <i class="fa-solid fa-spinner fa-spin me-2"></i>Attendere…
+                </span>
+            </button>
+
+            <small class="d-block text-muted text-center mt-2" style="font-size:.78rem">
+                <i class="fa-solid fa-shield-halved me-1"></i>Pagamento sicuro via Stripe
+            </small>
+        @endif
     </div>
+
+    {{-- Styles --}}
+    <style>
+        .booking-widget .bk-input { border-radius: 50px; padding: .55rem 1rem; border: 1.5px solid #eef0f3; width: 100%; background: #fff; font-size: .88rem; }
+        .booking-widget .bk-input:focus { outline: none; border-color: #7C37FF; box-shadow: 0 0 0 3px rgba(124,55,255,.12); }
+        .booking-widget .bk-textarea { border-radius: 14px; padding: .65rem 1rem; border: 1.5px solid #eef0f3; width: 100%; font-size: .88rem; resize: vertical; }
+        .booking-widget .bk-textarea:focus { outline: none; border-color: #7C37FF; box-shadow: 0 0 0 3px rgba(124,55,255,.12); }
+        .booking-widget .bk-label { font-size: .78rem; font-weight: 600; color: #0E1B33; margin-bottom: .35rem; display: block; }
+
+        .booking-widget .bk-stepper { display: inline-flex; align-items: center; background: #f4f4f4; border-radius: 50px; padding: 3px; gap: 4px; }
+        .booking-widget .bk-stepper button { width: 26px; height: 26px; border-radius: 50%; border: 0; background: #fff; color: #0E1B33; font-weight: 700; font-size: 1rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+        .booking-widget .bk-stepper button:disabled { opacity: .3; cursor: not-allowed; }
+        .booking-widget .bk-stepper button.plus { background: #7C37FF; color: #fff; }
+        .booking-widget .bk-stepper .qty { min-width: 22px; text-align: center; font-weight: 700; font-size: .9rem; color: #0E1B33; }
+
+        .booking-widget .bk-summary-mini { background: #fafafa; border-radius: 10px; padding: .65rem .85rem; }
+        .booking-widget .bk-summary-line { display: flex; justify-content: space-between; padding: .2rem 0; font-size: .85rem; color: #0E1B33; }
+        .booking-widget .bk-summary-line.discount { color: #198754; }
+
+        .booking-widget .tg-tour-about-coast .total-price { font-size: 22px; }
+        .booking-widget .tg-btn { background: #7C37FF; color: #fff; padding: 14px 22px; font-weight: 600; }
+        .booking-widget .tg-btn:hover { background: #5b1fd8; color: #fff; }
+        .booking-widget .tg-btn:disabled { background: #c7b8e8; cursor: not-allowed; }
+        .booking-widget .tg-tour-about-extra .tg-filter-list ul li { padding: .35rem 0; }
+
+        .booking-widget .bk-reductions-info { line-height: 1.7; }
+        .booking-widget .bk-reduction-chip {
+            display: inline-block; background: #f7f3ff; color: #4c1d95; border-radius: 50px;
+            padding: 2px 10px; font-size: .72rem; font-weight: 600;
+            margin-right: .25rem; margin-bottom: .2rem;
+        }
+        .booking-widget .bk-reduction-chip em { font-style: normal; opacity: .7; font-weight: 500; }
+
+        .booking-widget .bk-children-wrap { display: flex; flex-direction: column; gap: .65rem; }
+        .booking-widget .bk-child-row {
+            border: 1.5px solid #eef0f3; border-radius: 14px; padding: .65rem .75rem; background: #fafafa;
+        }
+        .booking-widget .bk-child-row-head {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: .35rem;
+        }
+        .booking-widget .bk-child-num { font-weight: 700; font-size: .82rem; color: #0E1B33; }
+        .booking-widget .bk-child-remove {
+            background: transparent; border: 0; color: #6c757d; padding: 0 .25rem;
+            cursor: pointer; transition: color .15s; font-size: .85rem;
+        }
+        .booking-widget .bk-child-remove:hover { color: #dc3545; }
+        .booking-widget .bk-child-resolved {
+            margin-top: .5rem; padding: .4rem .6rem; background: #f0fdf4; border: 1px solid #bbf7d0;
+            border-radius: 10px; font-size: .8rem; color: #14532d;
+            display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
+        }
+        .booking-widget .bk-child-resolved strong { color: #0E1B33; }
+
+        /* Time radios as pill chips */
+        .booking-widget .tg-tour-about-time .form-check {
+            display: inline-flex; align-items: center; gap: .35rem;
+        }
+        .booking-widget .tg-tour-about-time .form-check-input {
+            margin: 0; transform: none;
+        }
+
+        /* Flatpickr theme override (purple) */
+        .flatpickr-calendar.bk-fp-theme .flatpickr-day.selected,
+        .flatpickr-calendar.bk-fp-theme .flatpickr-day.selected:hover { background: #7C37FF; border-color: #7C37FF; }
+        .flatpickr-calendar.bk-fp-theme .flatpickr-day.today:not(.selected) { border-color: #7C37FF; color: #7C37FF; }
+        .flatpickr-calendar.bk-fp-theme .flatpickr-day.flatpickr-disabled { text-decoration: line-through; opacity: .35; }
+    </style>
+
+    {{-- Flatpickr init for date input --}}
+    @if(!empty($availableDates))
+        <script>
+            (function () {
+                function initBookingDatePicker() {
+                    const el = document.getElementById('booking-date-input');
+                    if (!el || typeof flatpickr === 'undefined') return;
+                    if (el._fp) return; // già inizializzato
+                    const dates = JSON.parse(el.dataset.availableDates || '[]');
+                    if (dates.length === 0) return;
+                    el._fp = flatpickr(el, {
+                        enable: dates,
+                        minDate: 'today',
+                        maxDate: dates[dates.length - 1],
+                        dateFormat: 'Y-m-d',
+                        disableMobile: true,
+                        defaultDate: el.dataset.current || null,
+                        locale: {
+                            firstDayOfWeek: 1,
+                            weekdays: { shorthand: ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'], longhand: ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'] },
+                            months: { shorthand: ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'], longhand: ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'] },
+                        },
+                        onChange: function (selectedDates, dateStr) {
+                            if (window.Livewire && dateStr) {
+                                @this.call('pickDate', dateStr);
+                            }
+                        },
+                    });
+                    el._fp.calendarContainer && el._fp.calendarContainer.classList.add('bk-fp-theme');
+                }
+                if (document.readyState !== 'loading') {
+                    initBookingDatePicker();
+                } else {
+                    document.addEventListener('DOMContentLoaded', initBookingDatePicker);
+                }
+                document.addEventListener('livewire:navigated', initBookingDatePicker);
+                document.addEventListener('livewire:update', initBookingDatePicker);
+            })();
+        </script>
+    @endif
 </div>

@@ -61,10 +61,14 @@ class RegisteredUserController extends Controller
             'locale' => app()->getLocale(),
         ]);
 
+        // L'evento Registered triggera il listener standard SendEmailVerificationNotification,
+        // che chiama User::sendEmailVerificationNotification() — quest'ultimo è stato sovrascritto
+        // per spedire la nostra UserWelcome con il link di verifica firmato.
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard'));
+        $target = $user->isAdmin() ? route('admin.dashboard') : route('bookings.my');
+        return redirect()->intended($target);
     }
 }

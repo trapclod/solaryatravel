@@ -122,7 +122,7 @@
                                     </span>
                                     <div class="min-w-0">
                                         <div class="fw-semibold text-truncate">{{ $booking->customer_first_name }} {{ $booking->customer_last_name }}</div>
-                                        <div class="small text-muted text-truncate">{{ $booking->catamaran->name }} · {{ $booking->timeSlot->name }}</div>
+                                        <div class="small text-muted text-truncate">{{ $booking->tour?->name ?? '—' }} · {{ $booking->departure?->start_time ?? '' }}</div>
                                     </div>
                                 </div>
                                 <div class="text-end ms-2">

@@ -89,6 +89,20 @@ class CheckInController extends Controller
             ], 400);
         }
 
+        // Block if participant data incomplete
+        if (!$booking->hasAllParticipantsDetails()) {
+            $missing = $booking->seatRecords()
+                ->where(function ($q) {
+                    $q->whereNull('guest_first_name')->orWhere('guest_first_name', '');
+                })
+                ->count();
+            return response()->json([
+                'success' => false,
+                'message' => "Dati partecipanti incompleti ({$missing} mancanti). Il cliente deve compilarli prima dell'imbarco.",
+                'participants_url' => $booking->participantsUrl(),
+            ], 400);
+        }
+
         // Create check-in record
         $checkIn = CheckIn::create([
             'booking_id' => $booking->id,
@@ -109,10 +123,9 @@ class CheckInController extends Controller
             'booking' => [
                 'number' => $booking->booking_number,
                 'customer_name' => $booking->customer_first_name . ' ' . $booking->customer_last_name,
-                'catamaran' => $booking->catamaran->name,
+                'tour' => $booking->tour?->name,
                 'time_slot' => optional($booking->departure)->start_time,
                 'seats' => $booking->seats,
-                'is_exclusive' => $booking->isExclusive(),
             ],
             'check_in' => [
                 'id' => $checkIn->id,

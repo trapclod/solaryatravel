@@ -17,21 +17,18 @@ class Payment extends Model
         'booking_id',
         'gateway',
         'gateway_payment_id',
-        'gateway_transaction_id',
-        'gateway_customer_id',
+        'gateway_payment_intent',
         'amount',
         'currency',
-        'fee_amount',
-        'net_amount',
         'status',
+        'payment_method_type',
+        'last_four',
         'card_brand',
-        'card_last_four',
         'gateway_response',
-        'failure_reason',
-        'refund_reason',
+        'failure_code',
+        'failure_message',
         'refunded_amount',
         'refunded_at',
-        'idempotency_key',
         'paid_at',
     ];
 
@@ -39,8 +36,6 @@ class Payment extends Model
         'status' => PaymentStatus::class,
         'gateway_response' => 'array',
         'amount' => 'decimal:2',
-        'fee_amount' => 'decimal:2',
-        'net_amount' => 'decimal:2',
         'refunded_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'refunded_at' => 'datetime',
@@ -110,10 +105,10 @@ class Payment extends Model
 
     public function getCardDisplayAttribute(): ?string
     {
-        if (!$this->card_brand || !$this->card_last_four) {
+        if (!$this->card_brand || !$this->last_four) {
             return null;
         }
 
-        return ucfirst($this->card_brand) . ' •••• ' . $this->card_last_four;
+        return ucfirst($this->card_brand) . ' •••• ' . $this->last_four;
     }
 }

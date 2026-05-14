@@ -75,6 +75,20 @@
                             </table>
                         @endforeach
 
+                        @if(!$booking->hasAllParticipantsDetails())
+                            <div style="background:#fee2e2;border:1px solid #fca5a5;padding:18px;border-radius:10px;margin-top:18px;">
+                                <p style="margin:0 0 10px 0;font-size:14px;color:#991b1b;font-weight:700;">
+                                    ⚠️ Manca un passaggio: dati partecipanti
+                                </p>
+                                <p style="margin:0 0 14px 0;font-size:13px;color:#7f1d1d;line-height:1.6;">
+                                    Per legge serve nome, cognome e codice fiscale di ogni passeggero. Senza questi dati l'imbarco non potrà essere effettuato.
+                                </p>
+                                <a href="{{ $booking->participantsUrl() }}" style="display:inline-block;background:#dc2626;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+                                    Compila ora i dati partecipanti
+                                </a>
+                            </div>
+                        @endif
+
                         <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:14px;border-radius:6px;margin-top:18px;">
                             <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;">
                                 <strong>Suggerimento:</strong> presentati al molo almeno 15 minuti prima della partenza con il QR code di ogni passeggero (anche dal cellulare).

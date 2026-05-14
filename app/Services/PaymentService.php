@@ -43,11 +43,11 @@ class PaymentService
             'booking_id' => $booking->id,
             'amount' => $booking->total_amount,
             'currency' => 'EUR',
-            'payment_method' => 'card',
-            'payment_gateway' => 'stripe',
-            'transaction_id' => $session->id,
+            'gateway' => 'stripe',
+            'gateway_payment_id' => $session->id,
+            'payment_method_type' => 'card',
             'status' => PaymentStatus::PENDING,
-            'metadata' => ['session_id' => $session->id],
+            'gateway_response' => ['session_id' => $session->id],
         ]);
 
         return [
@@ -75,7 +75,7 @@ class PaymentService
         // Sottrai eventuali addons riportati come line item separato
         $addonsTotal = 0;
         foreach ($booking->addons as $bookingAddon) {
-            $addonsTotal += (float) ($bookingAddon->pivot->total_price ?? 0);
+            $addonsTotal += (float) ($bookingAddon->total_price ?? 0);
         }
         $mainAmount = max(0, $totalForMain - $addonsTotal);
 
@@ -93,7 +93,7 @@ class PaymentService
 
         foreach ($booking->addons as $bookingAddon) {
             $name = $bookingAddon->addon->name ?? ($bookingAddon->name ?? 'Servizio aggiuntivo');
-            $unit = (float) ($bookingAddon->pivot->total_price ?? 0);
+            $unit = (float) ($bookingAddon->total_price ?? 0);
             if ($unit <= 0) {
                 continue;
             }
@@ -125,7 +125,7 @@ class PaymentService
                 ];
             }
 
-            $payment = Payment::where('transaction_id', $sessionId)->first();
+            $payment = Payment::where('gateway_payment_id', $sessionId)->first();
 
             if (!$payment) {
                 return [
@@ -136,10 +136,11 @@ class PaymentService
 
             // Update payment record
             $payment->update([
-                'status' => PaymentStatus::COMPLETED,
+                'status' => PaymentStatus::SUCCEEDED,
                 'paid_at' => now(),
-                'metadata' => array_merge(
-                    $payment->metadata ?? [],
+                'gateway_payment_intent' => $session->payment_intent,
+                'gateway_response' => array_merge(
+                    $payment->gateway_response ?? [],
                     ['payment_intent' => $session->payment_intent]
                 ),
             ]);
@@ -167,7 +168,7 @@ class PaymentService
     public function refund(Booking $booking, ?float $amount = null): array
     {
         $payment = $booking->payments()
-            ->where('status', PaymentStatus::COMPLETED)
+            ->where('status', PaymentStatus::SUCCEEDED)
             ->latest('paid_at')
             ->first();
 
@@ -179,7 +180,8 @@ class PaymentService
         }
 
         try {
-            $paymentIntent = $payment->metadata['payment_intent'] ?? null;
+            $paymentIntent = $payment->gateway_payment_intent
+                ?? ($payment->gateway_response['payment_intent'] ?? null);
 
             if (!$paymentIntent) {
                 return [
@@ -206,8 +208,8 @@ class PaymentService
                 'status' => $isFullRefund ? PaymentStatus::REFUNDED : PaymentStatus::PARTIALLY_REFUNDED,
                 'refunded_amount' => $refundedAmount,
                 'refunded_at' => now(),
-                'metadata' => array_merge(
-                    $payment->metadata ?? [],
+                'gateway_response' => array_merge(
+                    $payment->gateway_response ?? [],
                     ['refund_id' => $refund->id]
                 ),
             ]);
@@ -233,7 +235,7 @@ class PaymentService
     public function calculateRefundAmount(Booking $booking): array
     {
         $payment = $booking->payments()
-            ->where('status', PaymentStatus::COMPLETED)
+            ->where('status', PaymentStatus::SUCCEEDED)
             ->latest('paid_at')
             ->first();
 

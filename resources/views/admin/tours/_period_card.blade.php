@@ -87,12 +87,16 @@
 
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
             <div class="text-uppercase text-muted small fw-semibold">
-                <i class="bi bi-people me-1"></i>Fasce d'età
+                <i class="bi bi-people me-1"></i>Riduzioni bambini
             </div>
             <button type="button" class="btn btn-sm btn-light border rounded-pill fw-medium"
                     onclick="addBracketToPeriod({{ $pi }})">
-                <i class="bi bi-plus-lg me-1"></i>Aggiungi fascia
+                <i class="bi bi-plus-lg me-1"></i>Aggiungi riduzione
             </button>
+        </div>
+        <div class="form-text small mb-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Aggiungi qui le fasce d'età con prezzo ridotto (es. bambini 0–2 gratis, 3–11 al 50%). Gli adulti pagano il <strong>prezzo adulto</strong> impostato in alto.
         </div>
 
         <div class="table-responsive bracket-table-wrap">
@@ -141,7 +145,7 @@
         </div>
         <div class="form-text small mt-2">
             <i class="bi bi-info-circle me-1"></i>
-            Disabilita "Conta come posto" per i bambini in braccio (es. infanti 0-2 anni).
+            Disabilita "Conta come posto" per i bambini in braccio (es. infanti 0–2 anni che non occupano un posto a sedere).
         </div>
     </div>
 </div>

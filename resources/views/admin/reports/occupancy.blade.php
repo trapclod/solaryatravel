@@ -2,188 +2,132 @@
 
 @section('title', 'Report occupazione')
 
+@push('styles')
+    @include('admin.reports._styles')
+@endpush
+
 @php
-    $periodLabels = [
-        'today' => 'Oggi', 'week' => 'Questa settimana', 'month' => 'Questo mese',
-        'quarter' => 'Questo trimestre', 'year' => "Quest'anno", 'all' => 'Tutto lo storico',
-    ];
+    $avg = $stats['avg_occupancy'];
+    $avgAccent = $avg >= 70 ? 'is-accent-success' : ($avg >= 50 ? 'is-accent-warning' : 'is-accent-danger');
 @endphp
 
 @section('content')
-    <div class="dash-page-header">
-        <div class="d-flex align-items-center gap-3">
-            <a href="{{ route('admin.reports.index') }}" class="dash-icon-btn" title="Torna ai report">
-                <i class="bi bi-arrow-left"></i>
-            </a>
+<div class="rpt-shell">
+    @include('admin.reports._sidebar', ['current' => 'occupancy', 'exportType' => 'passengers'])
+
+    <main class="rpt-main">
+        <div class="rpt-header">
             <div>
-                <h1 class="mb-0">Report occupazione</h1>
-                <p class="mt-1 mb-0">
-                    <i class="bi bi-calendar3 me-1"></i>
+                <h1>Report occupazione</h1>
+                <p class="rpt-header-sub">
+                    <i class="bi bi-calendar3"></i>
                     {{ $startDate->format('d/m/Y') }} → {{ $endDate->format('d/m/Y') }}
                 </p>
             </div>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <form action="{{ route('admin.reports.occupancy') }}" method="GET">
-                <select name="period" onchange="this.form.submit()" class="form-select rounded-pill px-3 fw-semibold">
-                    @foreach($periodLabels as $value => $label)
-                        <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </form>
-            <a href="{{ route('admin.reports.export', ['type' => 'passengers', 'period' => $period]) }}"
-               class="btn btn-primary rounded-pill px-3 fw-semibold">
-                <i class="bi bi-download me-2"></i>Esporta CSV
-            </a>
-        </div>
-    </div>
 
-    {{-- Stats --}}
-    @php
-        $avg = $stats['avg_occupancy'];
-        $avgClass = $avg >= 70 ? 'text-success' : ($avg >= 50 ? 'text-warning' : 'text-danger');
-    @endphp
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
-            <div class="dash-mini-stat is-active">
-                <div class="dash-mini-stat-label"><i class="bi bi-people-fill me-1"></i>Trasportati</div>
-                <div class="dash-mini-stat-value">{{ $stats['total_capacity_used'] }}</div>
+        <div class="rpt-kpis">
+            <div class="rpt-kpi is-accent-primary">
+                <span class="rpt-kpi-label"><i class="bi bi-people-fill"></i>Trasportati</span>
+                <span class="rpt-kpi-value">{{ $stats['total_capacity_used'] }}</span>
+                <span class="rpt-kpi-sub">passeggeri</span>
+            </div>
+            <div class="rpt-kpi">
+                <span class="rpt-kpi-label"><i class="bi bi-stack"></i>Capacità massima</span>
+                <span class="rpt-kpi-value">{{ $stats['total_max_capacity'] }}</span>
+                <span class="rpt-kpi-sub">posti disponibili</span>
+            </div>
+            <div class="rpt-kpi {{ $avgAccent }}">
+                <span class="rpt-kpi-label"><i class="bi bi-bar-chart-fill"></i>Occupazione media</span>
+                <span class="rpt-kpi-value">{{ $avg }}%</span>
+                <span class="rpt-kpi-sub">tutti i tour</span>
+            </div>
+            <div class="rpt-kpi">
+                <span class="rpt-kpi-label"><i class="bi bi-fire"></i>Giorno più affollato</span>
+                <span class="rpt-kpi-value" style="font-size:1.15rem">{{ $stats['busiest_day'] }}</span>
+                <span class="rpt-kpi-sub">in media</span>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="dash-mini-stat">
-                <div class="dash-mini-stat-label"><i class="bi bi-stack me-1"></i>Capacità massima</div>
-                <div class="dash-mini-stat-value text-muted">{{ $stats['total_max_capacity'] }}</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="dash-mini-stat">
-                <div class="dash-mini-stat-label"><i class="bi bi-bar-chart-fill me-1"></i>Occupazione media</div>
-                <div class="dash-mini-stat-value {{ $avgClass }}">{{ $avg }}%</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="dash-mini-stat">
-                <div class="dash-mini-stat-label"><i class="bi bi-fire me-1"></i>Giorno più affollato</div>
-                <div class="dash-mini-stat-value" style="font-size:1.05rem">{{ $stats['busiest_day'] }}</div>
-            </div>
-        </div>
-    </div>
 
-    {{-- Occupancy by catamaran --}}
-    <div class="dash-card mb-3">
-        <div class="dash-card-header">
-            <h3><i class="bi bi-water me-2 text-primary"></i>Occupazione per catamarano</h3>
-        </div>
-        <div class="dash-card-body">
-            @forelse($occupancyData as $item)
-                @php
-                    $rate = $item['occupancy_rate'];
-                    $rateClass = $rate >= 70 ? 'success' : ($rate >= 50 ? 'warning' : 'danger');
-                @endphp
-                <div class="border rounded-3 p-3 mb-3">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                        <div class="d-flex align-items-center gap-3">
-                            <span class="rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center"
-                                  style="width:42px; height:42px; font-size:1.25rem">
-                                <i class="bi bi-water"></i>
-                            </span>
-                            <div>
-                                <h4 class="fw-bold text-dark mb-0">{{ $item['catamaran']->name }}</h4>
-                                <p class="small text-muted mb-0">
-                                    <i class="bi bi-people me-1"></i>Capacità {{ $item['catamaran']->max_capacity }} persone
-                                </p>
+        <section class="rpt-section">
+            <div class="rpt-section-head">
+                <h2 class="rpt-section-title"><i class="bi bi-compass"></i>Occupazione per tour</h2>
+                <span class="rpt-section-sub">{{ count($occupancyData) }} tour attivi</span>
+            </div>
+            <div class="rpt-grid-3">
+                @forelse($occupancyData as $item)
+                    @php
+                        $rate = $item['occupancy_rate'];
+                        $rateClass = $rate >= 70 ? 'is-success' : ($rate >= 50 ? 'is-warning' : 'is-danger');
+                        $barClass = $rate >= 70 ? 'is-success' : ($rate >= 50 ? 'is-warning' : 'is-danger');
+                    @endphp
+                    <div class="rpt-tour-card">
+                        <div class="rpt-tour-card-head">
+                            <div style="min-width:0">
+                                <h3 class="rpt-tour-card-name">{{ $item['tour']->name }}</h3>
+                                <p class="rpt-tour-card-cap"><i class="bi bi-people me-1"></i>Capacità {{ $item['tour']->max_capacity }} pax/slot</p>
+                            </div>
+                            <div style="text-align:right">
+                                <div class="rpt-tour-card-rate {{ $rateClass }}">{{ $rate }}%</div>
+                                <div class="rpt-tour-card-cap">occupazione</div>
                             </div>
                         </div>
-                        <div class="text-end">
-                            <span class="display-6 fw-bold text-{{ $rateClass }}">{{ $rate }}%</span>
-                            <p class="small text-muted mb-0">occupazione</p>
-                        </div>
-                    </div>
-                    <div class="progress mb-3" style="height:12px; border-radius:999px">
-                        <div class="progress-bar bg-{{ $rateClass }}" style="width: {{ min(100, $rate) }}%; border-radius:999px"></div>
-                    </div>
-                    <div class="row g-3 small">
-                        <div class="col-4">
-                            <div class="text-muted"><i class="bi bi-receipt me-1"></i>Prenotazioni</div>
-                            <div class="fw-bold text-dark fs-6">{{ $item['bookings'] }}</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-muted"><i class="bi bi-people me-1"></i>Passeggeri</div>
-                            <div class="fw-bold text-primary fs-6">{{ $item['passengers'] }}</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-muted"><i class="bi bi-graph-up me-1"></i>Media a viaggio</div>
-                            <div class="fw-bold text-dark fs-6">{{ $item['avg_passengers'] }}</div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="text-center py-4 text-muted">
-                    <i class="bi bi-water fs-1 d-block mb-2 opacity-50"></i>
-                    <p class="mb-0">Nessun dato disponibile</p>
-                </div>
-            @endforelse
-        </div>
-    </div>
-
-    {{-- Charts row --}}
-    <div class="row g-3 mb-3">
-        <div class="col-lg-7">
-            <div class="dash-card h-100">
-                <div class="dash-card-header">
-                    <h3><i class="bi bi-graph-up me-2 text-primary"></i>Andamento giornaliero</h3>
-                </div>
-                <div class="dash-card-body">
-                    <div style="height:300px"><canvas id="dailyChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-5">
-            <div class="dash-card h-100">
-                <div class="dash-card-header">
-                    <h3><i class="bi bi-calendar-week me-2 text-primary"></i>Distribuzione per giorno</h3>
-                </div>
-                <div class="dash-card-body">
-                    <div style="height:300px"><canvas id="weekChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Time slot popularity --}}
-    <div class="dash-card mb-4">
-        <div class="dash-card-header">
-            <h3><i class="bi bi-clock me-2 text-warning"></i>Popolarità fasce orarie</h3>
-        </div>
-        <div class="dash-card-body">
-            <div class="row g-3">
-                @forelse($timeSlotPopularity as $slot)
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="border rounded-3 p-3 text-center h-100"
-                             style="background: linear-gradient(135deg, rgba(234,179,8,.06), rgba(2,132,199,.06))">
-                            <span class="rounded-circle bg-warning-subtle text-warning d-inline-flex align-items-center justify-content-center mb-2"
-                                  style="width:44px; height:44px; font-size:1.25rem">
-                                <i class="bi bi-clock"></i>
-                            </span>
-                            <p class="fs-6 fw-semibold text-dark mb-1">{{ $slot->time_slot }}</p>
-                            <p class="display-6 fw-bold text-primary mb-1">{{ $slot->count }}</p>
-                            <p class="small text-muted mb-0">prenotazioni</p>
-                            <p class="small text-secondary mb-0">
-                                <i class="bi bi-people me-1"></i>{{ $slot->passengers }} passeggeri
-                            </p>
+                        <div class="rpt-bar {{ $barClass }}" style="height:8px"><span style="width:{{ min(100, $rate) }}%"></span></div>
+                        <div class="rpt-tour-card-stats">
+                            <div>
+                                <div class="rpt-tour-card-stat-label">Prenot.</div>
+                                <div class="rpt-tour-card-stat-value">{{ $item['bookings'] }}</div>
+                            </div>
+                            <div>
+                                <div class="rpt-tour-card-stat-label">Pass.</div>
+                                <div class="rpt-tour-card-stat-value" style="color:#1d4ed8">{{ $item['passengers'] }}</div>
+                            </div>
+                            <div>
+                                <div class="rpt-tour-card-stat-label">Media</div>
+                                <div class="rpt-tour-card-stat-value">{{ $item['avg_passengers'] }}</div>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-12 text-center py-4 text-muted">
-                        <i class="bi bi-clock fs-1 d-block mb-2 opacity-50"></i>
-                        <p class="mb-0">Nessun dato disponibile</p>
-                    </div>
+                    <div class="rpt-empty" style="grid-column:1/-1"><i class="bi bi-compass"></i><p>Nessun tour attivo nel periodo</p></div>
                 @endforelse
             </div>
+        </section>
+
+        <div class="rpt-grid-2">
+            <section class="rpt-section">
+                <div class="rpt-section-head">
+                    <h2 class="rpt-section-title"><i class="bi bi-graph-up"></i>Andamento giornaliero</h2>
+                </div>
+                <div style="height:300px"><canvas id="dailyChart"></canvas></div>
+            </section>
+
+            <section class="rpt-section">
+                <div class="rpt-section-head">
+                    <h2 class="rpt-section-title"><i class="bi bi-calendar-week"></i>Per giorno settimana</h2>
+                </div>
+                <div style="height:300px"><canvas id="weekChart"></canvas></div>
+            </section>
         </div>
-    </div>
+
+        <section class="rpt-section">
+            <div class="rpt-section-head">
+                <h2 class="rpt-section-title"><i class="bi bi-clock"></i>Popolarità fasce orarie</h2>
+            </div>
+            <div class="rpt-grid-3">
+                @forelse($timeSlotPopularity as $slot)
+                    <div class="rpt-slot-tile">
+                        <p class="rpt-slot-time"><i class="bi bi-clock me-1" style="color:#94a3b8"></i>{{ $slot->time_slot }}</p>
+                        <p class="rpt-slot-count">{{ $slot->count }}</p>
+                        <p class="rpt-slot-sub">prenotazioni · {{ $slot->passengers }} pax</p>
+                    </div>
+                @empty
+                    <div class="rpt-empty" style="grid-column:1/-1"><i class="bi bi-clock"></i><p>Nessun dato disponibile</p></div>
+                @endforelse
+            </div>
+        </section>
+    </main>
+</div>
 @endsection
 
 @push('scripts')
@@ -192,14 +136,13 @@
     Chart.defaults.font.family = "'Google Sans', 'Inter', system-ui, sans-serif";
     Chart.defaults.color = '#64748b';
 
-    // Daily chart
     const dailyData = @json($dailyOccupancy);
     const dailyLabels = dailyData.map(d => new Date(d.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }));
     const dailyPassengers = dailyData.map(d => d.passengers);
 
     const dailyCtx = document.getElementById('dailyChart').getContext('2d');
     const dailyGrad = dailyCtx.createLinearGradient(0, 0, 0, 300);
-    dailyGrad.addColorStop(0, 'rgba(2, 132, 199, 0.25)');
+    dailyGrad.addColorStop(0, 'rgba(2, 132, 199, 0.22)');
     dailyGrad.addColorStop(1, 'rgba(2, 132, 199, 0.0)');
 
     new Chart(dailyCtx, {
@@ -234,9 +177,8 @@
         }
     });
 
-    // Week chart
     const weekData = @json($dayOfWeekStats);
-    const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+    const days = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
     const weekValues = [1,2,3,4,5,6,7].map(d => weekData[d] || 0);
 
     new Chart(document.getElementById('weekChart').getContext('2d'), {

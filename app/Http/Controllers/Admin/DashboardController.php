@@ -89,7 +89,7 @@ class DashboardController extends Controller
         $recentActivity = collect();
 
         // Add recent bookings
-        $recentBookings = Booking::with('catamaran')
+        $recentBookings = Booking::with('tour')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -97,7 +97,7 @@ class DashboardController extends Controller
                 return [
                     'type' => 'booking',
                     'message' => "Nuova prenotazione #{$booking->booking_number}",
-                    'details' => "{$booking->customer_first_name} {$booking->customer_last_name} - {$booking->catamaran->name}",
+                    'details' => "{$booking->customer_first_name} {$booking->customer_last_name} - " . ($booking->tour?->name ?? 'N/A'),
                     'time' => $booking->created_at,
                     'icon' => 'calendar',
                     'color' => 'blue',
@@ -157,8 +157,8 @@ class DashboardController extends Controller
                     'color' => $this->getBookingColor($booking->status),
                     'extendedProps' => [
                         'booking_number' => $booking->booking_number,
-                        'catamaran' => $booking->catamaran->name ?? 'N/A',
-                        'catamaran_id' => $booking->catamaran_id,
+                        'tour' => $booking->tour?->name ?? 'N/A',
+                        'tour_id' => $booking->tour_id,
                         'guests' => $booking->seats,
                         'status' => $booking->status->value ?? $booking->status,
                     ],

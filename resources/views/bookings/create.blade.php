@@ -3,5 +3,49 @@
 @section('title', 'Prenota — ' . $tour->name)
 
 @section('content')
-    <livewire:public.booking-form :tour="$tour" :departure="$departure" />
+
+    {{-- HERO --}}
+    <div class="tg-breadcrumb-area pt-150 pb-90 p-relative" style="
+        @if($tour->primaryImage)
+            background: linear-gradient(rgba(11,61,92,.55),rgba(11,61,92,.55)), url('{{ \Illuminate\Support\Facades\Storage::url($tour->primaryImage->path) }}') center/cover;
+        @else
+            background: linear-gradient(135deg, #560CE3 0%, #7C37FF 100%);
+        @endif
+    ">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center text-white">
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb justify-content-center mb-0">
+                            <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-white-50 text-decoration-none">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('tours.show', $tour->slug) }}" class="text-white-50 text-decoration-none">{{ $tour->name }}</a></li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">Prenota</li>
+                        </ol>
+                    </nav>
+                    <h1 class="mb-2 wow fadeInUp">Prenota il tuo tour</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-5 col-lg-6 col-md-8">
+                    <livewire:public.booking-form :tour="$tour" :departure="$departure" />
+                    <p class="text-center small text-muted mt-3">
+                        Vuoi cambiare data? <a href="{{ route('tours.show', $tour->slug) }}">Torna alla pagina del tour</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
+
+@push('head')
+<style>
+    .breadcrumb-item.active { color: #fff !important; }
+    .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,.6); }
+</style>
+@endpush

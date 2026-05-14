@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class SettingsController extends Controller
@@ -64,6 +65,37 @@ class SettingsController extends Controller
         Cache::forget('app_settings');
 
         return back()->with('success', 'Impostazioni aggiornate con successo.');
+    }
+
+    /**
+     * Invia una mail di test con la config SMTP corrente. Risponde JSON per chiamate AJAX.
+     */
+    public function sendTestMail(Request $request)
+    {
+        $request->validate(['to' => 'required|email']);
+
+        try {
+            Mail::raw(
+                "Questa è una mail di prova inviata da " . config('app.name') . " il " . now()->format('d/m/Y H:i:s') . ".\n\n"
+                . "Se la stai leggendo, la configurazione SMTP funziona correttamente.\n\n"
+                . "Driver: " . config('mail.default') . "\n"
+                . "Host: " . config('mail.mailers.smtp.host') . "\n"
+                . "Porta: " . config('mail.mailers.smtp.port') . "\n"
+                . "Mittente: " . config('mail.from.address'),
+                function ($message) use ($request) {
+                    $message->to($request->to)->subject('Test SMTP · ' . config('app.name'));
+                }
+            );
+            return response()->json([
+                'success' => true,
+                'message' => 'Mail di prova inviata a ' . $request->to . '. Verifica la casella (anche spam).',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     // Le fasce orarie sono ora gestite per-tour (tour_departures).

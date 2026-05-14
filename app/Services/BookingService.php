@@ -24,8 +24,13 @@ class BookingService
      * Crea una prenotazione su un tour, distribuendo automaticamente i posti
      * tra i catamarani disponibili (ottimizzazione: gruppo unito quando possibile).
      *
+     * Input (nuovo modello adulti + bambini con DOB):
+     *  - 'adults_count' int (>=1)
+     *  - 'children' array<int, array{dob: 'Y-m-d', bracket_id?: int}>
+     *
      * @param  array  $data  [
-     *   'tour_id', 'tour_departure_id', 'bracket_counts' => [id => count],
+     *   'tour_id', 'tour_departure_id',
+     *   'adults_count', 'children',
      *   'customer_first_name', 'customer_last_name', 'customer_email', ...,
      *   'addons' => [], 'discount_code' => null
      * ]
@@ -44,16 +49,45 @@ class BookingService
                 throw new \Exception('Questa partenza non è disponibile.');
             }
 
-            $bracketCounts = $data['bracket_counts'] ?? [];
-            if (empty(array_filter($bracketCounts))) {
-                throw new \Exception('Devi selezionare almeno un partecipante.');
+            // Modalità legacy (admin form): accetta bracket_counts e converte in formato nuovo
+            if (!isset($data['adults_count']) && !empty($data['bracket_counts'] ?? [])) {
+                return $this->createFromBracketCounts($tour, $departure, $data, $source);
+            }
+
+            $adultsCount = (int) ($data['adults_count'] ?? 0);
+            $children = $data['children'] ?? [];
+
+            if ($adultsCount < 1) {
+                throw new \Exception('Serve almeno un adulto per prenotare.');
+            }
+
+            // Risolvi bracket per ogni bambino (in base al DOB e alla data di partenza)
+            $brackets = $this->pricingService
+                ->resolveBrackets($tour, $departure->departure_date)
+                ->keyBy('id');
+            $resolvedChildren = [];
+            foreach ($children as $child) {
+                $dob = $child['dob'] ?? null;
+                if (!$dob) {
+                    throw new \Exception('Manca la data di nascita di un bambino.');
+                }
+                $bracket = $this->pricingService->resolveBracketForDob(
+                    $brackets->values(),
+                    $dob,
+                    $departure->departure_date
+                );
+                if (!$bracket) {
+                    throw new \Exception("Per la data di nascita {$dob} non è disponibile alcuna riduzione: aggiungilo come adulto.");
+                }
+                $resolvedChildren[] = ['dob' => $dob, 'bracket_id' => $bracket->id];
             }
 
             // Pricing
-            $pricing = $this->pricingService->calculate(
+            $pricing = $this->pricingService->calculateForParticipants(
                 $tour,
                 $departure,
-                $bracketCounts,
+                $adultsCount,
+                $resolvedChildren,
                 $data['addons'] ?? [],
                 $data['discount_code'] ?? null
             );
@@ -94,14 +128,33 @@ class BookingService
                 'locale' => app()->getLocale(),
                 'ip_address' => request()?->ip(),
                 'user_agent' => request()?->userAgent(),
+                'participants_token' => \Illuminate\Support\Str::random(48),
                 'metadata' => [
                     'pricing' => $pricing,
                     'distribution' => $assignment,
                 ],
             ]);
 
-            // Crea booking_seats per ogni partecipante (counting + non-counting)
-            $this->createSeats($booking, $bracketCounts, $assignment, $data['guests'] ?? []);
+            // Pre-popola il primo adulto (prenotante) come guest
+            $guests = $data['guests'] ?? [];
+            if (empty($guests)) {
+                $guests = [[
+                    'first_name' => $data['customer_first_name'] ?? null,
+                    'last_name' => $data['customer_last_name'] ?? null,
+                    'date_of_birth' => null,
+                ]];
+            }
+
+            // Crea booking_seats per ogni partecipante (adulti + bambini risolti)
+            $this->createParticipantSeats(
+                $booking,
+                $adultsCount,
+                (float) $pricing['adult_unit_price'],
+                $resolvedChildren,
+                $brackets,
+                $assignment,
+                $guests
+            );
 
             // Addons
             if (!empty($data['addons'])) {
@@ -109,7 +162,8 @@ class BookingService
                     $addon = \App\Models\Addon::find($addonId);
                     if ($addon) {
                         $totalPrice = (float) $addon->calculatePrice($countingSeats, max(0.5, ($tour->duration_hours ?? 0) / 8));
-                        $booking->addons()->attach($addonId, [
+                        $booking->addons()->create([
+                            'addon_id' => $addonId,
                             'quantity' => $addon->price_type === 'per_person' ? $countingSeats : 1,
                             'unit_price' => $addon->price,
                             'total_price' => $totalPrice,
@@ -125,6 +179,87 @@ class BookingService
 
             return $booking->fresh(['seatRecords.catamaran', 'tour', 'departure']);
         });
+    }
+
+    /**
+     * Legacy: crea una prenotazione dal vecchio formato bracket_counts
+     * (usato dal form admin che permette di scegliere quantità per bracket).
+     */
+    protected function createFromBracketCounts(Tour $tour, TourDeparture $departure, array $data, string $source): Booking
+    {
+        $bracketCounts = $data['bracket_counts'] ?? [];
+        if (empty(array_filter($bracketCounts))) {
+            throw new \Exception('Devi selezionare almeno un partecipante.');
+        }
+
+        $pricing = $this->pricingService->calculate(
+            $tour,
+            $departure,
+            $bracketCounts,
+            $data['addons'] ?? [],
+            $data['discount_code'] ?? null
+        );
+
+        $countingSeats = $pricing['counting_seats'];
+        if ($countingSeats <= 0) {
+            throw new \Exception('Numero posti non valido.');
+        }
+
+        $assignment = $this->distributeSeats($tour, $departure, $countingSeats);
+        if ($assignment === null) {
+            throw new \Exception('Posti insufficienti per questa partenza.');
+        }
+
+        $booking = Booking::create([
+            'user_id' => $data['user_id'] ?? auth()->id(),
+            'tour_id' => $tour->id,
+            'tour_departure_id' => $departure->id,
+            'booking_date' => $departure->departure_date,
+            'seats' => $countingSeats,
+            'base_price' => $pricing['base_price'],
+            'addons_total' => $pricing['addons_total'],
+            'discount_amount' => $pricing['discount_amount'],
+            'discount_code_id' => $pricing['discount_code_id'],
+            'tax_amount' => $pricing['tax_amount'],
+            'total_amount' => $pricing['total_amount'],
+            'currency' => 'EUR',
+            'status' => BookingStatus::PENDING,
+            'customer_first_name' => $data['customer_first_name'],
+            'customer_last_name' => $data['customer_last_name'],
+            'customer_email' => $data['customer_email'],
+            'customer_phone' => $data['customer_phone'] ?? null,
+            'customer_country' => $data['customer_country'] ?? 'IT',
+            'special_requests' => $data['special_requests'] ?? null,
+            'payment_deadline' => now()->addMinutes(config('booking.payment_expiry_minutes', 30)),
+            'source' => $source,
+            'locale' => app()->getLocale(),
+            'ip_address' => request()?->ip(),
+            'user_agent' => request()?->userAgent(),
+            'metadata' => ['pricing' => $pricing, 'distribution' => $assignment],
+        ]);
+
+        $this->createSeats($booking, $bracketCounts, $assignment, $data['guests'] ?? []);
+
+        if (!empty($data['addons'])) {
+            foreach ($data['addons'] as $addonId) {
+                $addon = \App\Models\Addon::find($addonId);
+                if ($addon) {
+                    $totalPrice = (float) $addon->calculatePrice($countingSeats, max(0.5, ($tour->duration_hours ?? 0) / 8));
+                    $booking->addons()->create([
+                        'addon_id' => $addonId,
+                        'quantity' => $addon->price_type === 'per_person' ? $countingSeats : 1,
+                        'unit_price' => $addon->price,
+                        'total_price' => $totalPrice,
+                    ]);
+                }
+            }
+        }
+
+        if ($pricing['discount_code_id']) {
+            DiscountCode::find($pricing['discount_code_id'])?->increment('times_used');
+        }
+
+        return $booking->fresh(['seatRecords.catamaran', 'tour', 'departure']);
     }
 
     /**
@@ -298,11 +433,104 @@ class BookingService
     }
 
     /**
-     * Crea i record booking_seats applicando la distribuzione e le fasce d'età.
+     * Crea i booking_seats nel nuovo modello adulti + bambini.
+     * Gli adulti hanno tour_age_bracket_id NULL e price_paid = prezzo adulto del periodo.
+     * I bambini riferiscono al loro bracket (riduzione) e salvano la DOB.
+     *
+     * @param  array<int, array{dob: string, bracket_id: int}>  $children
+     * @param  \Illuminate\Support\Collection  $brackets  keyBy('id')
+     * @param  array<int, array{catamaran_id:int, seats:int}>  $distribution
+     */
+    protected function createParticipantSeats(
+        Booking $booking,
+        int $adultsCount,
+        float $adultUnitPrice,
+        array $children,
+        \Illuminate\Support\Collection $brackets,
+        array $distribution,
+        array $guests = []
+    ): void {
+        // Espandi la distribuzione in una queue di catamaran_id (uno per posto contante)
+        $catamaranQueue = [];
+        foreach ($distribution as $slot) {
+            for ($i = 0; $i < $slot['seats']; $i++) {
+                $catamaranQueue[] = $slot['catamaran_id'];
+            }
+        }
+
+        $seatNumber = 1;
+        $countingIdx = 0;
+
+        // Adulti
+        for ($a = 0; $a < $adultsCount; $a++) {
+            $guest = $guests[$countingIdx] ?? [];
+            BookingSeat::create([
+                'booking_id' => $booking->id,
+                'seat_number' => $seatNumber++,
+                'catamaran_id' => $catamaranQueue[$countingIdx] ?? null,
+                'tour_age_bracket_id' => null,
+                'price_paid' => $adultUnitPrice,
+                'guest_first_name' => $guest['first_name'] ?? null,
+                'guest_last_name' => $guest['last_name'] ?? null,
+                'guest_date_of_birth' => $guest['date_of_birth'] ?? null,
+                'is_primary' => $a === 0,
+            ]);
+            $countingIdx++;
+        }
+
+        // Bambini: prima quelli che occupano un posto (counts_as_seat=true), poi gli infanti
+        $countingChildren = [];
+        $nonCountingChildren = [];
+        foreach ($children as $child) {
+            $bracket = $brackets->get($child['bracket_id']);
+            if (!$bracket) {
+                continue;
+            }
+            $entry = ['child' => $child, 'bracket' => $bracket];
+            if ($bracket->counts_as_seat) {
+                $countingChildren[] = $entry;
+            } else {
+                $nonCountingChildren[] = $entry;
+            }
+        }
+
+        foreach ($countingChildren as $entry) {
+            $bracket = $entry['bracket'];
+            BookingSeat::create([
+                'booking_id' => $booking->id,
+                'seat_number' => $seatNumber++,
+                'catamaran_id' => $catamaranQueue[$countingIdx] ?? null,
+                'tour_age_bracket_id' => $bracket->id,
+                'price_paid' => (float) $bracket->price * (float) $booking->departure->price_modifier,
+                'guest_date_of_birth' => $entry['child']['dob'],
+                'is_primary' => false,
+            ]);
+            $countingIdx++;
+        }
+
+        // Infanti in braccio: stesso catamarano del primo posto
+        $defaultCatamaran = $catamaranQueue[0] ?? null;
+        foreach ($nonCountingChildren as $entry) {
+            $bracket = $entry['bracket'];
+            BookingSeat::create([
+                'booking_id' => $booking->id,
+                'seat_number' => $seatNumber++,
+                'catamaran_id' => $defaultCatamaran,
+                'tour_age_bracket_id' => $bracket->id,
+                'price_paid' => (float) $bracket->price * (float) $booking->departure->price_modifier,
+                'guest_date_of_birth' => $entry['child']['dob'],
+                'is_primary' => false,
+            ]);
+        }
+    }
+
+    /**
+     * Legacy: crea i booking_seats da un dizionario bracket_id => quantità.
+     * Mantenuto per eventuali importazioni o vecchie integrazioni.
      *
      * @param  array<int,int>  $bracketCounts
      * @param  array<int, array{catamaran_id:int, seats:int}>  $distribution
-     * @param  array  $guests  dati ospiti opzionali in ordine
+     * @param  array  $guests
      */
     protected function createSeats(Booking $booking, array $bracketCounts, array $distribution, array $guests = []): void
     {

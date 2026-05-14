@@ -76,9 +76,15 @@ class TourController extends Controller
             ->with(['images', 'ageBrackets', 'periods', 'catamarans'])
             ->firstOrFail();
 
-        // Prossime partenze (60 giorni) generate dai periodi
+        // Prossime partenze (180 giorni) generate dai periodi.
+        // Vengono raggruppate per data per alimentare il calendario di prenotazione.
         $departures = app(\App\Services\DepartureGeneratorService::class)
-            ->upcoming($tour, 60);
+            ->upcoming($tour, 180);
+
+        $departuresByDate = $departures
+            ->groupBy('date')
+            ->map(fn ($items) => $items->pluck('time')->unique()->values()->all())
+            ->all();
 
         // Tour simili
         $similar = Tour::active()
@@ -88,7 +94,7 @@ class TourController extends Controller
             ->take(3)
             ->get();
 
-        return view('tours.show', compact('tour', 'departures', 'similar'));
+        return view('tours.show', compact('tour', 'departures', 'departuresByDate', 'similar'));
     }
 
     /**

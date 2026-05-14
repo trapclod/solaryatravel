@@ -275,9 +275,12 @@ class BookingController extends Controller
 
     public function cancel(Request $request, Booking $booking): RedirectResponse
     {
-        $request->validate(['reason' => 'required|string|max:500']);
+        $request->validate(['reason' => 'nullable|string|max:500']);
         try {
-            $this->bookingService->cancel($booking, $request->reason);
+            $reason = $request->filled('reason')
+                ? $request->input('reason')
+                : 'Annullata da amministratore';
+            $this->bookingService->cancel($booking, $reason);
             return back()->with('success', 'Prenotazione annullata.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

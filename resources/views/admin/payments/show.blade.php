@@ -134,22 +134,22 @@
                             </dd>
                         @endif
 
-                        @if($payment->gateway_transaction_id)
+                        @if($payment->gateway_payment_intent)
                             <dt class="col-sm-4 py-2 small text-muted border-bottom">
-                                <i class="bi bi-arrow-left-right me-1"></i>Transaction ID
+                                <i class="bi bi-arrow-left-right me-1"></i>Payment Intent
                             </dt>
                             <dd class="col-sm-8 py-2 border-bottom mb-0">
-                                <code class="small text-dark">{{ $payment->gateway_transaction_id }}</code>
+                                <code class="small text-dark">{{ $payment->gateway_payment_intent }}</code>
                             </dd>
                         @endif
 
-                        @if($payment->card_brand || $payment->card_last_four)
+                        @if($payment->card_brand || $payment->last_four)
                             <dt class="col-sm-4 py-2 small text-muted border-bottom">
                                 <i class="bi bi-credit-card me-1"></i>Carta
                             </dt>
                             <dd class="col-sm-8 py-2 border-bottom mb-0">
                                 <span class="fw-semibold text-dark">{{ ucfirst($payment->card_brand ?? 'Carta') }}</span>
-                                <span class="font-monospace text-muted ms-2">•••• {{ $payment->card_last_four }}</span>
+                                <span class="font-monospace text-muted ms-2">•••• {{ $payment->last_four }}</span>
                             </dd>
                         @endif
 
@@ -233,8 +233,8 @@
                             <div class="d-flex flex-column gap-2 small">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-water text-primary"></i>
-                                    <span class="text-muted">Catamarano</span>
-                                    <span class="ms-auto fw-semibold text-dark text-truncate">{{ $payment->booking->catamaran->name ?? '—' }}</span>
+                                    <span class="text-muted">Tour</span>
+                                    <span class="ms-auto fw-semibold text-dark text-truncate">{{ $payment->booking->tour->name ?? '—' }}</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-calendar-event text-primary"></i>
@@ -244,7 +244,7 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-clock text-primary"></i>
                                     <span class="text-muted">Orario</span>
-                                    <span class="ms-auto fw-semibold text-dark">{{ $payment->booking->timeSlot->name ?? '—' }}</span>
+                                    <span class="ms-auto fw-semibold text-dark">{{ $payment->booking->departure?->start_time ? \Carbon\Carbon::parse($payment->booking->departure->start_time)->format('H:i') : '—' }}</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-people text-primary"></i>

@@ -45,7 +45,7 @@ class PaymentController extends Controller
     /**
      * Create a Stripe Checkout session.
      */
-    public function createCheckoutSession(Booking $booking): RedirectResponse
+    public function process(Booking $booking): RedirectResponse
     {
         if (!$booking->isPending()) {
             return redirect()
@@ -77,13 +77,14 @@ class PaymentController extends Controller
                 $session = Session::retrieve($sessionId);
 
                 if ($session->payment_status === 'paid') {
-                    $payment = Payment::where('transaction_id', $sessionId)->first();
-                    if ($payment && $payment->status !== PaymentStatus::COMPLETED) {
+                    $payment = Payment::where('gateway_payment_id', $sessionId)->first();
+                    if ($payment && $payment->status !== PaymentStatus::SUCCEEDED) {
                         $payment->update([
-                            'status' => PaymentStatus::COMPLETED,
+                            'status' => PaymentStatus::SUCCEEDED,
                             'paid_at' => now(),
-                            'metadata' => array_merge(
-                                $payment->metadata ?? [],
+                            'gateway_payment_intent' => $session->payment_intent,
+                            'gateway_response' => array_merge(
+                                $payment->gateway_response ?? [],
                                 ['payment_intent' => $session->payment_intent]
                             ),
                         ]);
@@ -136,6 +137,37 @@ class PaymentController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+
+        $this->sendParticipantsRequestEmail($booking);
+    }
+
+    /**
+     * Se mancano nome/cognome su qualche posto, manda l'invito a compilare i dati partecipanti.
+     * Idempotente: una sola mail per booking.
+     */
+    protected function sendParticipantsRequestEmail(Booking $booking): void
+    {
+        $booking->refresh();
+        if ($booking->participants_details_requested_at) {
+            return;
+        }
+        if ($booking->hasAllParticipantsDetails()) {
+            return;
+        }
+        if (!$booking->participants_token) {
+            $booking->update(['participants_token' => \Illuminate\Support\Str::random(48)]);
+            $booking->refresh();
+        }
+        try {
+            Mail::to($booking->customer_email)
+                ->send(new \App\Mail\BookingParticipantsRequest($booking));
+            $booking->update(['participants_details_requested_at' => now()]);
+        } catch (\Throwable $e) {
+            Log::error('Invio richiesta dati partecipanti fallito', [
+                'booking' => $booking->booking_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -183,14 +215,15 @@ class PaymentController extends Controller
      */
     protected function handleCheckoutCompleted($session): void
     {
-        $payment = Payment::where('transaction_id', $session->id)->first();
+        $payment = Payment::where('gateway_payment_id', $session->id)->first();
 
         if ($payment && $session->payment_status === 'paid') {
             $payment->update([
-                'status' => PaymentStatus::COMPLETED,
+                'status' => PaymentStatus::SUCCEEDED,
                 'paid_at' => now(),
-                'metadata' => array_merge(
-                    $payment->metadata ?? [],
+                'gateway_payment_intent' => $session->payment_intent,
+                'gateway_response' => array_merge(
+                    $payment->gateway_response ?? [],
                     ['payment_intent' => $session->payment_intent]
                 ),
             ]);
@@ -211,11 +244,11 @@ class PaymentController extends Controller
      */
     protected function handlePaymentSucceeded($paymentIntent): void
     {
-        $payment = Payment::whereJsonContains('metadata->payment_intent', $paymentIntent->id)->first();
+        $payment = Payment::where('gateway_payment_intent', $paymentIntent->id)->first();
 
-        if ($payment && $payment->status !== PaymentStatus::COMPLETED) {
+        if ($payment && $payment->status !== PaymentStatus::SUCCEEDED) {
             $payment->update([
-                'status' => PaymentStatus::COMPLETED,
+                'status' => PaymentStatus::SUCCEEDED,
                 'paid_at' => now(),
             ]);
 
@@ -235,15 +268,12 @@ class PaymentController extends Controller
      */
     protected function handlePaymentFailed($paymentIntent): void
     {
-        $payment = Payment::whereJsonContains('metadata->payment_intent', $paymentIntent->id)->first();
+        $payment = Payment::where('gateway_payment_intent', $paymentIntent->id)->first();
 
         if ($payment) {
             $payment->update([
                 'status' => PaymentStatus::FAILED,
-                'metadata' => array_merge(
-                    $payment->metadata ?? [],
-                    ['failure_message' => $paymentIntent->last_payment_error?->message]
-                ),
+                'failure_message' => $paymentIntent->last_payment_error?->message,
             ]);
         }
     }
@@ -253,7 +283,7 @@ class PaymentController extends Controller
      */
     protected function handleRefund($charge): void
     {
-        $payment = Payment::whereJsonContains('metadata->payment_intent', $charge->payment_intent)->first();
+        $payment = Payment::where('gateway_payment_intent', $charge->payment_intent)->first();
 
         if ($payment) {
             $refundedAmount = $charge->amount_refunded / 100;

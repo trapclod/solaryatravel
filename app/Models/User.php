@@ -83,4 +83,14 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Booking::class);
     }
+
+    /**
+     * Sovrascrive l'invio standard della mail di verifica:
+     * spediamo la nostra UserWelcome che include il link signed.
+     * Chiamato sia dal listener Registered che dal pulsante "Reinvia mail di verifica".
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        \Illuminate\Support\Facades\Mail::to($this->email)->send(new \App\Mail\UserWelcome($this));
+    }
 }

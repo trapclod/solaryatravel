@@ -16,8 +16,8 @@ return [
     'max_booking_days_ahead' => env('BOOKING_MAX_DAYS_AHEAD', 180),
     'allow_same_day_booking' => env('BOOKING_ALLOW_SAME_DAY', true),
 
-    // Prezzi
-    'tax_rate' => env('BOOKING_TAX_RATE', 0.22),
+    // Prezzi — IVA inclusa nei prezzi mostrati, quindi tax_rate è 0
+    'tax_rate' => env('BOOKING_TAX_RATE', 0),
     'default_currency' => 'EUR',
 
     // QR Code

@@ -327,6 +327,61 @@
                                                placeholder="noreply@solaryatravel.com" class="form-control">
                                     </div>
                                 </div>
+
+                                <div class="mt-4 pt-3 border-top">
+                                    <h5 class="fw-bold mb-2"><i class="bi bi-send-check me-2 text-success"></i>Test invio email</h5>
+                                    <p class="small text-muted mb-3">Salva prima le impostazioni qui sopra (pulsante "Salva" in fondo), poi torna qui per inviare una mail di prova.</p>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <input type="email" id="mailTestTo" class="form-control" style="max-width:320px"
+                                               value="{{ auth()->user()->email }}" placeholder="destinatario@example.com">
+                                        <button type="button" id="mailTestBtn" class="btn btn-success">
+                                            <i class="bi bi-send me-1"></i>Invia mail di prova
+                                        </button>
+                                    </div>
+                                    <div id="mailTestResult" class="mt-3 small"></div>
+                                </div>
+
+                                @push('scripts')
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', () => {
+                                        const btn = document.getElementById('mailTestBtn');
+                                        if (!btn) return;
+                                        btn.addEventListener('click', async () => {
+                                            const to = document.getElementById('mailTestTo').value.trim();
+                                            const result = document.getElementById('mailTestResult');
+                                            if (!to) {
+                                                result.innerHTML = '<div class="alert alert-warning py-2 mb-0">Inserisci un indirizzo email.</div>';
+                                                return;
+                                            }
+                                            btn.disabled = true;
+                                            const original = btn.innerHTML;
+                                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Invio…';
+                                            result.innerHTML = '';
+                                            try {
+                                                const fd = new FormData();
+                                                fd.append('to', to);
+                                                fd.append('_token', '{{ csrf_token() }}');
+                                                const r = await fetch('{{ route('admin.settings.mail-test') }}', {
+                                                    method: 'POST',
+                                                    body: fd,
+                                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                                });
+                                                const data = await r.json();
+                                                if (r.ok && data.success) {
+                                                    result.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="bi bi-check-circle me-1"></i>' + data.message + '</div>';
+                                                } else {
+                                                    result.innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="bi bi-x-circle me-1"></i>' + (data.message || 'Errore sconosciuto') + '</div>';
+                                                }
+                                            } catch (e) {
+                                                result.innerHTML = '<div class="alert alert-danger py-2 mb-0">Errore di rete: ' + e.message + '</div>';
+                                            } finally {
+                                                btn.disabled = false;
+                                                btn.innerHTML = original;
+                                            }
+                                        });
+                                    });
+                                </script>
+                                @endpush
                             </div>
                         </div>
                     </div>
